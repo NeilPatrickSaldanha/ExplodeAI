@@ -1,0 +1,742 @@
+id: tokenization
+title: Tokenization, exploded
+summary: >-
+  Take a byte-pair-encoding tokenizer apart. Train real merges on a small
+  corpus, watch new text get split into tokens, decode it back, and see how
+  vocabulary size trades against sequence length.
+status: published
+version: 1.0.0
+updated: 2026-10-19
+estimated_minutes: 20
+objectives:
+  - Explain how BPE learns merges from a corpus and replays them, in order, on new text.
+  - Predict how the number of merges changes vocabulary size and the number of tokens a text needs.
+  - Explain why a byte-level alphabet never needs an unknown token, and why a character alphabet can.
+  - Read token counts critically. They depend on the tokenizer, so they do not transfer between models or providers.
+prerequisites:
+  - Knowing that a language model reads text as a sequence of numbers, not letters.
+verification_report: reports/Tokenization verification.md
+
+# ------------------------------------------------------------------ claims
+# primary = Pass 1 (primary-source research), cross_check = Pass 2,
+# technical = Pass 3 (execution / consistency checks). Pass records are
+# updated only from the written verification report.
+# Pass 1 notes: research_notes/Tokenization primary sources/
+claims:
+  - id: bpe-compression-origin
+    kind: fact
+    text: BPE began as a data-compression technique that repeatedly replaces the most frequent pair of bytes with a new symbol. Sennrich et al. adapted it in 2016 to split words into subword units.
+    citations:
+      - source: sennrich2016bpe
+        locator: §1 (contributions)
+        excerpt: "We adapt byte pair encoding (BPE) (Gage, 1994), a compression algorithm, to the task of word segmentation."
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "a simple data compression technique that iteratively replaces the most frequent pair of bytes in a sequence with a single, unused byte"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Historical fact about the algorithm's origin."}
+
+  - id: subword-open-vocabulary
+    kind: fact
+    text: Subword units let a model with a fixed vocabulary handle rare and unseen words, by spelling them out from smaller pieces it already knows.
+    citations:
+      - source: sennrich2016bpe
+        locator: abstract
+        excerpt: "making the NMT model capable of open-vocabulary translation by encoding rare and unknown words as sequences of subword units."
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "In our example, the OOV ‘lower’ would be segmented into ‘low er·’."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_unseen_words_are_spelled_from_known_subwords."}
+
+  - id: bpe-training-loop
+    kind: definition
+    text: BPE training starts from single symbols, counts every pair of adjacent symbols, merges the most frequent pair into a new symbol, and repeats.
+    citations:
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "We iteratively count all symbol pairs and replace each occurrence of the most frequent pair (‘A’, ‘B’) with a new symbol ‘AB’."
+      - source: hf_course_bpe
+        locator: Training algorithm
+        excerpt: "That most frequent pair is the one that will be merged, and we rinse and repeat for the next step."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_bpe_matches_an_independent_reference_implementation; test_each_merge_is_the_most_frequent_pair_at_that_step."}
+
+  - id: bpe-frequency-weighted
+    kind: fact
+    text: Pair counts are weighted by how often each word occurs, so BPE can be trained on a list of distinct words with their frequencies instead of the full text.
+    citations:
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "The algorithm can thus be run on the dictionary extracted from a text, with each word being weighted by its frequency."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_training_on_a_word_frequency_dictionary_equals_training_on_the_text."}
+
+  - id: bpe-vocab-formula
+    kind: fact
+    text: The final vocabulary is the starting alphabet plus one new symbol per merge (plus any special tokens), so the number of merges is what sets the vocabulary size.
+    citations:
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "The final symbol vocabulary size is equal to the size of the initial vocabulary, plus the number of merge operations"
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "the latter is the only hyperparameter of the algorithm."
+      - source: hf_transformers_tokenization
+        locator: BPE
+        excerpt: "the target vocabulary size, which equals the base vocabulary size plus the number of merges."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Added '(plus any special tokens)': the app's own vocabulary counts one."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_vocabulary_is_base_plus_merges_plus_special."}
+
+  - id: bpe-no-cross-word
+    kind: fact
+    text: Sennrich et al.'s BPE never counts pairs that cross a word boundary, so no learned symbol spans two words.
+    citations:
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "For efficiency, we do not consider pairs that cross word boundaries."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_word_pre_tokenization_keeps_every_merge_inside_a_word; test_challenge_fails_when_broken_and_passes_when_fixed."}
+
+  - id: bpe-apply-in-order
+    kind: fact
+    text: To tokenize new text, a BPE tokenizer splits it into base symbols and then applies the learned merges in the order they were learned.
+    citations:
+      - source: sennrich2016bpe
+        locator: §3.2
+        excerpt: "At test time, we first split words into sequences of characters, then apply the learned operations to merge the characters into larger, known symbols."
+      - source: hf_course_bpe
+        locator: Tokenization algorithm
+        excerpt: "Applying the merge rules learned in order on those splits"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "Sennrich implies the order; the Hugging Face course states it."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_bpe_matches_an_independent_reference_implementation; test_challenge_fails_when_broken_and_passes_when_fixed."}
+
+  - id: bpe-deterministic
+    kind: fact
+    text: Standard BPE is deterministic, so the same text always gets the same tokens. The unigram language model, an alternative, can produce several segmentations of the same text, each with a probability. Variants such as BPE-dropout add randomness on purpose during training.
+    citations:
+      - source: kudo2018subword
+        locator: §3.1
+        excerpt: "BPE is based on a greedy and deterministic symbol replacement, which can not provide multiple segmentations with probabilities."
+      - source: kudo2018subword
+        locator: §3.4
+        excerpt: "the unigram language model is more flexible as it is based on a probabilistic language model and can output multiple segmentations with their probabilities"
+      - source: provilkov2020bpedropout
+        locator: abstract
+        excerpt: "It stochastically corrupts the segmentation procedure of BPE, which leads to producing multiple segmentations within the same fixed BPE framework."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Scoped to standard BPE; BPE-dropout (Provilkov et al.) added as the randomised variant."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "BPE half only; the unigram half rests on the source. Evidence: test_training_and_encoding_are_deterministic_and_merges_are_a_prefix."}
+
+  - id: sentencepiece-raw-text
+    kind: fact
+    text: SentencePiece trains directly on raw sentences and treats whitespace as an ordinary symbol (U+2581, "▁"), so it needs no language-specific word splitting first.
+    citations:
+      - source: kudo2018sentencepiece
+        locator: abstract
+        excerpt: "While existing subword segmentation tools assume that the input is pre-tokenized into word sequences, SentencePiece can train subword models directly from raw sentences"
+      - source: kudo2018sentencepiece
+        locator: §3.1 (the PDF text layer renders the meta symbol as "_")
+        excerpt: "SentencePiece first escapes the whitespace with a meta symbol _ (U+2581), and tokenizes the input into an arbitrary subword sequence"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "ExplodeAI's educational tokenizer does not implement SentencePiece."}
+
+  - id: sentencepiece-vocab-size
+    kind: fact
+    text: SentencePiece is configured by the final vocabulary size rather than the number of merges, because a merge count only makes sense for BPE.
+    citations:
+      - source: kudo2018sentencepiece
+        locator: §3.3
+        excerpt: "While subword-nmt specifies the number of merge operations, SentencePiece specifies the final size of vocabulary"
+      - source: kudo2018sentencepiece
+        locator: §3.3
+        excerpt: "as the number of merge operations is a BPE specific parameter and can not be applicable to other segmentation algorithms"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Describes SentencePiece's configuration; ExplodeAI's slider sets merges, as in Sennrich et al."}
+
+  - id: sentencepiece-lossless
+    kind: fact
+    text: SentencePiece's decoder is the exact inverse of its encoder on normalised text, which its authors call lossless tokenization. What comes back is the normalised text (NFKC by default in the paper), which matches the original only if normalisation left it unchanged.
+    citations:
+      - source: kudo2018sentencepiece
+        locator: §3.1
+        excerpt: "SentencePiece implements the Decoder as an inverse operation of Encoder, i.e., Decode(Encode(Normalize(text))) = Normalize(text)."
+      - source: kudo2018sentencepiece
+        locator: §3.4
+        excerpt: "By default, SentencePiece normalizes the input text with the Unicode NFKC normalization."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Reworded: decoding returns the normalised text, not necessarily the original."}
+      technical: {status: not_applicable, notes: "ExplodeAI does not implement SentencePiece or NFKC normalisation. The byte-level round trip is tested under byte-bpe-lossless."}
+
+  - id: gpt2-byte-level
+    kind: fact
+    text: GPT-2 runs BPE on bytes rather than Unicode characters. A byte-level base vocabulary needs only 256 symbols, while Unicode code points would need over 130,000 before any merges.
+    citations:
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "In contrast, a byte-level version of BPE only requires a base vocabulary of size 256."
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "This would result in a base vocabulary of over 130,000 before any multi-symbol tokens are added."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Consistency of ExplodeAI's byte alphabet; the 130,000 figure rests on the paper. Evidence: test_byte_level_base_alphabet_has_exactly_256_symbols."}
+
+  - id: byte-level-no-unk
+    kind: fact
+    text: Every possible byte is in a byte-level alphabet, so any text can be encoded, including text unlike anything in training, and no unknown token is needed.
+    citations:
+      - source: hf_tokenizers_components
+        locator: Pre-tokenizers, ByteLevel
+        excerpt: "it is absolutely unnecessary to have an unknown token using this"
+      - source: hf_course_bpe
+        locator: Training algorithm (tip)
+        excerpt: "the base vocabulary has a small size (256), but every character you can think of will still be included"
+      - source: tiktoken_readme
+        locator: What is BPE anyway?
+        excerpt: "It works on arbitrary text, even text that is not in the tokeniser's training data"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Property test on random mixed-script text. Evidence: test_byte_level_bpe_round_trips_arbitrary_text_without_unknowns; test_challenge_fails_when_broken_and_passes_when_fixed."}
+
+  - id: char-bpe-unk
+    kind: fact
+    text: If the base alphabet holds only the characters seen in training, any other character becomes an unknown token, and the original text cannot be recovered from it.
+    citations:
+      - source: hf_course_bpe
+        locator: Tokenization algorithm
+        excerpt: "\"mug\", however, will be tokenized as [\"[UNK]\", \"ug\"] since the letter \"m\" was not in the base vocabulary."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_character_alphabet_turns_unseen_characters_into_unknowns."}
+
+  - id: gpt2-character-categories
+    kind: fact
+    text: GPT-2 stops BPE from merging across character categories, so a common word does not get a separate token for each punctuation mark that can follow it. Spaces are the exception.
+    citations:
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "We observed BPE including many versions of common words like dog since they occur in many variations such as dog. dog! dog?"
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "To avoid this, we prevent BPE from merging across character categories for any byte sequence."
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "We add an exception for spaces which significantly improves the compression efficiency while adding only minimal fragmentation of words across multiple vocab tokens."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "The paper does not define 'character categories'."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "ExplodeAI's simplified GPT-2-style pattern, not GPT-2's own regex. Evidence: test_letters_and_punctuation_are_never_merged_together."}
+
+  - id: leading-space
+    kind: fact
+    text: In GPT-style tokenizers a space usually belongs to the start of the next word, so " the" and "the" are different tokens.
+    citations:
+      - source: openai_cookbook_count_tokens
+        locator: How strings are typically tokenized
+        excerpt: "Spaces are usually grouped with the starts of words (e.g., \" is\" instead of \"is \" or \" \"+\"is\")."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_a_space_belongs_to_the_next_word."}
+
+  - id: gpt2-vocab-size
+    kind: fact
+    text: GPT-2's vocabulary has 50,257 tokens, made up of 256 byte tokens, 50,000 merges, and one end-of-text special token.
+    citations:
+      - source: hf_transformers_tokenization
+        locator: Byte-level BPE
+        excerpt: "a vocabulary size of 50,257 (256 byte tokens + 50,000 merges + special end-of-text token)."
+      - source: radford2019gpt2
+        locator: §2.3
+        excerpt: "The vocabulary is expanded to 50,257."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "The GPT-2 paper gives the total but not the breakdown."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Fact about a released model. ExplodeAI mirrors the same formula (base + merges + 1 special), tested under bpe-vocab-formula."}
+
+  - id: real-merge-counts
+    kind: fact
+    text: Real systems learn tens of thousands of merges. For English→German, Sennrich et al. used 59,500 (89,500 for joint BPE over both languages), and GPT-2 has 50,000. This lesson's tiny corpus runs out after about 200 (216 with the default pre-tokenizer).
+    citations:
+      - source: sennrich2016bpe
+        locator: §4.1
+        excerpt: "Table 1 shows BPE with 59 500 merge operations, and joint BPE with 89 500 operations."
+      - source: hf_transformers_tokenization
+        locator: Byte-level BPE
+        excerpt: "a vocabulary size of 50,257 (256 byte tokens + 50,000 merges + special end-of-text token)."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Scoped Sennrich's figures to English→German; corpus limit corrected to 216 merges."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Only the sentence about ExplodeAI's corpus is executable. Evidence: test_training_stops_when_no_pair_is_left."}
+
+  - id: special-tokens
+    kind: provider_specific
+    provider: OpenAI (tiktoken)
+    text: Special tokens such as end-of-text are artificial tokens used to unlock model capabilities. By default, tiktoken's encode refuses text that matches a special token, because such tokens can be used to trick a model. ExplodeAI's educational tokenizer does not copy that refusal; it encodes such text as ordinary bytes.
+    citations:
+      - source: tiktoken_core
+        locator: Encoding.encode docstring
+        excerpt: "Special tokens are artificial tokens used to unlock capabilities from a model, such as fill-in-the-middle."
+      - source: tiktoken_core
+        locator: Encoding.encode docstring
+        excerpt: "by default, encode will raise an error if it encounters text that corresponds to a special token."
+      - source: tiktoken_core
+        locator: Encoding.encode docstring
+        excerpt: "they can be used to trick a model into doing something we don't want it to do."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Added a tiktoken excerpt for the first sentence; noted ExplodeAI does not copy tiktoken's refusal."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Only ExplodeAI's own behaviour is executable; tiktoken's refusal rests on its source. Evidence: test_special_token_text_in_the_input_is_encoded_as_plain_text."}
+
+  - id: hf-pipeline
+    kind: definition
+    text: "Hugging Face Tokenizers describes encoding as a pipeline: normalization, pre-tokenization, a model such as BPE, and post-processing. The model is the part trained on a corpus, and post-processing adds any special tokens."
+    citations:
+      - source: hf_tokenizers_pipeline
+        locator: Model
+        excerpt: "This is the part of the pipeline that needs training on your corpus"
+      - source: hf_tokenizers_pipeline
+        locator: introduction
+        excerpt: "the input text(s) go through the following pipeline:"
+      - source: hf_tokenizers_pipeline
+        locator: Post-Processing
+        excerpt: "to perform any additional transformation to the Encoding before it's returned, like adding potential special tokens."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "'Only' dropped; replaced an excerpt that did not support the four-stage list."}
+      technical: {status: not_applicable, notes: "Describes a library's architecture."}
+
+  - id: vocab-length-tradeoff
+    kind: fact
+    text: Vocabulary size trades against sequence length. Characters give a tiny vocabulary but long sequences, whole words a huge vocabulary, and BPE sits in between. More merges mean a bigger vocabulary and fewer tokens per text, until the text's words are already single tokens.
+    citations:
+      - source: sennrich2016bpe
+        locator: §4.1
+        excerpt: "Character n-grams allow for different trade-offs between sequence length (# tokens) and vocabulary size (# types), depending on the choice of n."
+      - source: sennrich2016bpe
+        locator: §3.1
+        excerpt: "we also want a compact representation of the text itself, since an increase in text length reduces efficiency"
+      - source: radford2019gpt2
+        locator: §2.2
+        excerpt: "Byte Pair Encoding (BPE) (Sennrich et al., 2015) is a practical middle ground between character and word level language modeling"
+      - source: kudo2018subword
+        locator: §3.1
+        excerpt: "it can effectively balance the vocabulary size and the step size (the number of tokens required to encode the sentence)"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Added the plateau: once words are single tokens, more merges stop helping."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_more_merges_grow_the_vocabulary_and_shorten_sequences; test_challenge_fails_when_broken_and_passes_when_fixed."}
+
+  - id: byte-bpe-lossless
+    kind: fact
+    text: Byte-level BPE is reversible and lossless. Decoding the tokens of any text gives back exactly the original text.
+    citations:
+      - source: tiktoken_readme
+        locator: What is BPE anyway?
+        excerpt: "It's reversible and lossless, so you can convert tokens back into the original text"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "On ExplodeAI's educational BPE, not tiktoken. Evidence: test_byte_level_bpe_round_trips_arbitrary_text_without_unknowns."}
+
+  - id: decode-partial-lossy
+    kind: fact
+    text: One token can hold part of a multi-byte character, so decoding only some of the tokens may not produce valid UTF-8. tiktoken warns that its decode is lossy by default for this reason.
+    citations:
+      - source: tiktoken_core
+        locator: Encoding.decode docstring
+        excerpt: "the default behaviour of this function is lossy, since decoded bytes are not guaranteed to be valid UTF-8."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_one_character_can_span_tokens_and_a_slice_of_them_is_not_valid_utf8."}
+
+  - id: tokens-not-words
+    kind: fact
+    text: Tokens are not words or characters. Depending on the language and the tokenizer, a token can be shorter than one character or longer than one word.
+    citations:
+      - source: openai_cookbook_count_tokens
+        locator: How strings are typically tokenized
+        excerpt: "in some languages tokens can be shorter than one character or longer than one word."
+      - source: anthropic_glossary
+        locator: Tokens
+        excerpt: "Tokens are the smallest individual units of a language model, and can correspond to words, subwords, characters, or even bytes (in the case of Unicode)."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Evidence: test_one_character_can_span_tokens_and_a_slice_of_them_is_not_valid_utf8; test_without_pre_tokenization_a_token_can_span_several_words."}
+
+  - id: counts-tokenizer-specific
+    kind: fact
+    text: Token counts depend on the tokenizer. Different models can use different tokenizers, so the same text can need a different number of tokens, and counts from one model should not be reused for another.
+    citations:
+      - source: openai_cookbook_count_tokens
+        locator: Encodings
+        excerpt: "Encodings specify how text is converted into tokens. Different models use different encodings."
+      - source: anthropic_glossary
+        locator: Tokens
+        excerpt: "For Claude, the number of characters a token represents depends on the model and the language."
+      - source: anthropic_token_counting
+        locator: Token counts on Claude Fable and Claude Mythos models
+        excerpt: "The token counting endpoint counts under the tokenizer of the model you pass."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "No provider says outright not to compare counts across providers; that part is an inference from each provider's tokenizer-specific statements."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: passed, date: 2026-10-19, by: "pass3/pytest", notes: "Shown across ExplodeAI tokenizer settings, not provider tokenizers. Evidence: test_the_same_text_gets_different_counts_under_different_tokenizers."}
+
+  - id: tiktoken-model-encodings
+    kind: provider_specific
+    provider: OpenAI (tiktoken)
+    text: In tiktoken 0.14.0, GPT-4o maps to the o200k_base encoding and GPT-4 to cl100k_base. The same text can therefore get different token counts on the two models.
+    citations:
+      - source: tiktoken_model
+        locator: MODEL_TO_ENCODING
+        excerpt: "\"gpt-4o\": \"o200k_base\","
+      - source: tiktoken_model
+        locator: MODEL_TO_ENCODING
+        excerpt: "\"gpt-4\": \"cl100k_base\","
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "Mapping lives in code at a pinned tag; no OpenAI platform doc names o200k_base."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Needs OpenAI's trained encodings; ExplodeAI ships no provider tokenizer."}
+
+  - id: bytes-per-token
+    kind: provider_specific
+    provider: OpenAI (tiktoken)
+    text: tiktoken's README says that, in practice, each token corresponds to about 4 bytes on average.
+    citations:
+      - source: tiktoken_readme
+        locator: What is BPE anyway?
+        excerpt: "On average, in practice, each token corresponds to about 4 bytes."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "An average over OpenAI's trained encodings and real text. ExplodeAI's toy vocabulary shows the trend, not this value."}
+
+  - id: openai-rule-of-thumb
+    kind: provider_specific
+    provider: OpenAI
+    text: OpenAI's rough rule of thumb is that, for English text, 1 token is about 4 characters or 0.75 words.
+    citations:
+      - source: openai_concepts
+        locator: Tokens
+        excerpt: "As a rough rule of thumb, 1 token is approximately 4 characters or 0.75 words for English text."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Provider rule of thumb; checking it would need OpenAI's tokenizer and a representative corpus."}
+
+  - id: gemini-tokens
+    kind: provider_specific
+    provider: Google
+    text: For Gemini models, Google says a token is about 4 characters and 100 tokens are about 60–80 English words. Its count_tokens call returns the token count of the input only.
+    citations:
+      - source: gemini_tokens
+        locator: introduction
+        excerpt: "For Gemini models, a token is equivalent to about 4 characters. 100 tokens is equal to about 60-80 English words."
+      - source: gemini_tokens
+        locator: Count tokens
+        excerpt: "Call count_tokens with the input of the request. Returns the total number of tokens in the input only."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Excerpts matched in the raw source; independent source agrees."}
+      technical: {status: not_applicable, notes: "Provider documentation; ExplodeAI never calls provider APIs."}
+
+  - id: anthropic-count-tokens
+    kind: provider_specific
+    provider: Anthropic
+    text: Anthropic's token counting endpoint takes the same structured inputs as a message, including system prompts, tools, images and PDFs, with a few exceptions such as server tools and URL-sourced files. It is free but rate-limited, and its count is an estimate that can differ slightly from actual usage.
+    citations:
+      - source: anthropic_token_counting
+        locator: How to count message tokens
+        excerpt: "The token counting endpoint accepts the same structured list of inputs for creating a message, including support for system prompts, tools, images, and PDFs."
+      - source: anthropic_token_counting
+        locator: Pricing and rate limits
+        excerpt: "Token counting is free to use but subject to requests per minute rate limits based on your usage tier."
+      - source: anthropic_token_counting
+        locator: How to count message tokens
+        excerpt: "This endpoint returns an `invalid_request_error` for a few inputs that the Messages API accepts"
+      - source: anthropic_token_counting
+        locator: How to count message tokens (note)
+        excerpt: "In some cases, the actual number of input tokens used when creating a message might differ by a small amount."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Narrowed 'the same inputs': the endpoint rejects a few (server tools, URL-sourced files)."}
+      technical: {status: not_applicable, notes: "Provider feature; ExplodeAI never calls provider APIs or uses keys."}
+
+  - id: anthropic-new-tokenizer
+    kind: provider_specific
+    provider: Anthropic
+    text: Anthropic's docs say Claude 4.7 and later models use a newer tokenizer that produces roughly 30% more tokens for the same text (its Opus 5.5 migration guide gives about 1x–1.35x, depending on content), and advise recounting prompts for the model you plan to use.
+    citations:
+      - source: anthropic_token_counting
+        locator: Supported models (note)
+        excerpt: "Claude 4.7 and later models and Claude Mythos Preview use a newer tokenizer."
+      - source: anthropic_token_counting
+        locator: Supported models (note)
+        excerpt: "The same input text produces approximately 30 percent more tokens than on earlier models."
+      - source: anthropic_token_counting
+        locator: Supported models (note)
+        excerpt: "Recount prompts against the model you plan to use rather than reusing counts measured against earlier models."
+      - source: anthropic_opus55_migration
+        locator: Breaking changes, "Updated token counting"
+        excerpt: "roughly 1x to 1.35x as many tokens when processing text compared to models before Claude Opus 4.7 (up to ~35% more, varying by content)."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "Dated and model-specific. Anthropic's Opus 5.5 migration guide gives 1x–1.35x instead."}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Dated; added the Opus 5.5 migration guide's 1x–1.35x range."}
+      technical: {status: not_applicable, notes: "Needs Claude's tokenizer, which is not public; ExplodeAI never calls provider APIs."}
+
+  - id: tokens-meter-usage
+    kind: fact
+    text: Providers measure prices and context windows in tokens, which is why token counts matter in practice.
+    citations:
+      - source: openai_cookbook_count_tokens
+        locator: introduction
+        excerpt: "how much an OpenAI API call costs (as usage is priced by token)."
+      - source: gemini_tokens
+        locator: Context window
+        excerpt: "Each Gemini model has a maximum number of tokens it can handle."
+      - source: gemini_tokens
+        locator: Pricing
+        excerpt: "the cost of a call to the Gemini API is determined in part by the number of input and output tokens"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-cross-check", notes: "Gemini excerpt not found on the page (and contradicted for newer models); replaced with two verbatim ones."}
+      technical: {status: not_applicable, notes: "Provider pricing and limits; not executable offline."}
+
+# --------------------------------------------------------------- 3D model
+# position = assembled (compact) layout; explode = offset applied at full explosion.
+# Exploded layout: training runs left→right along the back row and ends in the
+# vocabulary; the input text (front right) meets the vocabulary at the encoder,
+# and the token ids run right→left into the decoder.
+components:
+  - id: corpus
+    label: Training corpus
+    phase: training
+    short: The text the tokenizer learns its merges from.
+    detail: Merges come from whatever is frequent in this text, so the corpus decides which words end up as single tokens. Here it is a small, fictional lighthouse keeper's log in plain ASCII.
+    claims: [bpe-frequency-weighted, real-merge-counts]
+    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    position: [-2.2, 0, -0.55]
+    explode: [-2.8, 0, -1.6]
+  - id: pre_tokenizer
+    label: Pre-tokenizer
+    phase: training
+    short: Cuts text into word-like pieces before any merging.
+    detail: Merges never cross a piece boundary. The pattern here is a simplified GPT-2 style one. A space stays attached to the word after it, and letters, digits and punctuation go into separate pieces. Turn it off and merges start to span words.
+    claims: [bpe-no-cross-word, gpt2-character-categories, leading-space, sentencepiece-raw-text, hf-pipeline]
+    geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
+    position: [-1.1, 0, -0.55]
+    explode: [-1.4, 0, -1.6]
+  - id: base_alphabet
+    label: Base alphabet
+    phase: training
+    short: The starting symbols every piece is spelled with.
+    detail: With bytes, there are always 256 starting symbols and any text can be spelled. With only the characters seen in training, anything new becomes [UNK].
+    claims: [gpt2-byte-level, byte-level-no-unk, char-bpe-unk]
+    geometry: {shape: grid, size: [0.9, 0.4, 0.9]}
+    position: [0, 0, -0.55]
+    explode: [0, 0, -1.6]
+  - id: merge_learner
+    label: Merge learner
+    phase: training
+    short: Repeatedly merges the most frequent adjacent pair.
+    detail: Each step counts every adjacent pair, weighted by how often its word occurs, and turns the winner into a new symbol. Ties go to the pair whose bytes sort first, so training is deterministic.
+    claims: [bpe-compression-origin, bpe-training-loop, bpe-frequency-weighted, bpe-deterministic]
+    geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
+    position: [1.1, 0, -0.55]
+    explode: [1.4, 0, -1.6]
+  - id: vocabulary
+    label: Vocabulary
+    phase: training
+    short: Base symbols, learned merges, and special tokens, each with an id.
+    detail: Vocabulary size is the base alphabet plus one entry per merge plus the special tokens. Here that is one end-of-text marker, as in GPT-2. With the character alphabet, [UNK] counts as part of the base. The merge list is ordered, and that order is part of the tokenizer.
+    claims: [bpe-vocab-formula, gpt2-vocab-size, real-merge-counts, sentencepiece-vocab-size, special-tokens, vocab-length-tradeoff]
+    geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
+    position: [2.2, 0, -0.55]
+    explode: [2.8, 0, -1.6]
+  - id: input_text
+    label: Input text
+    phase: encoding
+    short: New text to turn into tokens.
+    detail: It does not have to look like the training text. Words the corpus never contained still get spelled out from smaller pieces.
+    claims: [subword-open-vocabulary, tokens-not-words]
+    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    position: [2.2, 0, 0.55]
+    explode: [2.8, 0, 1.6]
+  - id: encoder
+    label: Encoder
+    phase: encoding
+    short: Pre-tokenizes, spells in base symbols, then replays the merges in order.
+    detail: The encoder uses the same pre-tokenizer and alphabet as training and applies the merges in the order they were learned. The number of ids it outputs is the token count. That count only holds for this tokenizer.
+    claims: [bpe-apply-in-order, subword-open-vocabulary, counts-tokenizer-specific, tiktoken-model-encodings, bytes-per-token, openai-rule-of-thumb, gemini-tokens, anthropic-count-tokens, anthropic-new-tokenizer, tokens-meter-usage]
+    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    position: [0.55, 0, 0.55]
+    explode: [0.7, 0, 1.6]
+  - id: decoder
+    label: Decoder
+    phase: decoding
+    short: Turns token ids back into bytes, then text.
+    detail: Joining every token's bytes gives back the input exactly, unless a token is [UNK]. With a byte alphabet that never happens. A single token can hold part of a character, so decoding only some of the tokens can produce broken text.
+    claims: [byte-bpe-lossless, decode-partial-lossy, sentencepiece-lossless]
+    geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
+    position: [-1.1, 0, 0.55]
+    explode: [-1.4, 0, 1.6]
+
+connections:
+  - {source: corpus, target: pre_tokenizer, payload: training text}
+  - {source: pre_tokenizer, target: base_alphabet, payload: word pieces}
+  - {source: base_alphabet, target: merge_learner, payload: symbol sequences}
+  - {source: merge_learner, target: vocabulary, payload: ordered merges}
+  - {source: vocabulary, target: encoder, payload: vocabulary and merge order}
+  - {source: input_text, target: encoder, payload: new text}
+  - {source: encoder, target: decoder, payload: token ids}
+
+visuals:
+  - id: exploded-view
+    kind: conceptual
+    label: Conceptual diagram
+    description: Positions and shapes are a visual metaphor. Data flow follows the real tokenizer stages.
+  - id: data-flow
+    kind: conceptual
+    label: Conceptual animation
+    description: Moving packets show which stage feeds which. Their speed carries no meaning.
+  - id: experiment
+    kind: real_execution
+    label: Real execution · educational BPE
+    description: Training, encoding and decoding run on the ExplodeAI backend with the settings you choose. This is a small BPE written for teaching, not any provider's tokenizer.
+  - id: merge-replay
+    kind: real_execution
+    label: Real execution, replayed
+    description: Each step is a merge the backend actually applied to your text, in the order it was learned. The replay only changes which step you look at.
+  - id: tradeoff
+    kind: real_execution
+    label: Real data, tiny corpus
+    description: Vocabulary size and token counts measured on the sample corpus, replaying the first n learned merges (identical to training with n merges, which a test checks). Bytes per token are measured on the training corpus itself, so they are in-sample. The trend is real, but the numbers are far from production scale.
+
+experiment:
+  engine: tokenize
+  endpoint: /api/experiments/tokenize/run
+  corpus_note: Fictional sample data. Nothing in it is a claim about the world. The tokenizer is ExplodeAI's educational BPE, not any provider's.
+  presets:
+    - label: Familiar sentence
+      text: The keeper lit the lantern at dusk.
+    - label: Unseen words
+      text: The lanternkeepers rewound clockwork.
+    - label: Accents and emoji
+      text: Café crème at the lantern ☕
+    - label: Numbers (none in the corpus)
+      text: Tide at 04:15, height 3.2 metres.
+
+challenges:
+  - id: unknown-characters
+    title: The characters that vanished
+    brief: The capital C, the accented letters and the emoji come out as [UNK], so the text cannot be decoded back. Fix it without changing the text, the merges or the pre-tokenizer.
+    broken_params: {text: "Café crème at the lantern ☕", merges: 60, base: chars, pre_tokenizer: words, merge_order: learned}
+    locked_params: [text, merges, pre_tokenizer, merge_order]
+    checks:
+      - {type: no_unknown}
+      - {type: round_trip}
+    hint: Which symbols can the tokenizer spell with before it learns any merges? Does the training text contain “é”, or a capital C?
+    explanation: A base alphabet built from the training characters has no way to spell a character it never saw. A byte alphabet holds all 256 byte values, so every character can be spelled, if only as several one-byte tokens.
+    claims: [char-bpe-unk, byte-level-no-unk, gpt2-byte-level]
+  - id: too-many-tokens
+    title: Over the token budget
+    brief: This sentence needs far more tokens than the budget allows. Get it to 12 tokens or fewer without changing the text or how it is split.
+    broken_params: {text: "The keeper lit the lantern before the tide turned.", merges: 0, base: bytes, pre_tokenizer: words, merge_order: learned}
+    locked_params: [text, base, pre_tokenizer, merge_order]
+    checks:
+      - {type: max_tokens, limit: 12}
+    hint: With no merges, how many bytes does each token hold? Open the trade-off chart.
+    explanation: Every merge adds one vocabulary entry and lets frequent sequences travel as one token. More merges mean a bigger vocabulary and shorter sequences, until every word in the corpus is a single token and there is nothing left to merge.
+    claims: [vocab-length-tradeoff, bpe-vocab-formula]
+  - id: merges-out-of-order
+    title: Merges replayed backwards
+    brief: The encoder replays the merges last-learned first, so words the tokenizer learned as single tokens come out in fragments. Make “ keeper” and “ lantern” single tokens again, using only the encoder settings.
+    broken_params: {text: "The keeper trimmed the lantern wick.", merges: 200, base: bytes, pre_tokenizer: words, merge_order: reversed}
+    locked_params: [text, merges, base, pre_tokenizer]
+    checks:
+      - {type: single_token, gold: [" keeper", " lantern"]}
+    hint: The merge that makes “ keeper” combines symbols that earlier merges created. What if those earlier merges have not run yet?
+    explanation: Later merges are built from the outputs of earlier ones. Replayed in reverse, a merge always runs before the merges that would create its inputs, so only merges that join two single bytes can fire. Learned order is part of the tokenizer.
+    claims: [bpe-apply-in-order, bpe-training-loop]
+  - id: merging-across-words
+    title: Tokens that swallowed the spaces
+    brief: With no pre-tokenizer, the learner merged across spaces and learned tokens like “ the ” and “d the ”. Stop any learned token from spanning two words without changing the merge count.
+    broken_params: {text: "The keeper lit the lantern at dusk.", merges: 150, base: bytes, pre_tokenizer: none, merge_order: learned}
+    locked_params: [text, merges, base, merge_order]
+    checks:
+      - {type: no_cross_word_tokens}
+    hint: Where does the learner get the boundaries it must not merge across?
+    explanation: Pair counting only happens inside each pre-tokenized piece, so a pre-tokenizer that splits on spaces keeps every merge inside a word. GPT-2's version also keeps punctuation out of words.
+    claims: [bpe-no-cross-word, gpt2-character-categories]
+
+reconstruction:
+  prompt: Put the stages in an order that could actually run. Each stage must come after everything it needs.
+  dependencies:
+    corpus: []
+    pre_tokenizer: [corpus]
+    base_alphabet: [pre_tokenizer]
+    merge_learner: [base_alphabet]
+    vocabulary: [merge_learner]
+    input_text: []
+    encoder: [vocabulary, input_text]
+    decoder: [encoder]
+
+tour:
+  - component: corpus
+    title: A tokenizer is learned from text
+    body: BPE learns which pieces of text are common. Change the corpus and you change the vocabulary.
+    claims: [bpe-frequency-weighted]
+  - component: pre_tokenizer
+    title: Cut the text into word pieces
+    body: Merges never cross these cuts, and a leading space stays with its word.
+    claims: [bpe-no-cross-word, leading-space]
+  - component: base_alphabet
+    title: Start from bytes
+    body: 256 byte values can spell any text, so nothing is ever unknown.
+    claims: [gpt2-byte-level, byte-level-no-unk]
+  - component: merge_learner
+    title: Merge the most frequent pair, again and again
+    body: Each merge glues the commonest adjacent pair into a new symbol. Drag the merges slider in the experiment to watch it happen.
+    claims: [bpe-training-loop]
+  - component: vocabulary
+    title: More merges, bigger vocabulary
+    body: Every merge adds one entry. A bigger vocabulary means shorter sequences, at the cost of more entries.
+    claims: [bpe-vocab-formula, vocab-length-tradeoff]
+  - component: input_text
+    title: New text, including words never seen
+    body: Unseen words still get tokens. They are spelled from smaller known pieces.
+    claims: [subword-open-vocabulary]
+  - component: encoder
+    title: Replay the merges in order
+    body: Encoding repeats training's merges in the order they were learned. The resulting count is specific to this tokenizer.
+    claims: [bpe-apply-in-order, counts-tokenizer-specific]
+  - component: decoder
+    title: Decode and compare
+    body: Joining the tokens' bytes gives back the exact input. Decoding only some of the tokens can split a character.
+    claims: [byte-bpe-lossless, decode-partial-lossy]

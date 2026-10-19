@@ -17,7 +17,7 @@ from datetime import date
 from datetime import date as Date
 from typing import Literal
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
 Vec3 = tuple[float, float, float]
 PassStatus = Literal["pending", "passed", "failed", "not_applicable"]
@@ -86,19 +86,29 @@ class Geometry(BaseModel):
 class Component(BaseModel):
     id: str
     label: str
-    phase: Literal["ingestion", "query", "generation"]
+    phase: str = Field(min_length=1)  # free-form group, e.g. pipeline phase
     short: str
     detail: str
     claims: list[str] = Field(min_length=1)
     geometry: Geometry
     position: Vec3
     explode: Vec3
+    # Optional stage-card content (all optional so other lessons need not set them).
+    subtitle: str | None = None  # 2–4 word tagline for the step bar
+    icon: str | None = None  # Phosphor icon name
+    inputs: list[str] = []
+    outputs: list[str] = []
+    # What breaks if this stage is removed. Statements here describe THIS
+    # lesson's executable pipeline and must be backed by an ablation test.
+    breaks_if_removed: str | None = None
 
 
 class Connection(BaseModel):
     source: str
     target: str
     payload: str
+    # Visual flow class: text moving, vectors moving, or the user's question.
+    flow: Literal["document", "vector", "query"] | None = None
 
 
 class Visual(BaseModel):
@@ -108,9 +118,28 @@ class Visual(BaseModel):
     description: str
 
 
+# Which check types each experiment engine can evaluate server-side.
+ENGINE_CHECKS: dict[str, set[str]] = {
+    "rag": {"gold_in_retrieved", "gold_in_prompt"},
+    "tokenize": {"round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens"},
+}
+
+
 class Check(BaseModel):
-    type: Literal["gold_in_retrieved", "gold_in_prompt"]
-    gold: list[str] = Field(min_length=1)
+    type: Literal[
+        "gold_in_retrieved", "gold_in_prompt",  # rag
+        "round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens",  # tokenize
+    ]
+    gold: list[str] = []
+    limit: int | None = None
+
+    @model_validator(mode="after")
+    def _needs_operands(self):
+        if self.type in ("gold_in_retrieved", "gold_in_prompt", "single_token") and not self.gold:
+            raise ValueError(f"{self.type} checks need at least one gold string")
+        if self.type == "max_tokens" and self.limit is None:
+            raise ValueError("max_tokens checks need a limit")
+        return self
 
 
 class Challenge(BaseModel):
@@ -214,6 +243,18 @@ def validate_lesson(lesson: Lesson, registry: SourceRegistry) -> list[str]:
         for end in (conn.source, conn.target):
             if end not in component_ids:
                 problems.append(f"connection {conn.source}->{conn.target}: unknown component '{end}'")
+
+    engine = lesson.experiment.get("engine")
+    allowed = ENGINE_CHECKS.get(engine)
+    if allowed is None:
+        problems.append(f"experiment: unknown engine '{engine}'")
+    else:
+        for ch in lesson.challenges:
+            for check in ch.checks:
+                if check.type not in allowed:
+                    problems.append(
+                        f"challenge {ch.id}: check '{check.type}' is not available for engine '{engine}'"
+                    )
 
     deps = lesson.reconstruction.dependencies
     if set(deps) != component_ids:

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const API_PORT = 8100
-const WEB_PORT = 5174
+const API_PORT = Number(process.env.E2E_API_PORT ?? 8100)
+const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 5174)
 
 /**
  * E2E runs its own backend (isolated SQLite file) and frontend on separate ports,
@@ -24,11 +24,11 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `rm -f ./data/e2e.sqlite3 && uv run uvicorn app.main:app --host 127.0.0.1 --port ${API_PORT}`,
+      command: `rm -f ./data/e2e-${API_PORT}.sqlite3 && uv run uvicorn app.main:app --host 127.0.0.1 --port ${API_PORT}`,
       cwd: '../backend',
       url: `http://127.0.0.1:${API_PORT}/api/health`,
       env: {
-        DATABASE_URL: 'sqlite:///./data/e2e.sqlite3',
+        DATABASE_URL: `sqlite:///./data/e2e-${API_PORT}.sqlite3`,
         CORS_ORIGINS: `http://127.0.0.1:${WEB_PORT}`,
         AI_FEATURES_ENABLED: 'false',
       },

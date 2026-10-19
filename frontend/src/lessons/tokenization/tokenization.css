@@ -1,0 +1,225 @@
+/* Hallmark · component: lesson module (token strip, merge replay, trade-off chart)
+ * genre: atmospheric · theme: custom (Lumen-tuned, inherited from tokens.css) · no new tokens
+ * states: default · hover · focus · active · disabled (buttons/sliders reuse base.css .btn / .slider)
+ * pre-emit critique: P4 H4 E4 S5 R5 V4
+ */
+
+/* ------------------------------------------------------------ token strip */
+.tokstrip {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.tokstrip__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tok {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 2.25rem;
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+}
+
+.tok__text {
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  white-space: pre;
+  overflow-wrap: anywhere;
+}
+
+.tok__id,
+.tok__bytes {
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-micro);
+  color: var(--color-muted);
+}
+
+/* Unknown and partial tokens carry a text label too, never colour alone. */
+.tok--unk {
+  border-style: dashed;
+  border-color: var(--color-error);
+}
+
+.tok--unk .tok__text,
+.tok--unk .tok__id {
+  color: var(--color-error);
+}
+
+.tok--partial {
+  border-style: dashed;
+}
+
+.tokstrip__decoded code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ merges */
+.merges {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.merges__wrap {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.wordhist {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wordhist__steps {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: var(--space-2xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wordhist__steps > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.wordhist__after {
+  min-width: 5.5rem;
+}
+
+.pieces {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-right: var(--space-xs);
+}
+
+.pieces__p {
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-3);
+  font-family: var(--font-label);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+  white-space: pre;
+}
+
+.pieces__p.is-fresh {
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* ------------------------------------------------------------ replay */
+.replay {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.replay__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-xs);
+}
+
+.replay__slider {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.replay__now {
+  min-height: 3em;
+  margin: 0;
+}
+
+.replay__text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) 0;
+  margin: 0;
+  line-height: 1.9;
+}
+
+/* ------------------------------------------------------------ trade-off chart */
+.tradeoff {
+  /* SVG user units: the viewBox scales text with the chart, so ticks are sized in viewBox px. */
+  --chart-tick-size: 9px;
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.tradeoff__title {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.tradeoff__svg {
+  width: 100%;
+  max-width: 34rem;
+  height: auto;
+  overflow: visible;
+}
+
+.tradeoff__grid {
+  stroke: var(--color-rule);
+  stroke-width: 1;
+}
+
+.tradeoff__axis {
+  stroke: var(--color-rule-2);
+  stroke-width: 1;
+}
+
+.tradeoff__tick,
+.tradeoff__axislabel {
+  fill: var(--color-muted);
+  font-family: var(--font-label);
+  font-size: var(--chart-tick-size);
+}
+
+.tradeoff__line {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.tradeoff__cross {
+  stroke: var(--color-rule-2);
+  stroke-dasharray: 2 3;
+}
+
+/* Surface ring separates the marker from the line. */
+.tradeoff__pt {
+  fill: var(--color-accent);
+  stroke: var(--color-paper-2);
+  stroke-width: 2;
+}
+
+.tradeoff__pt.is-current {
+  fill: var(--color-paper-2);
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+}
+
+.tradeoff__readout {
+  margin: 0;
+}

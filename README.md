@@ -5,9 +5,10 @@ exploded view of a real system: rotate it, pull it apart, isolate a part, run it
 for real with your own parameters, break it on purpose, and rebuild it. Every
 technical claim links to its sources and records three verification passes.
 
-**Status:** foundation plus one complete lesson,
-[Retrieval-Augmented Generation, exploded](content/lessons/rag-pipeline/lesson.yaml)
-(published, 32/32 claims through all three passes). See
+**Status:** foundation plus two complete lessons, each published with 32/32
+claims through all three passes:
+[Retrieval-Augmented Generation, exploded](content/lessons/rag-pipeline/lesson.yaml) and
+[Tokenization, exploded](content/lessons/tokenization/lesson.yaml). See
 [Limitations](#limitations).
 
 ## Quick start
@@ -52,6 +53,8 @@ API only reports whether a key is *present*. See
 | `frontend/src/engine/` | Reusable exploded-view engine (3D, 2D fallback, keyboard, labels, camera fit) |
 | `frontend/src/lessons/rag/` | The RAG lesson: explore, tour, experiment, break & fix, rebuild |
 | `backend/app/experiments/rag/` | Real pipeline: chunking, embedding, BM25, RRF, PCA, prompt assembly |
+| `frontend/src/lessons/tokenization/` | The tokenization lesson: token strip, merge replay, trade-off chart, plus the shared modes |
+| `backend/app/experiments/tokenize/` | Educational byte-pair-encoding tokenizer: pre-tokenize, byte/char alphabet, merge training, encode, decode |
 | `backend/app/content/` | Content schema + publishing rules |
 | `backend/app/ai/` | Paid-AI guard and provider clients |
 | `content/` | Lessons (`lessons/*/lesson.yaml`) and the source registry (`sources.yaml`) |
@@ -75,11 +78,13 @@ technical validation** before a lesson can be published. The validator refuses t
 publish otherwise. Passing three checks does not guarantee a claim is correct; it
 means each claim has recorded, inspectable evidence. See
 [docs/verification-workflow.md](docs/verification-workflow.md) and the
-[RAG verification report](reports/RAG%20pipeline%20verification.md).
+[RAG](reports/RAG%20pipeline%20verification.md) and
+[tokenization](reports/Tokenization%20verification.md) verification reports.
 
 ## Limitations
 
-- **One lesson so far.** The engine and content pipeline are lesson-agnostic, but only RAG is built.
+- **Two lessons so far.** The engine and content pipeline are lesson-agnostic; RAG and tokenization are built.
+- **The tokenizer is educational.** Lesson 02 trains a small BPE on a 1 KB fictional corpus. It shows how BPE works, but its token counts say nothing about GPT, Claude or Gemini tokenizers, and no provider tokenizer or token-counting API is ever called.
 - **The default embedder is lexical** (TF-IDF features folded into 1024 dims by hashing). The lesson says so everywhere it matters. The optional local neural model (`uv sync --extra neural`, BAAI/bge-small-en-v1.5) shows semantic matching.
 - **No LLM in the default answer step.** The offline answer is a labelled extractive baseline. The paid-provider clients are tested only against mocked HTTP; they have never been called live.
 - **Word counts, not tokens.** Chunk sizes and context budgets are counted in words, so they don't imply any specific tokenizer.

@@ -48,7 +48,7 @@ export function FlatDiagram({ spec, view, readouts, onSelect, title }: Props) {
               y1={a.y + uy * off}
               x2={b.x - ux * off}
               y2={b.y - uy * off}
-              className="flat-diagram__link"
+              className={`flat-diagram__link flat-diagram__link--${l.kind ?? "document"}`}
               markerEnd="url(#arrow)"
             />
             <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 8} className="flat-diagram__link-label" textAnchor="middle">
@@ -66,13 +66,14 @@ export function FlatDiagram({ spec, view, readouts, onSelect, title }: Props) {
           <g
             key={p.id}
             transform={`translate(${x - BOX_W / 2} ${y - BOX_H / 2})`}
-            className={`flat-diagram__part${selected ? ' is-selected' : ''}${dim ? ' is-dim' : ''}`}
-            role="button"
-            tabIndex={0}
-            aria-pressed={selected}
+            className={`flat-diagram__part${selected ? ' is-selected' : ''}${dim ? ' is-dim' : ''}${p.prop ? ' is-prop' : ''}`}
+            {...(p.prop
+              ? { role: 'img' }
+              : { role: 'button', tabIndex: 0 })}
+            aria-pressed={p.prop ? undefined : selected}
             aria-label={`${p.label}, ${p.group} stage${readouts?.parts?.[p.id] ? `, ${readouts.parts[p.id]}` : ''}`}
-            onClick={() => onSelect(selected ? null : p.id)}
-            onKeyDown={(e) => {
+            onClick={p.prop ? undefined : () => onSelect(selected ? null : p.id)}
+            onKeyDown={p.prop ? undefined : (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
                 onSelect(selected ? null : p.id)

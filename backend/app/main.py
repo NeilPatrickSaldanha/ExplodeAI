@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.db import init_db
-from app.routers import ai, experiments, lessons, progress
+from app.routers import ai, experiments, lessons, progress, tokenize
 
 
 @asynccontextmanager
@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok"}
 
-    for r in (lessons.router, experiments.router, progress.router, ai.router):
+    for r in (lessons.router, experiments.router, tokenize.router, progress.router, ai.router):
         app.include_router(r)
     return app
 

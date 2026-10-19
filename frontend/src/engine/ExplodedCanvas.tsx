@@ -110,17 +110,24 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
     return new Set([view.selectedId, ...neighbours(spec, view.selectedId)])
   }, [spec, view.isolate, view.selectedId])
 
-  const goal: Vec3 = view.selectedId && positions[view.selectedId] ? positions[view.selectedId] : frame.center
+  // Lean the camera a little toward the selected part, but keep the whole system in frame.
+  const FOCUS_PULL = 0.28
+  const sel = view.selectedId ? positions[view.selectedId] : undefined
+  const goal: Vec3 = sel
+    ? [0, 1, 2].map((i) => frame.center[i] + (sel[i] - frame.center[i]) * FOCUS_PULL) as Vec3
+    : frame.center
   const animating = view.flow && !reducedMotion
 
-  // Label anchors: above each part, and at link midpoints when a part is selected.
-  const showLinks = !!view.selectedId
-  const linkLabels = spec.links.filter((l) => showLinks && (l.source === view.selectedId || l.target === view.selectedId))
+  // Label anchors: a callout above each part, plus data cards at link midpoints.
+  const cardMode = view.linkCards ?? 'selected'
+  const linkLabels = tiny || cardMode === 'none'
+    ? []
+    : spec.links.filter((l) => cardMode === 'all' || (!!view.selectedId && (l.source === view.selectedId || l.target === view.selectedId)))
   const anchors = useRef<LabelAnchor[]>([])
   anchors.current = [
     ...spec.parts.map((p) => {
       const at = positions[p.id]
-      return { id: p.id, at: [at[0], at[1] + p.size[1] + 0.35 + t * 0.2, at[2]] as Vec3 }
+      return { id: p.id, at: [at[0], at[1] + p.size[1] + 0.55 + t * 0.25, at[2]] as Vec3 }
     }),
     ...linkLabels.map((l) => {
       const a = positions[l.source]
@@ -128,7 +135,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
       const s: Vec3 = [a[0], a[1] + 0.25, a[2]]
       const e: Vec3 = [b[0], b[1] + 0.25, b[2]]
       const m = quadBezier(s, linkControlPoint(s, e), e, 0.5)
-      return { id: linkKey(l), at: [m[0], m[1] + 0.15, m[2]] as Vec3 }
+      return { id: linkKey(l), at: [m[0], m[1] + 0.12, m[2]] as Vec3 }
     }),
   ]
   const elements = useRef(new Map<string, HTMLElement>())
@@ -164,7 +171,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
             onSelect={onSelect}
           />
         ))}
-        <Links3D links={spec.links} positions={positions} flow={view.flow} reducedMotion={reducedMotion} activeIds={active} palette={palette} />
+        <Links3D links={spec.links} positions={positions} flow={view.flow} reducedMotion={reducedMotion} activeIds={active} focusId={view.selectedId} palette={palette} />
         <OrbitControls makeDefault enableDamping={!reducedMotion} minDistance={3} maxDistance={60} maxPolarAngle={Math.PI * 0.47} />
         <CameraRig goal={goal} reduced={reducedMotion} resetSignal={resetSignal} framePoints={framePoints} center={frame.center} />
         <SizeReporter onWidth={setSceneWidth} />
@@ -174,20 +181,31 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
         {spec.parts.map((p, i) => {
           const dim = active !== null && !active.has(p.id)
           const isSel = view.selectedId === p.id
-          const num = String(i + 1).padStart(2, '0')
+          const num = p.number ?? String(i + 1).padStart(2, '0')
+          const readout = readouts?.parts?.[p.id]
+          const cls = ['callout part-label', compact && 'is-compact', isSel && 'is-selected', dim && 'is-dim', p.prop && 'is-prop'].filter(Boolean).join(' ')
+          if (tiny && !isSel && !p.prop) {
+            return (
+              <div key={p.id} ref={register(p.id)} className={`${cls} is-marker`}>
+                <span className="callout__num">{num}</span>
+              </div>
+            )
+          }
           return (
-            <div key={p.id} ref={register(p.id)} className={`part-label${compact ? ' is-compact' : ''}${isSel ? ' is-selected' : ''}${dim ? ' is-dim' : ''}`}>
-              <span className="part-label__name">{tiny && !isSel ? num : tiny ? `${num} · ${p.label}` : p.label}</span>
-              {readouts?.parts?.[p.id] && (!compact || view.selectedId === p.id) && (
-                <span className="part-label__readout">{readouts.parts[p.id]}</span>
-              )}
+            <div key={p.id} ref={register(p.id)} className={cls}>
+              {!p.prop && <span className="callout__num">{num}</span>}
+              <span className="callout__body">
+                <span className="callout__name">{p.label}</span>
+                {p.subtitle && !compact && <span className="callout__sub">{p.subtitle}</span>}
+                {readout && (!compact || isSel || (p.prop && !tiny)) && <span className="callout__readout">{readout}</span>}
+              </span>
             </div>
           )
         })}
-        {!tiny && linkLabels.map((l) => (
-          <div key={linkKey(l)} ref={register(linkKey(l))} className="link-label">
-            {l.label}
-            {readouts?.links?.[linkKey(l)] && <b> · {readouts.links[linkKey(l)]}</b>}
+        {linkLabels.map((l) => (
+          <div key={linkKey(l)} ref={register(linkKey(l))} className={`link-card link-card--${l.kind ?? 'document'}`}>
+            <span className="link-card__label">{l.label}</span>
+            {readouts?.links?.[linkKey(l)] && <b>{readouts.links[linkKey(l)]}</b>}
           </div>
         ))}
       </div>

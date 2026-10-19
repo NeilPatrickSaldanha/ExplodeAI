@@ -1,7 +1,8 @@
 # Source registry. Every claim in every lesson cites ids from this file.
 # `accessed` is when ExplodeAI's research pass read the source; `version` records
 # exactly which revision was read (arXiv version, docs "last updated" stamp, etc.).
-# Pass 1 notes with full excerpts: research_notes/RAG pipeline primary sources/
+# Pass 1 notes with full excerpts: research_notes/RAG pipeline primary sources/ (Lesson 01)
+# and research_notes/Tokenization primary sources/ (Lesson 02).
 sources:
   # ---------------------------------------------------------------- papers
   - id: lewis2020rag
@@ -191,4 +192,148 @@ sources:
     url: https://www.elastic.co/docs/reference/elasticsearch/index-settings/similarity
     type: reference
     version: live page at access date
+    accessed: 2026-10-18
+
+  # ======================================================= Lesson 02: tokenization
+  # Pass 1 notes: research_notes/Tokenization primary sources/
+  # ---------------------------------------------------------------- papers
+  - id: sennrich2016bpe
+    title: Neural Machine Translation of Rare Words with Subword Units
+    authors: [Rico Sennrich, Barry Haddow, Alexandra Birch]
+    publisher: arXiv / ACL 2016
+    url: https://arxiv.org/abs/1508.07909
+    type: paper
+    version: arXiv v5 (10 Jun 2016); cross-checked against ACL Anthology P16-1162 (pp. 1715–1725)
+    published: "2016"
+    accessed: 2026-10-18
+  - id: radford2019gpt2
+    title: Language Models are Unsupervised Multitask Learners
+    authors: [Alec Radford, Jeffrey Wu, Rewon Child, et al.]
+    publisher: OpenAI
+    url: https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+    type: paper
+    version: OpenAI PDF (undated; PDF created 2019-02-14, HTTP Last-Modified 2020-09-25)
+    published: "2019"
+    accessed: 2026-10-18
+  - id: kudo2018sentencepiece
+    title: "SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing"
+    authors: [Taku Kudo, John Richardson]
+    publisher: arXiv / EMNLP 2018 (system demonstrations)
+    url: https://arxiv.org/abs/1808.06226
+    type: paper
+    version: arXiv v1 (19 Aug 2018); cross-checked against ACL Anthology D18-2012
+    published: "2018"
+    accessed: 2026-10-18
+  - id: kudo2018subword
+    title: "Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates"
+    authors: [Taku Kudo]
+    publisher: arXiv / ACL 2018
+    url: https://arxiv.org/abs/1804.10959
+    type: paper
+    version: arXiv v1 (29 Apr 2018)
+    published: "2018"
+    accessed: 2026-10-18
+  - id: provilkov2020bpedropout
+    title: "BPE-Dropout: Simple and Effective Subword Regularization"
+    authors: [Ivan Provilkov, Dmitrii Emelianenko, Elena Voita]
+    publisher: arXiv / ACL 2020
+    url: https://arxiv.org/abs/1910.13267
+    type: paper
+    version: arXiv v2 (abstract via the arXiv export API); added in Pass 2
+    published: "2020"
+    accessed: 2026-10-19
+
+  # ------------------------------------------------------- library documentation
+  - id: hf_tokenizers_pipeline
+    title: The tokenization pipeline
+    publisher: Hugging Face Tokenizers documentation
+    url: https://huggingface.co/docs/tokenizers/pipeline
+    type: framework_docs
+    version: live docs v1.0.0-rc.2 (source file commit 3fe1b852de47, 2026-09-21)
+    accessed: 2026-10-18
+  - id: hf_tokenizers_components
+    title: Components
+    publisher: Hugging Face Tokenizers documentation
+    url: https://huggingface.co/docs/tokenizers/components
+    type: framework_docs
+    version: live docs v1.0.0-rc.2 (source file commit 3fe1b852de47, 2026-09-21)
+    accessed: 2026-10-18
+  - id: hf_course_bpe
+    title: Byte-Pair Encoding tokenization (LLM Course, chapter 6.5)
+    publisher: Hugging Face
+    url: https://huggingface.co/learn/llm-course/chapter6/5
+    type: framework_docs
+    version: live page at access date (source file commit e05c3b637f0a, 2025-09-29)
+    accessed: 2026-10-18
+  - id: hf_transformers_tokenization
+    title: Tokenization algorithms (formerly "Summary of the tokenizers")
+    publisher: Hugging Face Transformers documentation
+    url: https://huggingface.co/docs/transformers/tokenizer_summary
+    type: framework_docs
+    version: docs v5.20.1 (source file commit 83eb94c1febf, 2026-02-17)
+    accessed: 2026-10-18
+  - id: tiktoken_readme
+    title: tiktoken README
+    publisher: OpenAI (GitHub)
+    url: https://github.com/openai/tiktoken/blob/0.14.0/README.md
+    type: framework_docs
+    version: git tag 0.14.0 (commit 4e71bbe0c078); PyPI 0.14.0
+    accessed: 2026-10-18
+  - id: tiktoken_core
+    title: tiktoken/core.py (Encoding.encode and Encoding.decode docstrings)
+    publisher: OpenAI (GitHub)
+    url: https://github.com/openai/tiktoken/blob/0.14.0/tiktoken/core.py
+    type: framework_docs
+    version: git tag 0.14.0
+    accessed: 2026-10-18
+  - id: tiktoken_model
+    title: tiktoken/model.py (model to encoding mapping)
+    publisher: OpenAI (GitHub)
+    url: https://github.com/openai/tiktoken/blob/0.14.0/tiktoken/model.py
+    type: framework_docs
+    version: git tag 0.14.0
+    accessed: 2026-10-18
+  - id: openai_cookbook_count_tokens
+    title: How to count tokens with tiktoken
+    publisher: OpenAI Cookbook (GitHub)
+    url: https://github.com/openai/openai-cookbook/blob/db3144982aa2/examples/How_to_count_tokens_with_tiktoken.ipynb
+    type: framework_docs
+    version: notebook last changed in commit db3144982aa2 (2024-10-08)
+    accessed: 2026-10-18
+
+  # ------------------------------------------------------- provider documentation
+  - id: anthropic_token_counting
+    title: Token counting
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/build-with-claude/token-counting
+    type: official_docs
+    version: live page at access date (redirected from docs.claude.com)
+    accessed: 2026-10-18
+  - id: anthropic_opus55_migration
+    title: Migrating to Claude Opus 5.5 (Updated token counting)
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/models/opus-5-5/migration-guide
+    type: official_docs
+    version: live page at access date; added in Pass 2
+    accessed: 2026-10-19
+  - id: anthropic_glossary
+    title: Glossary (Tokens)
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/about-claude/glossary
+    type: official_docs
+    version: live page at access date (redirected from docs.claude.com)
+    accessed: 2026-10-18
+  - id: gemini_tokens
+    title: Understand and count tokens
+    publisher: Google AI for Developers (Gemini API docs)
+    url: https://ai.google.dev/gemini-api/docs/tokens
+    type: official_docs
+    version: Last updated 2026-10-13 UTC
+    accessed: 2026-10-18
+  - id: openai_concepts
+    title: Key concepts (Tokens)
+    publisher: OpenAI API documentation
+    url: https://developers.openai.com/api/docs/concepts
+    type: official_docs
+    version: live page at access date (redirected from platform.openai.com/docs/concepts)
     accessed: 2026-10-18

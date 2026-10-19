@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useRef, type KeyboardEvent } from 'react'
+import './engine.css'
 import { FlatDiagram } from './FlatDiagram'
 import { hasWebGL } from './hooks'
 import { stepIndex } from './math'
@@ -31,7 +32,7 @@ export function ExplodedView({ spec, view, readouts, mode, reducedMotion, onSele
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      const ids = spec.parts.map((p) => p.id)
+      const ids = spec.parts.filter((p) => !p.prop).map((p) => p.id)
       const i = view.selectedId ? ids.indexOf(view.selectedId) : -1
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         e.preventDefault()

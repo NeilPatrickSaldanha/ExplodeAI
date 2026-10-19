@@ -33,6 +33,8 @@ export interface ScenePalette {
   accent: string
   accent2: string
   flow: string
+  flowVector: string
+  flowQuery: string
   ink: string
   muted: string
   paper: string
@@ -45,6 +47,8 @@ export function scenePalette(): ScenePalette {
     accent: resolveTokenColor('--color-accent'),
     accent2: resolveTokenColor('--color-accent-2'),
     flow: resolveTokenColor('--scene-flow'),
+    flowVector: resolveTokenColor('--scene-flow-vector'),
+    flowQuery: resolveTokenColor('--scene-flow-query'),
     ink: resolveTokenColor('--color-ink'),
     muted: resolveTokenColor('--color-muted'),
     paper: resolveTokenColor('--color-paper'),

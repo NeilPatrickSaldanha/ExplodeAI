@@ -3,7 +3,9 @@
  * describes its system as parts + links and gets 3D, 2D and list views for free.
  */
 export type Vec3 = [number, number, number]
-export type PartShape = 'slab' | 'stack' | 'cylinder' | 'grid' | 'prism' | 'lens' | 'ring'
+export type PartShape = 'slab' | 'stack' | 'cylinder' | 'grid' | 'prism' | 'lens' | 'ring' | 'card'
+/** Visual flow class of a link: text moving, vectors moving, or the user's input. */
+export type FlowKind = 'document' | 'vector' | 'query'
 
 export interface PartSpec {
   id: string
@@ -16,12 +18,20 @@ export interface PartSpec {
   position: Vec3
   /** Offset added at full explosion. */
   explode: Vec3
+  /** Optional short tagline shown under the label in the callout. */
+  subtitle?: string
+  /** Optional ordinal shown in the callout badge (e.g. "06"). */
+  number?: string
+  /** A prop is scenery (e.g. the user's question card): drawn and linked, never selectable. */
+  prop?: boolean
 }
 
 export interface LinkSpec {
   source: string
   target: string
   label: string
+  /** Default 'document'. Each kind has its own line style and packet shape, not just a colour. */
+  kind?: FlowKind
 }
 
 export interface AssemblySpec {
@@ -37,6 +47,8 @@ export interface ViewState {
   isolate: boolean
   /** Animate packets along links. */
   flow: boolean
+  /** Which link data cards to show: none, those touching the selected part, or all. */
+  linkCards?: 'none' | 'selected' | 'all'
 }
 
 /** Live readouts attached to parts and links (real values from an experiment run). */

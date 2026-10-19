@@ -1,0 +1,769 @@
+{
+ "params": {
+  "corpus_id": "greyhaven-keepers-log",
+  "text": "The keeper lit the lantern. Café",
+  "merges": 40,
+  "base": "bytes",
+  "pre_tokenizer": "words",
+  "merge_order": "learned"
+ },
+ "label": "Educational BPE (ExplodeAI), not any provider's tokenizer",
+ "corpus": {
+  "id": "greyhaven-keepers-log",
+  "title": "Greyhaven Light keeper's log",
+  "note": "Fictional sample data: a made-up lighthouse keeper's log, plain ASCII.",
+  "text": "The keeper lit the lantern at dusk. The tide was low and the wind came from the ",
+  "characters": 1045,
+  "bytes": 1045
+ },
+ "pre_tokens": {
+  "mode": "words",
+  "count": 237,
+  "unique": 80,
+  "sample": [
+   {
+    "text": " the",
+    "count": 28
+   },
+   {
+    "text": ".",
+    "count": 22
+   },
+   {
+    "text": "\n",
+    "count": 11
+   },
+   {
+    "text": " keeper",
+    "count": 11
+   },
+   {
+    "text": " The",
+    "count": 10
+   },
+   {
+    "text": " lantern",
+    "count": 10
+   },
+   {
+    "text": " and",
+    "count": 9
+   },
+   {
+    "text": "The",
+    "count": 8
+   },
+   {
+    "text": ",",
+    "count": 7
+   },
+   {
+    "text": " at",
+    "count": 6
+   },
+   {
+    "text": " tide",
+    "count": 5
+   },
+   {
+    "text": " came",
+    "count": 4
+   }
+  ]
+ },
+ "base": {
+  "mode": "bytes",
+  "size": 256,
+  "has_unk": false
+ },
+ "training": {
+  "merges_requested": 40,
+  "merges_learned": 40,
+  "steps": [
+   {
+    "rank": 0,
+    "left": "h",
+    "right": "e",
+    "token": "he",
+    "token_id": 256,
+    "count": 48
+   },
+   {
+    "rank": 1,
+    "left": " ",
+    "right": "t",
+    "token": " t",
+    "token_id": 257,
+    "count": 40
+   },
+   {
+    "rank": 2,
+    "left": " t",
+    "right": "he",
+    "token": " the",
+    "token_id": 258,
+    "count": 28
+   },
+   {
+    "rank": 3,
+    "left": "e",
+    "right": "r",
+    "token": "er",
+    "token_id": 259,
+    "count": 24
+   },
+   {
+    "rank": 4,
+    "left": "a",
+    "right": "n",
+    "token": "an",
+    "token_id": 260,
+    "count": 20
+   },
+   {
+    "rank": 5,
+    "left": " ",
+    "right": "l",
+    "token": " l",
+    "token_id": 261,
+    "count": 19
+   },
+   {
+    "rank": 6,
+    "left": "T",
+    "right": "he",
+    "token": "The",
+    "token_id": 262,
+    "count": 18
+   },
+   {
+    "rank": 7,
+    "left": " ",
+    "right": "w",
+    "token": " w",
+    "token_id": 263,
+    "count": 17
+   },
+   {
+    "rank": 8,
+    "left": " ",
+    "right": "c",
+    "token": " c",
+    "token_id": 264,
+    "count": 14
+   },
+   {
+    "rank": 9,
+    "left": "e",
+    "right": "p",
+    "token": "ep",
+    "token_id": 265,
+    "count": 14
+   },
+   {
+    "rank": 10,
+    "left": "k",
+    "right": "e",
+    "token": "ke",
+    "token_id": 266,
+    "count": 14
+   },
+   {
+    "rank": 11,
+    "left": " ",
+    "right": "ke",
+    "token": " ke",
+    "token_id": 267,
+    "count": 13
+   }
+  ],
+  "word_history": [
+   {
+    "word": " the",
+    "count": 28,
+    "start": [
+     " ",
+     "t",
+     "h",
+     "e"
+    ],
+    "steps": [
+     {
+      "after_merges": 1,
+      "pieces": [
+       " ",
+       "t",
+       "he"
+      ]
+     },
+     {
+      "after_merges": 2,
+      "pieces": [
+       " t",
+       "he"
+      ]
+     },
+     {
+      "after_merges": 3,
+      "pieces": [
+       " the"
+      ]
+     }
+    ]
+   },
+   {
+    "word": ".",
+    "count": 22,
+    "start": [
+     "."
+    ],
+    "steps": []
+   },
+   {
+    "word": "\n",
+    "count": 11,
+    "start": [
+     "\n"
+    ],
+    "steps": []
+   },
+   {
+    "word": " keeper",
+    "count": 11,
+    "start": [
+     " ",
+     "k",
+     "e",
+     "e",
+     "p",
+     "e",
+     "r"
+    ],
+    "steps": [
+     {
+      "after_merges": 4,
+      "pieces": [
+       " ",
+       "k",
+       "e",
+       "e",
+       "p",
+       "er"
+      ]
+     },
+     {
+      "after_merges": 10,
+      "pieces": [
+       " ",
+       "k",
+       "e",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "after_merges": 11,
+      "pieces": [
+       " ",
+       "ke",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "after_merges": 12,
+      "pieces": [
+       " ke",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "after_merges": 13,
+      "pieces": [
+       " keep",
+       "er"
+      ]
+     },
+     {
+      "after_merges": 14,
+      "pieces": [
+       " keeper"
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "vocabulary": {
+  "size": 297,
+  "base_size": 256,
+  "merges": 40,
+  "special": [
+   {
+    "text": "<|endoftext|>",
+    "id": 296
+   }
+  ],
+  "crossing_word_boundary": []
+ },
+ "input": {
+  "text": "The keeper lit the lantern. Café",
+  "characters": 32,
+  "bytes": 33,
+  "pieces": 7
+ },
+ "encoding": {
+  "order": "learned",
+  "ids": [
+   262,
+   269,
+   261,
+   105,
+   116,
+   258,
+   275,
+   46,
+   32,
+   67,
+   97,
+   102,
+   195,
+   169
+  ],
+  "tokens": [
+   {
+    "id": 262,
+    "text": "The",
+    "bytes_hex": "54 68 65",
+    "is_unk": false
+   },
+   {
+    "id": 269,
+    "text": " keeper",
+    "bytes_hex": "20 6b 65 65 70 65 72",
+    "is_unk": false
+   },
+   {
+    "id": 261,
+    "text": " l",
+    "bytes_hex": "20 6c",
+    "is_unk": false
+   },
+   {
+    "id": 105,
+    "text": "i",
+    "bytes_hex": "69",
+    "is_unk": false
+   },
+   {
+    "id": 116,
+    "text": "t",
+    "bytes_hex": "74",
+    "is_unk": false
+   },
+   {
+    "id": 258,
+    "text": " the",
+    "bytes_hex": "20 74 68 65",
+    "is_unk": false
+   },
+   {
+    "id": 275,
+    "text": " lantern",
+    "bytes_hex": "20 6c 61 6e 74 65 72 6e",
+    "is_unk": false
+   },
+   {
+    "id": 46,
+    "text": ".",
+    "bytes_hex": "2e",
+    "is_unk": false
+   },
+   {
+    "id": 32,
+    "text": " ",
+    "bytes_hex": "20",
+    "is_unk": false
+   },
+   {
+    "id": 67,
+    "text": "C",
+    "bytes_hex": "43",
+    "is_unk": false
+   },
+   {
+    "id": 97,
+    "text": "a",
+    "bytes_hex": "61",
+    "is_unk": false
+   },
+   {
+    "id": 102,
+    "text": "f",
+    "bytes_hex": "66",
+    "is_unk": false
+   },
+   {
+    "id": 195,
+    "text": null,
+    "bytes_hex": "c3",
+    "is_unk": false
+   },
+   {
+    "id": 169,
+    "text": null,
+    "bytes_hex": "a9",
+    "is_unk": false
+   }
+  ],
+  "count": 14,
+  "pieces": [
+   {
+    "text": "The",
+    "start": [
+     "T",
+     "h",
+     "e"
+    ],
+    "steps": [
+     {
+      "rank": 0,
+      "token": "he",
+      "pieces": [
+       "T",
+       "he"
+      ]
+     },
+     {
+      "rank": 6,
+      "token": "The",
+      "pieces": [
+       "The"
+      ]
+     }
+    ]
+   },
+   {
+    "text": " keeper",
+    "start": [
+     " ",
+     "k",
+     "e",
+     "e",
+     "p",
+     "e",
+     "r"
+    ],
+    "steps": [
+     {
+      "rank": 3,
+      "token": "er",
+      "pieces": [
+       " ",
+       "k",
+       "e",
+       "e",
+       "p",
+       "er"
+      ]
+     },
+     {
+      "rank": 9,
+      "token": "ep",
+      "pieces": [
+       " ",
+       "k",
+       "e",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "rank": 10,
+      "token": "ke",
+      "pieces": [
+       " ",
+       "ke",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "rank": 11,
+      "token": " ke",
+      "pieces": [
+       " ke",
+       "ep",
+       "er"
+      ]
+     },
+     {
+      "rank": 12,
+      "token": " keep",
+      "pieces": [
+       " keep",
+       "er"
+      ]
+     },
+     {
+      "rank": 13,
+      "token": " keeper",
+      "pieces": [
+       " keeper"
+      ]
+     }
+    ]
+   },
+   {
+    "text": " lit",
+    "start": [
+     " ",
+     "l",
+     "i",
+     "t"
+    ],
+    "steps": [
+     {
+      "rank": 5,
+      "token": " l",
+      "pieces": [
+       " l",
+       "i",
+       "t"
+      ]
+     }
+    ]
+   },
+   {
+    "text": " the",
+    "start": [
+     " ",
+     "t",
+     "h",
+     "e"
+    ],
+    "steps": [
+     {
+      "rank": 0,
+      "token": "he",
+      "pieces": [
+       " ",
+       "t",
+       "he"
+      ]
+     },
+     {
+      "rank": 1,
+      "token": " t",
+      "pieces": [
+       " t",
+       "he"
+      ]
+     },
+     {
+      "rank": 2,
+      "token": " the",
+      "pieces": [
+       " the"
+      ]
+     }
+    ]
+   },
+   {
+    "text": " lantern",
+    "start": [
+     " ",
+     "l",
+     "a",
+     "n",
+     "t",
+     "e",
+     "r",
+     "n"
+    ],
+    "steps": [
+     {
+      "rank": 3,
+      "token": "er",
+      "pieces": [
+       " ",
+       "l",
+       "a",
+       "n",
+       "t",
+       "er",
+       "n"
+      ]
+     },
+     {
+      "rank": 4,
+      "token": "an",
+      "pieces": [
+       " ",
+       "l",
+       "an",
+       "t",
+       "er",
+       "n"
+      ]
+     },
+     {
+      "rank": 5,
+      "token": " l",
+      "pieces": [
+       " l",
+       "an",
+       "t",
+       "er",
+       "n"
+      ]
+     },
+     {
+      "rank": 16,
+      "token": " lan",
+      "pieces": [
+       " lan",
+       "t",
+       "er",
+       "n"
+      ]
+     },
+     {
+      "rank": 17,
+      "token": " lant",
+      "pieces": [
+       " lant",
+       "er",
+       "n"
+      ]
+     },
+     {
+      "rank": 18,
+      "token": " lanter",
+      "pieces": [
+       " lanter",
+       "n"
+      ]
+     },
+     {
+      "rank": 19,
+      "token": " lantern",
+      "pieces": [
+       " lantern"
+      ]
+     }
+    ]
+   },
+   {
+    "text": ".",
+    "start": [
+     "."
+    ],
+    "steps": []
+   },
+   {
+    "text": " Café",
+    "start": [
+     " ",
+     "C",
+     "a",
+     "f",
+     "c3",
+     "a9"
+    ],
+    "steps": []
+   }
+  ]
+ },
+ "decoding": {
+  "text": "The keeper lit the lantern. Café",
+  "round_trip": true,
+  "unk_count": 0
+ },
+ "sweep": [
+  {
+   "merges": 0,
+   "vocab_size": 257,
+   "input_tokens": 33,
+   "corpus_tokens": 1045,
+   "corpus_bytes_per_token": 1.0
+  },
+  {
+   "merges": 10,
+   "vocab_size": 267,
+   "input_tokens": 22,
+   "corpus_tokens": 803,
+   "corpus_bytes_per_token": 1.301
+  },
+  {
+   "merges": 25,
+   "vocab_size": 282,
+   "input_tokens": 14,
+   "corpus_tokens": 646,
+   "corpus_bytes_per_token": 1.618
+  },
+  {
+   "merges": 40,
+   "vocab_size": 297,
+   "input_tokens": 14,
+   "corpus_tokens": 555,
+   "corpus_bytes_per_token": 1.883
+  },
+  {
+   "merges": 50,
+   "vocab_size": 307,
+   "input_tokens": 14,
+   "corpus_tokens": 509,
+   "corpus_bytes_per_token": 2.053
+  },
+  {
+   "merges": 75,
+   "vocab_size": 332,
+   "input_tokens": 13,
+   "corpus_tokens": 424,
+   "corpus_bytes_per_token": 2.465
+  },
+  {
+   "merges": 100,
+   "vocab_size": 357,
+   "input_tokens": 12,
+   "corpus_tokens": 367,
+   "corpus_bytes_per_token": 2.847
+  },
+  {
+   "merges": 150,
+   "vocab_size": 407,
+   "input_tokens": 12,
+   "corpus_tokens": 303,
+   "corpus_bytes_per_token": 3.449
+  },
+  {
+   "merges": 200,
+   "vocab_size": 457,
+   "input_tokens": 12,
+   "corpus_tokens": 253,
+   "corpus_bytes_per_token": 4.13
+  }
+ ],
+ "timings_ms": {
+  "corpus": 0.001,
+  "pre_tokenizer": 0.023,
+  "base_alphabet": 0.095,
+  "merge_learner": 2.693,
+  "vocabulary": 0.012,
+  "input_text": 0.002,
+  "encoder": 0.054,
+  "decoder": 0.005
+ },
+ "stages": [
+  "corpus",
+  "pre_tokenizer",
+  "base_alphabet",
+  "merge_learner",
+  "vocabulary",
+  "input_text",
+  "encoder",
+  "decoder"
+ ]
+}

@@ -144,7 +144,7 @@ export function AnswerView({ result }: { result: RagResult }) {
   )
 }
 
-export function TimingStrip({ result }: { result: RagResult | null }) {
+export function TimingStrip({ result }: { result: Pick<RagResult, 'stages' | 'timings_ms'> | null }) {
   const stages = result?.stages ?? []
   const max = Math.max(0.001, ...stages.map((s) => result?.timings_ms[s] ?? 0))
   const total = stages.reduce((s, k) => s + (result?.timings_ms[k] ?? 0), 0)

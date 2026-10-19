@@ -38,13 +38,19 @@ export type Shape = 'slab' | 'stack' | 'cylinder' | 'grid' | 'prism' | 'lens' | 
 export interface Component {
   id: string
   label: string
-  phase: 'ingestion' | 'query' | 'generation'
+  /** Free-form group, e.g. the pipeline phase. */
+  phase: string
   short: string
   detail: string
   claims: string[]
   geometry: { shape: Shape; size: Vec3 }
   position: Vec3
   explode: Vec3
+  subtitle?: string | null
+  icon?: string | null
+  inputs?: string[]
+  outputs?: string[]
+  breaks_if_removed?: string | null
 }
 
 export interface Visual {
@@ -54,13 +60,13 @@ export interface Visual {
   description: string
 }
 
-export interface Challenge {
+export interface Challenge<P = RagParams> {
   id: string
   title: string
   brief: string
-  broken_params: Partial<RagParams>
-  locked_params: (keyof RagParams)[]
-  checks: { type: string; gold: string[] }[]
+  broken_params: Partial<P>
+  locked_params: (keyof P & string)[]
+  checks: { type: string; gold: string[]; limit: number | null }[]
   hint: string
   explanation: string
   claims: string[]
@@ -77,9 +83,9 @@ export interface Lesson {
   objectives: string[]
   claims: Claim[]
   components: Component[]
-  connections: { source: string; target: string; payload: string }[]
+  connections: { source: string; target: string; payload: string; flow?: 'document' | 'vector' | 'query' | null }[]
   visuals: Visual[]
-  experiment: { presets: { label: string; query: string }[]; corpus_note: string }
+  experiment: { engine: string; presets: { label: string; query?: string; text?: string }[]; corpus_note: string }
   challenges: Challenge[]
   reconstruction: { prompt: string; dependencies: Record<string, string[]> }
   tour: { component: string; title: string; body: string; claims: string[] }[]
@@ -137,9 +143,12 @@ export interface RagResult {
   stages: string[]
 }
 
-export interface ChallengeCheck {
+export interface ChallengeOutcome {
   passed: boolean
   checks: { type: string; gold: string; passed: boolean; message: string }[]
+}
+
+export interface ChallengeCheck extends ChallengeOutcome {
   result: RagResult
 }
 
@@ -160,4 +169,91 @@ export interface ReconstructionResult {
   correct: boolean
   violations: { stage: string; needs: string }[]
   message: string
+}
+
+/* ------------------------------------------------------------ tokenization */
+
+export interface TokenizeParams {
+  corpus_id: string
+  text: string
+  merges: number
+  base: 'bytes' | 'chars'
+  pre_tokenizer: 'words' | 'none'
+  merge_order: 'learned' | 'reversed'
+}
+
+export interface TokenOut {
+  id: number
+  /** Readable text, or null when the token's bytes are not valid UTF-8 on their own. */
+  text: string | null
+  bytes_hex: string
+  is_unk: boolean
+}
+
+export interface PieceTrace {
+  text: string
+  start: string[]
+  steps: { rank: number; token: string; pieces: string[] }[]
+}
+
+export interface SweepPoint {
+  merges: number
+  vocab_size: number
+  input_tokens: number
+  corpus_tokens: number
+  corpus_bytes_per_token: number
+}
+
+export interface TokenizeResult {
+  params: TokenizeParams
+  label: string
+  corpus: { id: string; title: string; note: string; text: string; characters: number; bytes: number }
+  pre_tokens: { mode: string; count: number; unique: number; sample: { text: string; count: number }[] }
+  base: { mode: TokenizeParams['base']; size: number; has_unk: boolean }
+  training: {
+    merges_requested: number
+    merges_learned: number
+    steps: { rank: number; left: string; right: string; token: string; token_id: number; count: number }[]
+    word_history: { word: string; count: number; start: string[]; steps: { after_merges: number; pieces: string[] }[] }[]
+  }
+  vocabulary: {
+    size: number
+    base_size: number
+    merges: number
+    special: { text: string; id: number }[]
+    crossing_word_boundary: string[]
+  }
+  input: { text: string; characters: number; bytes: number; pieces: number }
+  encoding: { order: TokenizeParams['merge_order']; ids: number[]; tokens: TokenOut[]; count: number; pieces: PieceTrace[] }
+  decoding: { text: string; round_trip: boolean; unk_count: number }
+  sweep: SweepPoint[]
+  timings_ms: Record<string, number>
+  stages: string[]
+}
+
+export interface TokenizeCheck extends ChallengeOutcome {
+  result: TokenizeResult
+}
+
+export interface TokenizeConfig {
+  defaults: TokenizeParams
+  max_merges: number
+  label: string
+  stages: string[]
+}
+
+/* ------------------------------------------------------------ ablation */
+
+export interface AblationOutcome {
+  removed: string | null
+  chunks: number
+  retrieved: { chunk_id: string; text: string }[]
+  prompt: { included: string[]; dropped: string[]; context_words: number; budget_words: number }
+  answer: { text: string | null; has_answer: boolean; is_llm: boolean }
+  notes: string[]
+}
+
+export interface AblationResult {
+  baseline: AblationOutcome
+  ablated: AblationOutcome
 }

@@ -45,7 +45,7 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
         {!isLocked('query') && (
           <div className="presets" role="group" aria-label="Example questions">
             {lesson.experiment.presets.map((p) => (
-              <button key={p.label} type="button" className="chip" onClick={() => update('query', p.query)}>
+              <button key={p.label} type="button" className="chip" onClick={() => update('query', p.query ?? '')}>
                 {p.label}
               </button>
             ))}

@@ -1,0 +1,158 @@
+/* Exploded-view engine styles: projected callouts, link data cards, 2D flow styles. Tokens only. */
+
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transition: border-color var(--dur-short) var(--ease-out), opacity var(--dur-short) var(--ease-out);
+}
+
+/* Leader line from callout down to the part it labels. */
+.callout::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: var(--space-md);
+  background: var(--color-rule-2);
+}
+
+.callout__num {
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+  padding: var(--space-3xs) var(--space-2xs);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+}
+
+.callout__body {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.callout__name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.callout__sub {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.callout__readout {
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.callout.is-selected {
+  border-color: var(--color-accent);
+  background: radial-gradient(120% 120% at 0% 0%, var(--color-paper-emit), transparent 70%), var(--color-paper-3);
+}
+
+.callout.is-selected::after {
+  background: var(--color-accent);
+}
+
+.callout.is-selected .callout__num {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.callout.is-dim {
+  opacity: 0.25;
+}
+
+.callout.is-compact .callout__name {
+  font-size: 11px;
+}
+
+.callout.is-marker {
+  padding: var(--space-3xs);
+}
+
+.callout.is-prop {
+  border-style: dashed;
+  border-color: var(--scene-flow-query);
+}
+
+.callout.is-prop .callout__readout {
+  color: var(--color-ink-2);
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+
+/* Data cards riding on links: what is flowing, with the real count. */
+.link-card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-2xs);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  font-family: var(--font-label);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.link-card::before {
+  content: "";
+  width: 14px;
+  border-top: 2px solid var(--scene-flow);
+}
+
+.link-card--vector::before {
+  border-top-style: dashed;
+  border-top-color: var(--scene-flow-vector);
+}
+
+.link-card--query::before {
+  border-top-style: dotted;
+  border-top-color: var(--scene-flow-query);
+}
+
+.link-card b {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+/* 2D fallback link styles mirror the 3D ones. */
+.flat-diagram__link--vector {
+  stroke: var(--scene-flow-vector);
+  stroke-dasharray: 6 4;
+}
+
+.flat-diagram__link--query {
+  stroke: var(--scene-flow-query);
+  stroke-dasharray: 2 4;
+}
+
+.flat-diagram__part.is-prop rect {
+  stroke-dasharray: 4 3;
+  stroke: var(--scene-flow-query);
+}
+

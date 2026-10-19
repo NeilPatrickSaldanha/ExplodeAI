@@ -1,4 +1,5 @@
 import type {
+  AblationResult,
   ChallengeCheck,
   Lesson,
   LessonSummary,
@@ -7,6 +8,10 @@ import type {
   RagParams,
   RagResult,
   ReconstructionResult,
+  TokenizeCheck,
+  TokenizeConfig,
+  TokenizeParams,
+  TokenizeResult,
 } from './types'
 
 const LEARNER_KEY = 'explodeai.learner'
@@ -61,6 +66,12 @@ export const api = {
   runRag: (params: Partial<RagParams>) => post<RagResult>('/api/experiments/rag/run', params),
   checkChallenge: (lessonId: string, challengeId: string, params: Partial<RagParams>) =>
     post<ChallengeCheck>(`/api/experiments/rag/challenges/${lessonId}/${challengeId}/check`, params),
+  ablate: (params: Partial<RagParams>, stage: string) =>
+    post<AblationResult>('/api/experiments/rag/ablate', { ...params, stage }),
+  tokenizeConfig: () => request<TokenizeConfig>('/api/experiments/tokenize/config'),
+  runTokenize: (params: Partial<TokenizeParams>) => post<TokenizeResult>('/api/experiments/tokenize/run', params),
+  checkTokenizeChallenge: (lessonId: string, challengeId: string, params: Partial<TokenizeParams>) =>
+    post<TokenizeCheck>(`/api/experiments/tokenize/challenges/${lessonId}/${challengeId}/check`, params),
   checkReconstruction: (lessonId: string, order: string[]) =>
     post<ReconstructionResult>(`/api/lessons/${lessonId}/reconstruction/check`, { order }),
   progress: (lessonId: string) => request<Progress>(`/api/progress/${lessonId}`),

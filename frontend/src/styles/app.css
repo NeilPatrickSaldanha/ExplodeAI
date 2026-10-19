@@ -334,64 +334,6 @@ main:focus {
   will-change: transform;
 }
 
-.part-label.is-dim {
-  opacity: 0.25;
-}
-
-.part-label.is-compact {
-  padding: var(--space-3xs) var(--space-2xs);
-}
-
-.part-label.is-compact .part-label__name {
-  font-size: 11px;
-}
-
-.part-label {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-3xs);
-  padding: var(--space-3xs) var(--space-xs);
-  border-radius: var(--radius-sm);
-  background: var(--color-paper-2);
-  border: 1px solid var(--color-rule);
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-}
-
-.part-label.is-selected {
-  border-color: var(--color-accent);
-}
-
-.part-label__name {
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: var(--color-ink);
-}
-
-.part-label__readout,
-.link-label {
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-muted);
-}
-
-.link-label {
-  white-space: nowrap;
-  pointer-events: none;
-  user-select: none;
-  padding: var(--space-3xs) var(--space-2xs);
-  background: var(--color-paper);
-  border-radius: var(--radius-sm);
-}
-
-.link-label b {
-  color: var(--color-accent);
-  font-weight: 500;
-}
-
 /* flat diagram */
 .flat-diagram {
   width: 100%;
@@ -824,6 +766,13 @@ main:focus {
   font-size: var(--text-sm);
   white-space: nowrap;
   cursor: pointer;
+}
+
+/* Touch screens get the 44px target the rest of the UI uses. */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+  }
 }
 
 .notice {

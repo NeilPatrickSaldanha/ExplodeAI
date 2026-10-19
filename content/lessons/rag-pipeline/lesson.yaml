@@ -478,6 +478,11 @@ components:
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [-1.65, 0, -0.55]
     explode: [-3.75, 0, -2.05]
+    subtitle: Docs the model can read
+    icon: Files
+    inputs: [Help-centre articles]
+    outputs: [Documents]
+    breaks_if_removed: Nothing exists to chunk, index or search, so every question comes back with no evidence.
   - id: chunker
     label: Chunker
     phase: ingestion
@@ -487,6 +492,11 @@ components:
     geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
     position: [-0.55, 0, -0.55]
     explode: [-1.25, 0, -2.05]
+    subtitle: Split into chunks
+    icon: Scissors
+    inputs: [Documents]
+    outputs: [Chunks]
+    breaks_if_removed: Each whole document becomes one chunk. Retrieval can only return entire documents, which use up the context budget faster.
   - id: embedder
     label: Chunk embedder
     phase: ingestion
@@ -496,6 +506,11 @@ components:
     geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
     position: [0.55, 0, -0.55]
     explode: [1.25, 0, -2.05]
+    subtitle: Chunks become vectors
+    icon: Cube
+    inputs: [Chunks]
+    outputs: [Chunk vectors]
+    breaks_if_removed: No chunk vectors exist, so dense retrieval scores nothing. Keyword (BM25) retrieval still works because it never needed vectors.
   - id: vector_index
     label: Vector index
     phase: ingestion
@@ -505,6 +520,11 @@ components:
     geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
     position: [1.65, 0, -0.55]
     explode: [3.75, 0, -2.05]
+    subtitle: Store and search
+    icon: Database
+    inputs: [Chunk vectors]
+    outputs: [Searchable index]
+    breaks_if_removed: Nothing is stored, so no retrieval method has anything to search.
   - id: query_encoder
     label: Query embedder
     phase: query
@@ -514,6 +534,11 @@ components:
     geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
     position: [1.65, 0, 0.55]
     explode: [3.75, 0, 2.05]
+    subtitle: Question becomes a vector
+    icon: ChatText
+    inputs: [Your question]
+    outputs: [Query vector]
+    breaks_if_removed: The question is never embedded, so dense retrieval scores nothing. BM25 still matches the raw question text.
   - id: retriever
     label: Retriever
     phase: query
@@ -523,6 +548,11 @@ components:
     geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
     position: [0.55, 0, 0.55]
     explode: [4.85, 0, -0.55]
+    subtitle: Find relevant chunks
+    icon: MagnifyingGlass
+    inputs: [Query vector, Searchable index]
+    outputs: [Top-k chunks]
+    breaks_if_removed: Chunks reach the prompt unranked, in corpus order, so a tight context budget can drop the one chunk that answers the question.
   - id: prompt_builder
     label: Prompt assembler
     phase: generation
@@ -532,6 +562,11 @@ components:
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [-0.55, 0, 0.55]
     explode: [2.35, 0, -0.55]
+    subtitle: Build the prompt
+    icon: Stack
+    inputs: [Top-k chunks, Your question]
+    outputs: [Assembled prompt]
+    breaks_if_removed: The generator receives only the question, with no retrieved documents to ground its answer.
   - id: generator
     label: Generator
     phase: generation
@@ -541,15 +576,20 @@ components:
     geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
     position: [-1.65, 0, 0.55]
     explode: [-0.15, 0, -0.55]
+    subtitle: Write the answer
+    icon: Sparkle
+    inputs: [Assembled prompt]
+    outputs: [Answer with citations]
+    breaks_if_removed: The prompt is assembled but never answered.
 
 connections:
-  - {source: corpus, target: chunker, payload: documents}
-  - {source: chunker, target: embedder, payload: chunks}
-  - {source: embedder, target: vector_index, payload: chunk vectors}
-  - {source: vector_index, target: retriever, payload: searchable index}
-  - {source: query_encoder, target: retriever, payload: query vector}
-  - {source: retriever, target: prompt_builder, payload: top-k chunks}
-  - {source: prompt_builder, target: generator, payload: assembled prompt}
+  - {source: corpus, target: chunker, flow: document, payload: documents}
+  - {source: chunker, target: embedder, flow: document, payload: chunks}
+  - {source: embedder, target: vector_index, flow: vector, payload: chunk vectors}
+  - {source: vector_index, target: retriever, flow: vector, payload: searchable index}
+  - {source: query_encoder, target: retriever, flow: vector, payload: query vector}
+  - {source: retriever, target: prompt_builder, flow: document, payload: top-k chunks}
+  - {source: prompt_builder, target: generator, flow: document, payload: assembled prompt}
 
 visuals:
   - id: exploded-view
@@ -559,7 +599,11 @@ visuals:
   - id: data-flow
     kind: conceptual
     label: Conceptual animation
-    description: Moving packets show which stage feeds which. Their speed carries no meaning.
+    description: Moving packets show which stage feeds which. Orange solid lines carry text, dashed lines carry vectors, and the blue dotted line is your question. Their speed carries no meaning.
+  - id: ablation
+    kind: real_execution
+    label: Real execution, stage removed
+    description: The pipeline really runs without the chosen stage, side by side with the full pipeline.
   - id: experiment
     kind: real_execution
     label: Real execution

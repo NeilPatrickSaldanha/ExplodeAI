@@ -1,29 +1,33 @@
 import { CheckCircle, Lightbulb, Wrench, XCircle } from '@phosphor-icons/react'
 import { useState } from 'react'
-import { api } from '../../api/client'
-import type { Challenge, ChallengeCheck, Lesson, RagParams } from '../../api/types'
+import type { Challenge, ChallengeOutcome } from '../../api/types'
 
-interface Props {
-  lesson: Lesson
-  active: Challenge | null
+type AnyChallenge = Pick<Challenge, 'id' | 'title' | 'brief' | 'hint' | 'explanation'> & { locked_params: readonly string[] }
+
+interface Props<C extends AnyChallenge, O extends ChallengeOutcome> {
+  challenges: C[]
+  active: C | null
   solved: string[]
-  params: RagParams
-  onStart: (c: Challenge) => void
+  /** Runs the server-side check for the active challenge with the learner's current settings. */
+  onCheck: (c: C) => Promise<O>
+  onStart: (c: C) => void
   onExit: () => void
-  onSolved: (id: string, check: ChallengeCheck) => void
+  onSolved: (id: string, check: O) => void
+  intro?: string
 }
 
-export function Challenges({ lesson, active, solved, params, onStart, onExit, onSolved }: Props) {
-  const [check, setCheck] = useState<ChallengeCheck | null>(null)
+/** Break & fix list and runner. Lesson-agnostic: the caller supplies the server check. */
+export function Challenges<C extends AnyChallenge, O extends ChallengeOutcome>({ challenges, active, solved, onCheck, onStart, onExit, onSolved, intro }: Props<C, O>) {
+  const [check, setCheck] = useState<O | null>(null)
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [showHint, setShowHint] = useState(false)
 
   if (!active) {
     return (
       <div className="challenges">
-        <p>Each pipeline below is broken in one specific way. Find the cause in the experiment, then fix it with the controls left unlocked.</p>
+        <p>{intro ?? 'Each pipeline below is broken in one specific way. Find the cause in the experiment, then fix it with the controls left unlocked.'}</p>
         <ol className="challenge-list">
-          {lesson.challenges.map((c) => (
+          {challenges.map((c) => (
             <li key={c.id}>
               <button
                 type="button"
@@ -57,7 +61,7 @@ export function Challenges({ lesson, active, solved, params, onStart, onExit, on
   const run = async () => {
     setState('loading')
     try {
-      const out = await api.checkChallenge(lesson.id, active.id, params)
+      const out = await onCheck(active)
       setCheck(out)
       setState('idle')
       if (out.passed) onSolved(active.id, out)

@@ -109,6 +109,15 @@ Not executable (`not_applicable`):
 - `citations-feature`: Provider feature; needs paid calls.
 - `grounding-definition`: Definition.
 
+## Implementation statements (added 2026-10-19)
+
+The redesign added a "what breaks if removed?" statement for each of the 8
+stages. They describe ExplodeAI's own executable pipeline, not the world, so they
+are validated by execution instead of citation: `backend/tests/test_ablation.py`
+removes each stage, runs the pipeline, and checks the stated effect (12 tests).
+The UI shows the same real run side by side, labelled "Real execution, stage
+removed". No new external claims were added, so no new research pass was needed.
+
 ## Clearly labelled non-claims
 
 - **Conceptual:** the exploded layout and shapes, and the moving data-flow packets.

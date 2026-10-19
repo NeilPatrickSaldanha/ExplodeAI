@@ -6,6 +6,7 @@ from app.content.schema import Challenge
 from app.db import ExperimentRun, get_session
 from app.deps import experiment_limiter, learner_id
 from app.experiments.rag import pipeline
+from app.experiments.rag.ablation import ablate
 from app.experiments.rag.corpus import SAMPLE_CORPUS_ID, SAMPLE_CORPUS_NOTE, get_corpus
 from app.experiments.rag.embedding import neural_available
 from app.routers.lessons import get_lesson_or_404
@@ -93,6 +94,8 @@ def check_challenge(
 ):
     experiment_limiter.check(learner)
     lesson = get_lesson_or_404(lesson_id)
+    if lesson.experiment.get("engine") != "rag":
+        raise HTTPException(404, "this lesson has no RAG challenges")
     challenge = next((c for c in lesson.challenges if c.id == challenge_id), None)
     if challenge is None:
         raise HTTPException(404, "challenge not found")
@@ -105,3 +108,18 @@ def check_challenge(
         raise HTTPException(422, exc.errors(include_url=False)) from exc
     result = _run(rag_params)
     return {**evaluate_challenge(challenge, result), "result": result}
+
+
+class AblationRequest(pipeline.RagParams):
+    stage: str
+
+
+@router.post("/ablate")
+def ablate_stage(req: AblationRequest, learner: str = Depends(learner_id)):
+    """Run the pipeline twice for real: as configured, and with one stage removed."""
+    experiment_limiter.check(learner)
+    params = pipeline.RagParams.model_validate(req.model_dump(exclude={"stage"}))
+    try:
+        return {"baseline": ablate(params, None), "ablated": ablate(params, req.stage)}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc

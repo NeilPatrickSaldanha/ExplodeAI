@@ -27,6 +27,42 @@ which starts with the Hallmark stamp. The run is recorded in `.hallmark/log.json
 - **The meter strip is real.** Its bars are per-stage timings from the last real
   execution, not decoration.
 
+## Lesson 02 additions (tokenization)
+
+Component-scope Hallmark run: no new theme, macrostructure, nav or footer.
+`frontend/src/lessons/tokenization/tokenization.css` adds only components, all
+on existing tokens: the token strip (unknown and partial tokens are dashed *and*
+labelled "UNKNOWN" / "PARTIAL", never colour alone), the merge replay (Previous /
+Next / slider always; autoplay only when motion is allowed), and a single-series
+trade-off line chart (one y-axis, current setting marked, hover readout, and the
+same data as a table). Example chips now reach 44px on coarse pointers.
+
+## Lesson 01 redesign: cinematic exploded view
+
+Hallmark `redesign`, single page, inside the existing boundaries (new components
+plus a scoped `lessons/rag/rag-cine.css`; nothing deleted). Mood: cinematic, technical.
+
+- **Structure:** the exploded machine is the hero (about 75% of the width, 74dvh
+  tall), with a slim stage panel on the right and a full-width 8-stage bar below.
+  Mode tabs move into the header. The old part list and inspector are replaced by
+  the stage bar and stage panel.
+- **Show first, explain second:** each stage shows a close-up of its part (its
+  sub-explosion opening and closing), what goes in and what comes out (real data
+  from the last run: vector strips, top-k scores, the prompt budget bar), and a
+  red "what breaks if removed?" card that runs the pipeline without the stage.
+  Facts are collapsed to one line each and expand to their full citations.
+- **Three flows, told apart by more than colour:** text (solid line, cube
+  packets), vectors (dashed, spheres), and your question (dotted, diamonds,
+  starting from a dashed "Your question" card). Tokens: `--scene-flow`,
+  `--scene-flow-vector`, `--scene-flow-query`, defined for both themes.
+- **Active stage:** emissive glow plus an accent bracket in the scene, a filled
+  number badge and leader line on its callout, a raised card in the stage bar,
+  brighter and faster packets on its links, and its data cards shown on those links.
+- **Removed:** the separate part list (its job moved to the stage bar) and the
+  long-text inspector as the default view.
+- **Engine styles** (callouts, link data cards, 2D flow styles) live in
+  `engine/engine.css`, so every lesson that uses the engine gets them.
+
 ## From ui-ux-pro-max
 
 - Pattern match: "Interactive 3D Configurator" (scene + minimal overlay UI).

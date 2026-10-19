@@ -47,12 +47,31 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   prompt assembly under a word budget, and an extractive answer baseline.
   `STAGE_DEPENDENCIES` is the contract shared with the lesson's 3D model and the
   rebuild puzzle; tests keep the three in sync.
-- **Challenges** are data: broken params, locked params, and checks (a gold
-  phrase must be in a retrieved chunk or in the prompt). The server forces locked
-  params back to their broken values, so the client cannot cheat.
+- **Tokenization experiment** (`backend/app/experiments/tokenize/`) — an
+  *educational* byte-pair-encoding tokenizer (not any provider's): simplified
+  GPT-2-style pre-tokenization (or none), a 256-byte or training-character base
+  alphabet, deterministic merge training on a fictional corpus, encoding that
+  replays merges in learned (or, for a challenge, reversed) order with a per-merge
+  trace, byte-exact decoding, and a vocabulary-size vs sequence-length sweep.
+  Same `STAGE_DEPENDENCIES` contract as RAG.
+- **Challenges** are data: broken params, locked params, and checks. Each
+  experiment engine declares the check types it can evaluate (`ENGINE_CHECKS` in
+  the schema): RAG checks gold phrases in retrieved chunks or the prompt;
+  tokenization checks round trip, unknown tokens, a token budget, single-token
+  words, and merges that cross word boundaries. The server forces locked params
+  back to their broken values, so the client cannot cheat.
 - **Persistence** — SQLite via SQLModel: `LessonProgress` (merge-only, filtered to
   valid ids), `ExperimentRun` (params + summary of every run), `AIUsage` (ledger
   for limits and budgets).
+
+## Ablation ("what breaks if removed?")
+
+`backend/app/experiments/rag/ablation.py` runs the real pipeline with one stage
+removed and returns a compact outcome; `POST /api/experiments/rag/ablate` returns
+it next to the full-pipeline outcome. Each component's `breaks_if_removed` text
+in the lesson YAML describes this executable behaviour and is checked by
+`tests/test_ablation.py` (Pass 3 evidence for implementation statements, which
+need no external citation).
 
 ## Paid AI guard
 

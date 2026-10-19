@@ -9,7 +9,7 @@ def test_health(client):
 
 def test_lessons_list_and_detail(client):
     lessons = client.get("/api/lessons").json()
-    assert [lesson["id"] for lesson in lessons] == ["rag-pipeline"]
+    assert [lesson["id"] for lesson in lessons] == ["rag-pipeline", "tokenization"]
     detail = client.get("/api/lessons/rag-pipeline").json()
     assert len(detail["components"]) == 8
     cited = {c["source"] for claim in detail["claims"] for c in claim["citations"]}
@@ -33,7 +33,11 @@ def test_draft_lessons_hidden_unless_enabled(client, monkeypatch):
 
 def test_published_lesson_visible_without_draft_flag(client, monkeypatch):
     monkeypatch.setattr(get_settings(), "show_draft_lessons", False)
-    assert [lesson["status"] for lesson in client.get("/api/lessons").json()] == ["published"]
+    from app.content.loader import content
+
+    statuses = [lesson["status"] for lesson in client.get("/api/lessons").json()]
+    published = [lesson for lesson in content()[1].values() if lesson.status == "published"]
+    assert statuses == ["published"] * len(published) and statuses
 
 
 def test_experiment_run_persists(client, engine):
