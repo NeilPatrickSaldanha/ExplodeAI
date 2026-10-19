@@ -51,6 +51,12 @@ def engine():
 def client(engine, monkeypatch):
     # The lesson is a draft until all three verification passes complete.
     monkeypatch.setattr(get_settings(), "show_draft_lessons", True)
+    # Never let a test reach a paid provider, whatever the developer's .env says.
+    from pydantic import SecretStr
+
+    for key in ("anthropic_api_key", "openai_api_key", "gemini_api_key"):
+        monkeypatch.setattr(get_settings(), key, SecretStr(""))
+    monkeypatch.setattr(get_settings(), "ai_features_enabled", False)
     from app.main import create_app
 
     with TestClient(create_app()) as c:

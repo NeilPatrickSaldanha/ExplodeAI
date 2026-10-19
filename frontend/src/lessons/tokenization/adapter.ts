@@ -4,7 +4,7 @@ import { linkKey } from '../../engine/types'
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   return {
-    parts: lesson.components.map((c) => ({
+    parts: lesson.components.map((c, i) => ({
       id: c.id,
       label: c.label,
       group: c.phase,
@@ -12,8 +12,10 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
       size: c.geometry.size,
       position: c.position,
       explode: c.explode,
+      subtitle: c.subtitle ?? undefined,
+      number: String(i + 1).padStart(2, '0'),
     })),
-    links: lesson.connections.map((c) => ({ source: c.source, target: c.target, label: c.payload })),
+    links: lesson.connections.map((c) => ({ source: c.source, target: c.target, label: c.payload, kind: c.flow ?? 'document' })),
   }
 }
 

@@ -1246,3 +1246,51 @@ main:focus {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---- paid LLM answer ---- */
+.llm {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-paper);
+}
+
+.llm--off {
+  border-color: var(--color-rule);
+}
+
+.llm__title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: var(--weight-strong);
+  color: var(--color-ink);
+}
+
+.llm__note {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.llm .btn--primary {
+  justify-self: start;
+}
+
+.llm .label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.llm__answer {
+  display: grid;
+  gap: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-rule);
+}

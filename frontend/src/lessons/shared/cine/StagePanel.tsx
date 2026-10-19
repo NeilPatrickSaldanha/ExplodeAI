@@ -1,11 +1,9 @@
 import { CaretDown, CaretLeft, CaretRight, CheckCircle, Pause, Play, SealCheck } from '@phosphor-icons/react'
-import { lazy, Suspense, useState } from 'react'
-import type { Claim, Component, Lesson, RagParams, RagResult, Source } from '../../api/types'
-import type { PartSpec } from '../../engine/types'
-import { BreaksCard } from './BreaksCard'
-import { ClaimCard } from './Inspector'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
+import type { Claim, Component, Lesson, Source } from '../../../api/types'
+import type { PartSpec } from '../../../engine/types'
+import { ClaimCard } from '../../rag/Inspector'
 import { StageIcon } from './StageIcon'
-import { StageIO } from './StageIO'
 
 const PartCloseup = lazy(() => import('./PartCloseup').then((m) => ({ default: m.PartCloseup })))
 
@@ -25,8 +23,10 @@ interface Props {
   component: Component | undefined
   part: PartSpec | undefined
   index: number
-  result: RagResult | null
-  params: RagParams
+  /** "What goes in → what comes out" for this stage (lesson-specific, real data). */
+  io?: ReactNode
+  /** "What breaks if removed?" card (lesson-specific runner). */
+  breaks?: ReactNode
   sources: Map<string, Source>
   reducedMotion: boolean
   onStep: (delta: number) => void
@@ -41,7 +41,7 @@ const passed = (c: Claim) =>
  * goes in and comes out (real data), what breaks if it is removed (a real run),
  * and compact, source-backed facts that expand to their citations.
  */
-export function StagePanel({ lesson, component, part, index, result, params, sources, reducedMotion, onStep, tour }: Props) {
+export function StagePanel({ lesson, component, part, index, io, breaks, sources, reducedMotion, onStep, tour }: Props) {
   const [openClaim, setOpenClaim] = useState<string | null>(null)
   const total = lesson.components.length
 
@@ -61,7 +61,6 @@ export function StagePanel({ lesson, component, part, index, result, params, sou
 
   const claims = component.claims.map((id) => lesson.claims.find((c) => c.id === id)).filter((c): c is Claim => !!c)
   const verified = claims.filter(passed).length
-  const ablationVisual = lesson.visuals.find((v) => v.id === 'ablation')
 
   return (
     <div className="spanel">
@@ -114,9 +113,9 @@ export function StagePanel({ lesson, component, part, index, result, params, sou
         <PartCloseup part={part} reducedMotion={reducedMotion} label={`Close-up of the ${component.label}, showing its internal parts`} />
       </Suspense>
 
-      <StageIO component={component} result={result} />
+      {io}
 
-      {component.breaks_if_removed && <BreaksCard key={`${component.id}|${JSON.stringify(params)}`} component={component} params={params} visual={ablationVisual} />}
+      {breaks}
 
       <section className="facts" aria-labelledby="facts-title">
         <h4 id="facts-title" className="facts__title">

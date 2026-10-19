@@ -40,7 +40,7 @@ same data as a table). Example chips now reach 44px on coarse pointers.
 ## Lesson 01 redesign: cinematic exploded view
 
 Hallmark `redesign`, single page, inside the existing boundaries (new components
-plus a scoped `lessons/rag/rag-cine.css`; nothing deleted). Mood: cinematic, technical.
+plus a scoped stylesheet, now `lessons/shared/cine/cine.css`; nothing deleted). Mood: cinematic, technical.
 
 - **Structure:** the exploded machine is the hero (about 75% of the width, 74dvh
   tall), with a slim stage panel on the right and a full-width 8-stage bar below.
@@ -62,6 +62,23 @@ plus a scoped `lessons/rag/rag-cine.css`; nothing deleted). Mood: cinematic, tec
   long-text inspector as the default view.
 - **Engine styles** (callouts, link data cards, 2D flow styles) live in
   `engine/engine.css`, so every lesson that uses the engine gets them.
+
+## Shared cinematic shell (both lessons)
+
+Lesson 02 now uses the same cinematic layout as Lesson 01, through a shared shell
+in `frontend/src/lessons/shared/cine/`:
+
+- `CineLesson` owns the layout, stage navigation (`goToStage` is the single source
+  of truth: scene click, stage bar, panel arrows, keyboard, tour, auto-play), tour
+  sync, auto-play, progress and the toolbar.
+- `StagePanel`, `StageBar`, `StageIcon`, `PartCloseup`, `FlowLegend` (labels per
+  lesson) and a generic `BreaksCard` (the caller supplies the ablation runner and
+  the outcome renderer).
+- Each lesson supplies only its own pieces: scene readouts, the in/out views
+  (`rag/StageIO`, `tokenization/TokStageIO`), the outcome renderers (`ragOutcome`,
+  `tokOutcome`) and its Experiment / Break & fix / Rebuild tabs.
+- Lesson 02 flows: text (solid), symbols & ids (dashed), your text (dotted).
+  Token chips in stage cards mark `[UNK]` with a dashed border *and* the text "[UNK]".
 
 ## From ui-ux-pro-max
 

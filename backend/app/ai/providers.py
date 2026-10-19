@@ -3,9 +3,11 @@
 Keys are read from Settings at call time, sent only in request headers to the
 provider's own API host, and never logged or returned. The request shapes follow
 each provider's public REST API; they are exercised in tests with a mocked
-transport and have NOT been exercised against the live APIs (that would cost
-money and requires the owner's explicit permission).
+transport. OpenAI and Gemini were also verified with one live call each on
+2026-10-19 (owner-approved, $4 cap). Anthropic has not been called live.
 """
+
+from dataclasses import dataclass
 
 import httpx
 
@@ -53,6 +55,49 @@ def _extract_text(provider: str, data: dict) -> str:
         return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
     except (KeyError, IndexError, TypeError) as exc:
         raise ProviderError("unexpected provider response shape") from exc
+
+
+def _extract_usage(provider: str, data: dict) -> tuple[int, int] | None:
+    """(input_tokens, output_tokens) as reported by the provider, or None."""
+    try:
+        if provider == "anthropic":
+            u = data["usage"]
+            return int(u["input_tokens"]), int(u["output_tokens"])
+        if provider == "openai":
+            u = data["usage"]
+            return int(u["prompt_tokens"]), int(u["completion_tokens"])
+        u = data["usageMetadata"]
+        out = int(u.get("candidatesTokenCount", 0)) + int(u.get("thoughtsTokenCount", 0))
+        return int(u["promptTokenCount"]), out
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+@dataclass(frozen=True)
+class Generation:
+    text: str
+    input_tokens: int | None
+    output_tokens: int | None
+
+
+def generate_with_usage(
+    settings: Settings,
+    provider: str,
+    model: str,
+    prompt: str,
+    max_tokens: int,
+    transport: httpx.BaseTransport | None = None,
+) -> Generation:
+    url, headers, body = _request(settings, provider, model, prompt, max_tokens)
+    timeout = httpx.Timeout(settings.ai_request_timeout_seconds)
+    with httpx.Client(timeout=timeout, transport=transport) as client:
+        resp = client.post(url, headers=headers, json=body)
+    if resp.status_code >= 400:
+        # Never echo the response body: some providers reflect request headers.
+        raise ProviderError(f"{provider} returned HTTP {resp.status_code}")
+    data = resp.json()
+    usage = _extract_usage(provider, data)
+    return Generation(_extract_text(provider, data), *(usage or (None, None)))
 
 
 def generate(

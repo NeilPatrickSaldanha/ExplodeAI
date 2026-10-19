@@ -31,6 +31,10 @@ export default defineConfig({
         DATABASE_URL: `sqlite:///./data/e2e-${API_PORT}.sqlite3`,
         CORS_ORIGINS: `http://127.0.0.1:${WEB_PORT}`,
         AI_FEATURES_ENABLED: 'false',
+        // Never reach a paid provider from e2e, whatever backend/.env holds.
+        OPENAI_API_KEY: '',
+        GEMINI_API_KEY: '',
+        ANTHROPIC_API_KEY: '',
       },
       reuseExistingServer: false,
       timeout: 60_000,

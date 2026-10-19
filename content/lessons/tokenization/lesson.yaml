@@ -543,6 +543,11 @@ components:
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [-2.2, 0, -0.55]
     explode: [-2.8, 0, -1.6]
+    subtitle: Text to learn from
+    icon: Scroll
+    inputs: [Lighthouse log]
+    outputs: [Training text]
+    breaks_if_removed: "Nothing is learned: zero merges, so text is spelled one byte per token, or entirely as [UNK] with the character alphabet."
   - id: pre_tokenizer
     label: Pre-tokenizer
     phase: training
@@ -552,6 +557,11 @@ components:
     geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
     position: [-1.1, 0, -0.55]
     explode: [-1.4, 0, -1.6]
+    subtitle: Cut into word pieces
+    icon: Scissors
+    inputs: [Training text]
+    outputs: [Word pieces]
+    breaks_if_removed: "Text is no longer cut at word boundaries, so learned merges can join pieces of different words."
   - id: base_alphabet
     label: Base alphabet
     phase: training
@@ -561,6 +571,11 @@ components:
     geometry: {shape: grid, size: [0.9, 0.4, 0.9]}
     position: [0, 0, -0.55]
     explode: [0, 0, -1.6]
+    subtitle: Starting symbols
+    icon: GridFour
+    inputs: [Word pieces]
+    outputs: [Symbol sequences]
+    breaks_if_removed: "There are no starting symbols, so every character of the input becomes [UNK] and the text cannot be recovered."
   - id: merge_learner
     label: Merge learner
     phase: training
@@ -570,6 +585,11 @@ components:
     geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
     position: [1.1, 0, -0.55]
     explode: [1.4, 0, -1.6]
+    subtitle: Merge frequent pairs
+    icon: ArrowsMerge
+    inputs: [Symbol sequences]
+    outputs: [Ordered merges]
+    breaks_if_removed: "No merges are learned: every token is a single base symbol, so the sequence is as long as it can be."
   - id: vocabulary
     label: Vocabulary
     phase: training
@@ -579,6 +599,11 @@ components:
     geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
     position: [2.2, 0, -0.55]
     explode: [2.8, 0, -1.6]
+    subtitle: Symbols and their ids
+    icon: Books
+    inputs: [Ordered merges]
+    outputs: [Vocabulary + merge order]
+    breaks_if_removed: "No table maps symbols to ids, so the encoder cannot produce any token ids."
   - id: input_text
     label: Input text
     phase: encoding
@@ -588,6 +613,11 @@ components:
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [2.2, 0, 0.55]
     explode: [2.8, 0, 1.6]
+    subtitle: Your text
+    icon: TextAa
+    inputs: [Your text]
+    outputs: [New text]
+    breaks_if_removed: "There is nothing to encode, so no tokens are produced."
   - id: encoder
     label: Encoder
     phase: encoding
@@ -597,6 +627,11 @@ components:
     geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
     position: [0.55, 0, 0.55]
     explode: [0.7, 0, 1.6]
+    subtitle: Text becomes token ids
+    icon: Hash
+    inputs: [Vocabulary, New text]
+    outputs: [Token ids]
+    breaks_if_removed: "No ids are produced, so the decoder has nothing to turn back into text."
   - id: decoder
     label: Decoder
     phase: decoding
@@ -606,17 +641,26 @@ components:
     geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
     position: [-1.1, 0, 0.55]
     explode: [-1.4, 0, 1.6]
+    subtitle: Ids back to text
+    icon: ArrowCounterClockwise
+    inputs: [Token ids]
+    outputs: [Text]
+    breaks_if_removed: "Ids are produced but never turned back into text, so the round trip cannot be checked."
 
 connections:
-  - {source: corpus, target: pre_tokenizer, payload: training text}
-  - {source: pre_tokenizer, target: base_alphabet, payload: word pieces}
-  - {source: base_alphabet, target: merge_learner, payload: symbol sequences}
-  - {source: merge_learner, target: vocabulary, payload: ordered merges}
-  - {source: vocabulary, target: encoder, payload: vocabulary and merge order}
-  - {source: input_text, target: encoder, payload: new text}
-  - {source: encoder, target: decoder, payload: token ids}
+  - {source: corpus, target: pre_tokenizer, flow: document, payload: training text}
+  - {source: pre_tokenizer, target: base_alphabet, flow: document, payload: word pieces}
+  - {source: base_alphabet, target: merge_learner, flow: vector, payload: symbol sequences}
+  - {source: merge_learner, target: vocabulary, flow: vector, payload: ordered merges}
+  - {source: vocabulary, target: encoder, flow: vector, payload: vocabulary and merge order}
+  - {source: input_text, target: encoder, flow: query, payload: new text}
+  - {source: encoder, target: decoder, flow: vector, payload: token ids}
 
 visuals:
+  - id: ablation
+    kind: real_execution
+    label: Real execution, stage removed
+    description: The tokenizer really runs without the chosen stage, side by side with the full tokenizer.
   - id: exploded-view
     kind: conceptual
     label: Conceptual diagram

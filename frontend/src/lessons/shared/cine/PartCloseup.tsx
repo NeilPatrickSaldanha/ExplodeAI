@@ -1,10 +1,10 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
-import { scenePalette } from '../../engine/colors'
-import { hasWebGL, useThemeVersion } from '../../engine/hooks'
-import { Part3D } from '../../engine/Part3D'
-import type { PartSpec } from '../../engine/types'
+import { scenePalette } from '../../../engine/colors'
+import { hasWebGL, useThemeVersion } from '../../../engine/hooks'
+import { Part3D } from '../../../engine/Part3D'
+import type { PartSpec } from '../../../engine/types'
 
 /**
  * The selected part on its own, slowly opening and closing its internal

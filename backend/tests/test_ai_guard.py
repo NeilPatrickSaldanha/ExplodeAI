@@ -73,13 +73,17 @@ def test_rate_limit_and_budget(engine):
 
 
 def test_cost_estimate_is_worst_case():
-    # 30 chars → 10 tokens at $1/M, plus the full 100-token output allowance at $5/M.
-    assert estimate_cost(PRICE, "x" * 30, 100) == pytest.approx((10 * 1 + 100 * 5) / 1e6)
+    # 30 chars → 15 tokens at $1/M, plus the full 100-token output allowance at $5/M.
+    assert estimate_cost(PRICE, "x" * 30, 100) == pytest.approx((15 * 1 + 100 * 5) / 1e6)
 
 
-def test_shipped_pricing_file_allows_nothing():
+def test_shipped_pricing_file_is_sourced_and_dated():
     load_prices.cache_clear()
-    assert load_prices() == {}
+    prices = load_prices()
+    assert prices, "allow-list should name at least one model"
+    for price in prices.values():
+        assert price.price_source.startswith("https://") and price.price_checked
+        assert price.input_usd_per_million_tokens > 0 and price.output_usd_per_million_tokens > 0
 
 
 def test_default_settings_disable_paid_ai():
@@ -128,3 +132,74 @@ def test_generate_endpoint_refuses_by_default(client):
                                               "prompt": "hi", "confirm_paid": True})
     assert r.status_code == 403
     assert r.json()["detail"]["code"] == "disabled"
+
+
+def test_total_budget_is_enforced_across_days(engine):
+    s = settings(ai_total_budget_usd=0.01, ai_daily_budget_usd=100)
+    with Session(engine) as session:
+        session.add(AIUsage(learner_id="old-learner-01", provider="anthropic", model="test-model",
+                            estimated_cost_usd=0.0099, status="ok",
+                            created_at=datetime(2020, 1, 1, tzinfo=UTC)))
+        session.commit()
+        with pytest.raises(GuardRefusal) as exc:
+            call(s, session)
+        assert exc.value.code == "total_budget_exceeded"
+
+
+@pytest.mark.parametrize("provider,body,expected", [
+    ("anthropic", {"content": [{"type": "text", "text": "a"}], "usage": {"input_tokens": 11, "output_tokens": 7}}, (11, 7)),
+    ("openai", {"choices": [{"message": {"content": "a"}}], "usage": {"prompt_tokens": 11, "completion_tokens": 7}}, (11, 7)),
+    ("gemini", {"candidates": [{"content": {"parts": [{"text": "a"}]}}],
+                "usageMetadata": {"promptTokenCount": 11, "candidatesTokenCount": 5, "thoughtsTokenCount": 2}}, (11, 7)),
+])
+def test_usage_is_read_from_each_provider(provider, body, expected):
+    s = settings(openai_api_key=SecretStr(FAKE_KEY), gemini_api_key=SecretStr(FAKE_KEY))
+    gen = providers.generate_with_usage(s, provider, "m", "p", 10,
+                                        transport=httpx.MockTransport(lambda r: httpx.Response(200, json=body)))
+    assert (gen.text, gen.input_tokens, gen.output_tokens) == ("a", *expected)
+
+
+def _enable(monkeypatch):
+    from app.ai import guard
+
+    s = get_settings()
+    monkeypatch.setattr(s, "ai_features_enabled", True)
+    monkeypatch.setattr(s, "anthropic_api_key", SecretStr(FAKE_KEY))
+    monkeypatch.setattr(guard, "load_prices", lambda: PRICES)
+    import app.routers.ai as ai_router
+    monkeypatch.setattr(ai_router, "load_prices", lambda: PRICES)
+
+
+def test_rag_answer_builds_the_prompt_server_side_and_ledgers_actual_cost(client, engine, monkeypatch):
+    _enable(monkeypatch)
+    seen = {}
+
+    def fake(settings_, provider, model, prompt, max_tokens):
+        seen["prompt"] = prompt
+        return providers.Generation("Within 30 days.", 150, 12)
+
+    monkeypatch.setattr(providers, "generate_with_usage", fake)
+    body = {"query": "How long do I have to return a bike?", "provider": "anthropic", "model": "test-model",
+            "confirm_paid": True, "max_output_tokens": 200}
+    r = client.post("/api/ai/rag-answer", json=body, headers={"X-Learner-Id": "learner-0001"})
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert seen["prompt"].startswith("<documents>") and "Question: How long" in seen["prompt"]
+    assert out["cost_usd"] == pytest.approx((150 * 1.0 + 12 * 5.0) / 1e6)
+    assert out["cost_usd"] <= out["max_cost_usd"]
+    with Session(engine) as session:
+        assert session.exec(__import__("sqlmodel").select(AIUsage)).one().estimated_cost_usd == pytest.approx(0.00021)
+
+
+def test_rag_answer_requires_confirmation(client, monkeypatch):
+    _enable(monkeypatch)
+    r = client.post("/api/ai/rag-answer", json={"provider": "anthropic", "model": "test-model"})
+    assert r.status_code == 403 and r.json()["detail"]["code"] == "not_confirmed"
+
+
+def test_rag_answer_estimate_is_free(client, monkeypatch, engine):
+    _enable(monkeypatch)
+    r = client.post("/api/ai/rag-answer/estimate", json={"provider": "anthropic", "model": "test-model"})
+    assert r.status_code == 200 and 0 < r.json()["max_cost_usd"] < 0.01
+    with Session(engine) as session:
+        assert session.exec(__import__("sqlmodel").select(AIUsage)).all() == []

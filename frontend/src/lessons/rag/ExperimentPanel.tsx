@@ -129,7 +129,7 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
           </Tabs.Content>
           <Tabs.Content value="answer" className="rtabs__panel">
             <KindBadge visual={visual('answer')} />
-            <AnswerView result={result} />
+            <AnswerView result={result} params={locked.length ? undefined : params} />
           </Tabs.Content>
         </Tabs.Root>
       )}

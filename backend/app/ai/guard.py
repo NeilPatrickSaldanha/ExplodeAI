@@ -8,14 +8,19 @@ A request is refused unless ALL of these hold, checked in this order:
  5. the caller sent confirm_paid = true           (explicit, per request)
  6. requested output tokens ≤ AI_MAX_OUTPUT_TOKENS
  7. learner is under AI_MAX_REQUESTS_PER_HOUR
- 8. today's estimated spend + this request's worst-case estimate ≤ AI_DAILY_BUDGET_USD
+ 8. today's spend + this request's worst-case estimate ≤ AI_DAILY_BUDGET_USD
+ 9. all-time spend + this request's worst-case estimate ≤ AI_TOTAL_BUDGET_USD
+
+Spend is the ledger in `AIUsage.estimated_cost_usd`: the worst-case estimate when
+the call is authorised, replaced by the actual cost from the provider's reported
+token usage once the call returns (see `actual_cost`).
 
 Cost estimates are deliberately conservative (≈ 1 token per 3 characters of
 input, and the full output allowance) and are labelled as estimates everywhere.
 """
 
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from functools import lru_cache
 from pathlib import Path
 
@@ -35,7 +40,7 @@ class ModelPrice(BaseModel):
     model: str
     input_usd_per_million_tokens: float
     output_usd_per_million_tokens: float
-    price_checked: str
+    price_checked: date | str
     price_source: str
 
 
@@ -60,7 +65,9 @@ class Authorization:
 
 
 def estimate_tokens(text: str) -> int:
-    return max(1, -(-len(text) // 3))  # ceil(len/3): conservative for English
+    # ceil(len/2): deliberately pessimistic. English averages ~4 chars/token, and
+    # newer tokenizers (e.g. Claude 4.7+) produce ~30% more tokens for the same text.
+    return max(1, -(-len(text) // 2))
 
 
 def estimate_cost(price: ModelPrice, prompt: str, max_output_tokens: int) -> float:
@@ -77,6 +84,16 @@ def key_configured(settings: Settings, provider: str) -> bool:
         "gemini": settings.gemini_api_key,
     }[provider]
     return bool(key.get_secret_value().strip())
+
+
+def actual_cost(price: ModelPrice, input_tokens: int, output_tokens: int) -> float:
+    return (input_tokens * price.input_usd_per_million_tokens
+            + output_tokens * price.output_usd_per_million_tokens) / 1_000_000
+
+
+def spent_total(session: Session) -> float:
+    total = session.exec(select(func.sum(AIUsage.estimated_cost_usd))).one()
+    return float(total or 0.0)
 
 
 def spent_today(session: Session, now: datetime) -> float:
@@ -134,4 +151,6 @@ def authorize(
     cost = estimate_cost(price, prompt, max_output_tokens)
     if spent_today(session, now) + cost > settings.ai_daily_budget_usd:
         raise GuardRefusal("budget_exceeded", "Today's estimated AI budget would be exceeded.")
+    if spent_total(session) + cost > settings.ai_total_budget_usd:
+        raise GuardRefusal("total_budget_exceeded", "The total AI budget would be exceeded.")
     return Authorization(price=price, estimated_cost_usd=round(cost, 6))

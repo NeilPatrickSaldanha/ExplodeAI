@@ -1,6 +1,6 @@
 import { CheckCircle } from '@phosphor-icons/react'
 import { useRef, type KeyboardEvent } from 'react'
-import type { Component } from '../../api/types'
+import type { Component } from '../../../api/types'
 import { StageIcon } from './StageIcon'
 
 interface Props {

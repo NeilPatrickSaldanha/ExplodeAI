@@ -73,6 +73,14 @@ in the lesson YAML describes this executable behaviour and is checked by
 `tests/test_ablation.py` (Pass 3 evidence for implementation statements, which
 need no external citation).
 
+Lesson 02 has the same mechanism for its tokenizer:
+`backend/app/experiments/tokenize/ablation.py` and
+`POST /api/experiments/tokenize/ablate` (checked by
+`tests/test_tokenize_ablation.py`). Removing the corpus leaves zero merges, removing
+the pre-tokenizer lets merges cross words, removing the base alphabet turns every
+character into `[UNK]`, removing the merge learner leaves one token per base symbol,
+and removing the vocabulary or encoder leaves no ids to decode.
+
 ## Paid AI guard
 
 `backend/app/ai/guard.py` fails closed. In order, a request needs: kill switch off →

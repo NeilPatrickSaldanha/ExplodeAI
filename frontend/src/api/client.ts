@@ -63,6 +63,11 @@ export const api = {
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
   ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
+  aiStatus: () => request<import('./types').AIStatus>('/api/ai/status'),
+  estimateRagAnswer: (params: Partial<RagParams>, provider: string, model: string) =>
+    post<{ max_cost_usd: number; prompt_words: number }>('/api/ai/rag-answer/estimate', { ...params, provider, model }),
+  ragAnswer: (params: Partial<RagParams>, provider: string, model: string) =>
+    post<import('./types').LLMAnswer>('/api/ai/rag-answer', { ...params, provider, model, confirm_paid: true }),
   runRag: (params: Partial<RagParams>) => post<RagResult>('/api/experiments/rag/run', params),
   checkChallenge: (lessonId: string, challengeId: string, params: Partial<RagParams>) =>
     post<ChallengeCheck>(`/api/experiments/rag/challenges/${lessonId}/${challengeId}/check`, params),
@@ -78,3 +83,10 @@ export const api = {
   saveProgress: (lessonId: string, update: Partial<Omit<Progress, 'lesson_id'>>) =>
     request<Progress>(`/api/progress/${lessonId}`, { method: 'PUT', body: JSON.stringify(update) }),
 }
+
+/** Run the tokenizer as configured and with one stage removed (real execution, both). */
+export const ablateTokenize = (params: Partial<import('./types').TokenizeParams>, stage: string) =>
+  post<{ baseline: import('./types').TokenizeAblationOutcome; ablated: import('./types').TokenizeAblationOutcome }>(
+    '/api/experiments/tokenize/ablate',
+    { ...params, stage },
+  )

@@ -1,15 +1,28 @@
-# Paid model allow-list and prices used for SPENDING ESTIMATES.
+# Paid model allow-list and prices used for SPENDING ESTIMATES and the ledger.
 #
 # Fail-closed by design: a provider/model pair can only be called if it is listed
-# here with both prices filled in. Prices change; copy them from the provider's
-# official pricing page and record the date you checked. ExplodeAI ships with an
-# empty list so no paid call is possible until you add one deliberately.
+# here with both prices filled in. Prices change: re-check the official pricing
+# page and update price_checked when you do.
 #
-# Example (values intentionally left blank — fill from the official page):
-# - provider: anthropic          # anthropic | openai | gemini
-#   model: <model id from the provider docs>
-#   input_usd_per_million_tokens: <number>
-#   output_usd_per_million_tokens: <number>
-#   price_checked: YYYY-MM-DD
-#   price_source: <official pricing URL>
-models: []
+# Chosen: the cheapest suitable text model per provider. Not reasoning models, so
+# the whole output allowance goes to the answer (and none to hidden thinking).
+models:
+  - provider: anthropic
+    model: claude-haiku-5-5
+    input_usd_per_million_tokens: 0.10   # prompts up to 100,000 tokens
+    output_usd_per_million_tokens: 0.50
+    price_checked: 2026-10-19
+    price_source: https://platform.claude.com/docs/en/about-claude/pricing
+  - provider: gemini
+    # gemini-2.5-flash-lite is "no longer available to new users" (API 404, 2026-10-19).
+    model: gemini-3.1-flash-lite
+    input_usd_per_million_tokens: 0.25   # text input, paid tier
+    output_usd_per_million_tokens: 1.50  # includes thinking tokens
+    price_checked: 2026-10-19
+    price_source: https://ai.google.dev/gemini-api/docs/pricing
+  - provider: openai
+    model: gpt-4.1-nano
+    input_usd_per_million_tokens: 0.10   # standard tier
+    output_usd_per_million_tokens: 0.40
+    price_checked: 2026-10-19
+    price_source: https://developers.openai.com/api/docs/pricing

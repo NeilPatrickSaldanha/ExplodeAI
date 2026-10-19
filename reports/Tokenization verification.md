@@ -180,3 +180,14 @@ A third issue came from the mobile e2e test: example chips were 36px on touch sc
 - **Toy scale.** With 216 merges on 1 KB of text, the trade-off curve has the right shape but production magnitudes are absent. Bytes per token (about 4.4 at the limit) is in-sample and must not be compared with tiktoken's "about 4 bytes"; the UI labels it in-sample.
 - **Inference, not quotation.** "Don't reuse token counts across providers" is inferred from provider statements that counts are tokenizer- and model-specific. No source states it in those words.
 - **Gage 1994** was read only on a third-party mirror in Pass 1 and is not cited directly. The lesson cites Sennrich's description of it.
+
+
+## Implementation statements (added 2026-10-19)
+
+The cinematic redesign added a "what breaks if removed?" statement for each of
+the 8 tokenizer stages. They describe ExplodeAI's own educational tokenizer, not
+any provider's, so they are validated by execution instead of citation:
+`backend/tests/test_tokenize_ablation.py` removes each stage, runs the tokenizer
+for real, and checks the stated effect (12 tests). The UI shows the same real run
+next to the full tokenizer, labelled "Real execution, stage removed". No new
+external claims were added, so no new research pass was needed.

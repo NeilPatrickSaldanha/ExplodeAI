@@ -1,4 +1,5 @@
-import type { ChunkOut, RagResult } from '../../api/types'
+import type { ChunkOut, RagResult, RagParams } from '../../api/types'
+import { LLMAnswerPanel } from './LLMAnswerPanel'
 
 /** Document text with chunk boundaries, overlaps, and retrieved chunks marked. */
 export function ChunkDocView({ result }: { result: RagResult }) {
@@ -123,7 +124,7 @@ export function PromptView({ result }: { result: RagResult }) {
   )
 }
 
-export function AnswerView({ result }: { result: RagResult }) {
+export function AnswerView({ result, params }: { result: RagResult; params?: RagParams }) {
   return (
     <div className="answerview">
       <p className="answerview__text" aria-live="polite">
@@ -140,6 +141,7 @@ export function AnswerView({ result }: { result: RagResult }) {
         with your question. A language model would write a fluent answer from the same prompt, and could still be
         wrong.
       </p>
+      {params && <LLMAnswerPanel key={JSON.stringify(params)} params={params} />}
     </div>
   )
 }

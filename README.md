@@ -28,23 +28,30 @@ docker compose up --build   # same ports
 
 No API keys are needed. Everything in the lesson runs locally and costs nothing.
 
-## API keys and paid AI (optional, off by default)
+## API keys and paid AI (optional)
 
-`backend/.env` (git-ignored) holds empty `OPENAI_API_KEY`, `GEMINI_API_KEY` and
-`ANTHROPIC_API_KEY` placeholders; `backend/.env.example` documents every setting.
-Paid calls are **impossible** until you deliberately:
+Everything works with no keys. Paid answers are an optional extra in the RAG
+lesson's **Experiment → Answer** tab ("Ask a real LLM"). The server builds the
+prompt from the lesson's pipeline, so the endpoint can't be used as a
+general-purpose paid proxy.
 
-1. add a key to `backend/.env`,
-2. set `AI_FEATURES_ENABLED=true`,
-3. allow-list the model with prices you copied from the provider's pricing page in
-   [`backend/app/ai/pricing.yaml`](backend/app/ai/pricing.yaml) (ships empty), and
-4. send `confirm_paid: true` with each request.
+To turn it on, add **one** key to `backend/.env` (git-ignored) and restart the
+backend: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `GEMINI_API_KEY`. Already
+configured:
 
-The backend also enforces a per-learner hourly request limit, a daily estimated
-budget, a max-output-token cap, a request timeout, and an emergency kill switch
-(`AI_EMERGENCY_DISABLE=true` blocks everything). Keys never leave the backend; the
-API only reports whether a key is *present*. See
-[docs/architecture.md § Paid AI guard](docs/architecture.md#paid-ai-guard).
+- `AI_FEATURES_ENABLED=true`, with `AI_EMERGENCY_DISABLE=true` as the kill switch.
+- **`AI_TOTAL_BUDGET_USD=4.00`**: a lifetime cap enforced server-side before
+  every call. There is also a $1/day cap, 10 requests/hour, a 300-token output
+  cap, and a 20 s timeout.
+- An allow-list with prices copied from the official pricing pages on 2026-10-19
+  (`backend/app/ai/pricing.yaml`): `claude-haiku-5-5`, `gemini-3.1-flash-lite`,
+  `gpt-4.1-nano`. One lesson answer costs well under $0.001 (live tests on 2026-10-19: $0.00003–$0.00011).
+- The worst-case cost is shown before each click, and each click is one confirmed
+  request. The ledger records the actual cost from the provider's reported token
+  counts, so the $4 cap tracks real spend.
+
+Keys stay in the backend. The API only ever reports whether a key is *present*,
+and the test suite blanks all keys so tests can never make a paid call.
 
 ## Repository layout
 

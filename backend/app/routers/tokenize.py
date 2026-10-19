@@ -6,6 +6,7 @@ from app.content.schema import Challenge
 from app.db import ExperimentRun, get_session
 from app.deps import experiment_limiter, learner_id
 from app.experiments.tokenize import pipeline
+from app.experiments.tokenize.ablation import ablate
 from app.experiments.tokenize.corpus import SAMPLE_CORPUS
 from app.routers.lessons import get_lesson_or_404
 
@@ -113,3 +114,18 @@ def check_challenge(
     result = _run(tok_params)
     return {**evaluate_challenge(challenge, result), "result": result}
 
+
+
+class AblationRequest(pipeline.TokenizeParams):
+    stage: str
+
+
+@router.post("/ablate")
+def ablate_stage(req: AblationRequest, learner: str = Depends(learner_id)):
+    """Run the tokenizer twice for real: as configured, and with one stage removed."""
+    experiment_limiter.check(learner)
+    params = pipeline.TokenizeParams.model_validate(req.model_dump(exclude={"stage"}))
+    try:
+        return {"baseline": ablate(params, None), "ablated": ablate(params, req.stage)}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc

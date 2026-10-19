@@ -152,6 +152,37 @@ export interface ChallengeCheck extends ChallengeOutcome {
   result: RagResult
 }
 
+/* ------------------------------------------------------------ paid AI */
+
+export interface AIModelOption {
+  provider: 'anthropic' | 'openai' | 'gemini'
+  model: string
+  usable: boolean
+  input_usd_per_million_tokens: number
+  output_usd_per_million_tokens: number
+  price_checked: string
+}
+
+export interface AIStatus {
+  enabled: boolean
+  emergency_disabled: boolean
+  allowed_models: AIModelOption[]
+  limits: { daily_budget_usd: number; total_budget_usd: number; spent_today_usd: number; spent_total_usd: number; max_output_tokens: number }
+}
+
+export interface LLMAnswer {
+  text: string
+  provider: string
+  model: string
+  input_tokens: number | null
+  output_tokens: number | null
+  cost_usd: number
+  max_cost_usd: number
+  spent_total_usd: number
+  included: string[]
+  is_llm: true
+}
+
 export interface RagConfig {
   defaults: RagParams
   embedders: { id: string; label: string; available: boolean }[]
@@ -256,4 +287,19 @@ export interface AblationOutcome {
 export interface AblationResult {
   baseline: AblationOutcome
   ablated: AblationOutcome
+}
+
+/* ------------------------------------------------- tokenization ablation */
+
+export interface TokenizeAblationOutcome {
+  removed: string | null
+  vocab_size: number
+  merges: number
+  crossing_word_boundary: number
+  tokens: number | null
+  preview: string[]
+  unk_count: number
+  decoded: string | null
+  round_trip: boolean
+  notes: string[]
 }

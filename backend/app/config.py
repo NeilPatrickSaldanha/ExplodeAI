@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     ai_features_enabled: bool = False
     ai_emergency_disable: bool = False
     ai_daily_budget_usd: float = 1.0
+    # Lifetime cap across all days: the sum of every recorded call may never exceed it.
+    ai_total_budget_usd: float = 4.0
     ai_max_requests_per_hour: int = 10
     ai_request_timeout_seconds: float = 20.0
     ai_max_output_tokens: int = 300

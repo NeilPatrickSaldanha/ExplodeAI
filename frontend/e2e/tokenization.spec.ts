@@ -6,7 +6,8 @@ async function openMode(page: Page, name: string) {
   await page.getByRole('tab', { name, exact: true }).click()
 }
 
-const panel = (page: Page) => page.getByRole('region', { name: 'Lesson activities' })
+const panel = (page: Page) => page.locator('.cine__panel')
+const stages = (page: Page) => page.getByRole('navigation', { name: 'Pipeline stages' })
 
 test('home lists lesson 02 and it opens', async ({ page }) => {
   await page.goto('/')
@@ -21,10 +22,14 @@ test('home lists lesson 02 and it opens', async ({ page }) => {
 test('3D view renders, parts carry live readouts and cited claims', async ({ page }) => {
   await page.goto(LESSON)
   await expect(page.locator('.exploded-view[data-mode="3d"] canvas')).toBeVisible()
-  await expect(page.locator('.lesson__status')).toContainText(/Verified: (\d+)\/\1 claims through all three passes/)
-  await page.getByRole('navigation', { name: 'Parts' }).getByRole('button', { name: /Base alphabet/ }).click()
+  await expect(page.locator('.cine__meta')).toContainText(/Verified: (\d+)\/\1 claims through all three passes/)
+  await expect(page.getByRole('list', { name: 'Flow legend' })).toContainText('Symbols & ids')
+  await stages(page).getByRole('button', { name: /Base alphabet/ }).click()
   await expect(page.locator('.part-label', { hasText: 'Base alphabet' })).toContainText('256 SYMBOLS')
   await expect(panel(page).getByRole('heading', { name: 'Base alphabet' })).toBeVisible()
+  await expect(panel(page).getByText('STAGE 03 / 08')).toBeVisible()
+  await expect(panel(page).locator('.io-card').nth(1)).toContainText('256 starting symbols')
+  await panel(page).locator('.fact__head').first().click()
   await expect(panel(page).locator('a.claim__source').first()).toHaveAttribute('href', /^https?:\/\//)
 
   await page.locator('.exploded-view').focus()
@@ -81,10 +86,10 @@ test('break & fix: unknown characters fail, a keyboard fix passes, progress pers
   await expect(bytes).toHaveAttribute('aria-checked', 'true')
   await page.getByRole('button', { name: 'Check my fix' }).click()
   await expect(page.locator('.challenges .check')).toContainText('Fixed.')
-  await expect(page.locator('.lesson__status')).toContainText('FIXED 1/4')
+  await expect(page.locator('.cine__meta')).toContainText('FIXED 1/4')
 
   await page.reload()
-  await expect(page.locator('.lesson__status')).toContainText('FIXED 1/4')
+  await expect(page.locator('.cine__meta')).toContainText('FIXED 1/4')
 })
 
 test('break & fix: the merges slider fixes the token budget from the keyboard', async ({ page }) => {
@@ -113,16 +118,35 @@ test('rebuild: reorder the tokenizer stages with buttons', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Check order' }).click()
   await expect(page.locator('.rebuild .check')).toContainText('Every stage runs after what it depends on.')
-  await expect(page.locator('.lesson__status')).toContainText('REBUILT YES')
+  await expect(page.locator('.cine__meta')).toContainText('REBUILT YES')
+})
+
+test('what breaks if removed: the tokenizer really runs without the merge learner', async ({ page }) => {
+  await page.goto(LESSON)
+  await stages(page).getByRole('button', { name: /Merge learner/ }).click()
+  await panel(page).getByRole('button', { name: 'Run without the merge learner' }).click()
+  const compare = panel(page).locator('.breaks__compare')
+  await expect(compare).toContainText('Real execution, stage removed')
+  await expect(compare).toContainText('Full tokenizer')
+  await expect(compare.locator('.outcome--broken')).toContainText('no merges: one token per base symbol')
+})
+
+test('tour stays in sync when you click a stage directly', async ({ page }) => {
+  await page.goto(LESSON)
+  await openMode(page, 'Tour')
+  await expect(page.getByText('TOUR · STEP 1 OF 8')).toBeVisible()
+  await stages(page).getByRole('button', { name: /Encoder/ }).click()
+  await expect(page.getByText('TOUR · STEP 7 OF 8')).toBeVisible()
+  await expect(panel(page).getByRole('heading', { name: 'Encoder' })).toBeVisible()
 })
 
 test('tour walks all eight stages; 2D fallback is keyboard operable', async ({ page }) => {
   await page.goto(LESSON)
   await openMode(page, 'Tour')
-  await expect(page.getByText('STEP 1 OF 8')).toBeVisible()
+  await expect(page.getByText('TOUR · STEP 1 OF 8')).toBeVisible()
   for (let i = 2; i <= 8; i++) {
-    await page.getByRole('button', { name: /Next/ }).click()
-    await expect(page.getByText(`STEP ${i} OF 8`)).toBeVisible()
+    await panel(page).getByRole('button', { name: 'Next stage' }).click()
+    await expect(page.getByText(`TOUR · STEP ${i} OF 8`)).toBeVisible()
   }
   await page.getByRole('button', { name: /3D/ }).click()
   const part = page.locator('.flat-diagram').getByRole('button', { name: /Encoder/ })
