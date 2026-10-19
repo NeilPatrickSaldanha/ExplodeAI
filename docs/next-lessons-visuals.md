@@ -47,3 +47,22 @@ Based on the Embeddings concept image. It builds directly on Lessons 01 and 02.
 1. **Attention, exploded:** Q/K/V projection plates, a score grid, softmax, a weighted sum. A real tiny attention computation runs on the backend; the heat-grid is the 2D precision view.
 2. **Tool-using agent, exploded:** planner → tool router → tools → observation → memory loop. The loop is the hero animation; it runs offline with deterministic stub tools, clearly labelled as simulation.
 3. **Evaluation harness, exploded:** dataset → runner → grader → metrics, reusing Lesson 01's challenges as test cases.
+
+## After more lessons: "Ask ExplodeAI" tutor chatbot (planned, requested 2026-10-19)
+
+A small chat tutor grounded only in ExplodeAI's own verified content. It is a RAG
+system built on the lessons themselves.
+
+- **Knowledge:** every lesson's claims (with citations), component details, tour
+  steps and challenge explanations, indexed with the local neural embedder
+  plus BM25 and RRF (Lesson 01's own techniques).
+- **Grounded answers:** every answer cites claim ids and sources. If retrieval
+  finds nothing relevant, it says the lessons don't cover it, with no
+  general-knowledge fallback.
+- **Tutor mode:** asks a check-question about the current stage, then explains
+  with that stage's real experiment or ablation result.
+- **Context-aware:** it knows the open lesson, the selected stage and the last run.
+- **Paid path:** reuses `/api/ai` (server-built prompt, cost shown per message,
+  $4 lifetime cap, kill switch). Roughly $0.0001 per turn.
+- **When:** after Lesson 03 (Embeddings) and at least one more lesson, so
+  cross-topic questions have material to connect.
