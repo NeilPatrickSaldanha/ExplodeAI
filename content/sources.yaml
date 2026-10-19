@@ -1,0 +1,194 @@
+# Source registry. Every claim in every lesson cites ids from this file.
+# `accessed` is when ExplodeAI's research pass read the source; `version` records
+# exactly which revision was read (arXiv version, docs "last updated" stamp, etc.).
+# Pass 1 notes with full excerpts: research_notes/RAG pipeline primary sources/
+sources:
+  # ---------------------------------------------------------------- papers
+  - id: lewis2020rag
+    title: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
+    authors: [Patrick Lewis, Ethan Perez, Aleksandra Piktus, et al.]
+    publisher: arXiv / NeurIPS 2020
+    url: https://arxiv.org/abs/2005.11401
+    type: paper
+    version: arXiv v4 (12 Apr 2021); full text read via ar5iv rendering
+    published: "2020"
+    accessed: 2026-10-18
+  - id: karpukhin2020dpr
+    title: Dense Passage Retrieval for Open-Domain Question Answering
+    authors: [Vladimir Karpukhin, Barlas Oğuz, Sewon Min, et al.]
+    publisher: arXiv / EMNLP 2020
+    url: https://arxiv.org/abs/2004.04906
+    type: paper
+    version: arXiv v3 (30 Sep 2020)
+    published: "2020"
+    accessed: 2026-10-18
+  - id: reimers2019sbert
+    title: "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks"
+    authors: [Nils Reimers, Iryna Gurevych]
+    publisher: arXiv / EMNLP 2019
+    url: https://arxiv.org/abs/1908.10084
+    type: paper
+    version: arXiv abstract page as of access date (submitted 27 Aug 2019)
+    published: "2019"
+    accessed: 2026-10-18
+  - id: malkov2016hnsw
+    title: Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs
+    authors: [Yu. A. Malkov, D. A. Yashunin]
+    publisher: arXiv
+    url: https://arxiv.org/abs/1603.09320
+    type: paper
+    version: arXiv v4 (14 Aug 2018); abstract in Pass 1, full text read in Pass 2
+    published: "2016"
+    accessed: 2026-10-18
+  - id: magesh2024legal
+    title: "Hallucination-Free? Assessing the Reliability of Leading AI Legal Research Tools"
+    authors: [Varun Magesh, Faiz Surani, Matthew Dahl, et al.]
+    publisher: arXiv
+    url: https://arxiv.org/abs/2405.20362
+    type: paper
+    version: arXiv v1 (30 May 2024); abstract
+    published: "2024"
+    accessed: 2026-10-18
+  - id: cormack2009rrf
+    title: Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods
+    authors: [Gordon V. Cormack, Charles L. A. Clarke, Stefan Büttcher]
+    publisher: SIGIR 2009 (pp. 758–759, DOI 10.1145/1571941.1572114)
+    url: http://cormack.uwaterloo.ca/cormacksigir09-rrf.pdf
+    type: paper
+    version: author PDF of the SIGIR '09 short paper
+    published: "2009"
+    accessed: 2026-10-18
+  - id: robertson2009bm25
+    title: "The Probabilistic Relevance Framework: BM25 and Beyond"
+    authors: [Stephen Robertson, Hugo Zaragoza]
+    publisher: Foundations and Trends in Information Retrieval 3(4), 333–389 (DOI 10.1561/1500000019)
+    url: https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf
+    type: paper
+    version: author-hosted PDF of the 2009 FnTIR monograph
+    published: "2009"
+    accessed: 2026-10-18
+  - id: liu2023lost
+    title: "Lost in the Middle: How Language Models Use Long Contexts"
+    authors: [Nelson F. Liu, Kevin Lin, John Hewitt, et al.]
+    publisher: arXiv / TACL vol. 12 (2024), pp. 157–173
+    url: https://arxiv.org/abs/2307.03172
+    type: paper
+    version: arXiv v3 (20 Nov 2023) PDF
+    published: "2023"
+    accessed: 2026-10-18
+    notes: Experiments use 2023-era models (e.g. GPT-3.5-Turbo, Claude-1.3).
+
+  # ------------------------------------------------------------- Anthropic
+  - id: anthropic_contextual_retrieval
+    title: Introducing Contextual Retrieval
+    publisher: Anthropic
+    url: https://www.anthropic.com/news/contextual-retrieval
+    type: official_blog
+    version: published 19 Sep 2024
+    published: "2024-09-19"
+    accessed: 2026-10-18
+    notes: Results are specific to Anthropic's 2024 evaluation setup.
+  - id: anthropic_embeddings
+    title: Embeddings
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/build-with-claude/embeddings
+    type: official_docs
+    version: live page at access date (docs.claude.com redirects here)
+    accessed: 2026-10-18
+  - id: anthropic_prompting
+    title: Prompting best practices (long context section)
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices
+    type: official_docs
+    version: live page at access date (older long-context tips page redirects here)
+    accessed: 2026-10-18
+  - id: anthropic_citations
+    title: Citations
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/build-with-claude/citations
+    type: official_docs
+    version: live page at access date
+    accessed: 2026-10-18
+  - id: anthropic_hallucinations
+    title: Reduce hallucinations
+    publisher: Anthropic (Claude Platform docs)
+    url: https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations
+    type: official_docs
+    version: live page at access date
+    accessed: 2026-10-18
+
+  # ---------------------------------------------------------------- OpenAI
+  - id: openai_embeddings
+    title: Vector embeddings guide
+    publisher: OpenAI (API docs)
+    url: https://developers.openai.com/api/docs/guides/embeddings
+    type: official_docs
+    version: live page at access date (no date shown; platform.openai.com redirects here)
+    accessed: 2026-10-18
+  - id: openai_retrieval
+    title: Retrieval guide
+    publisher: OpenAI (API docs)
+    url: https://developers.openai.com/api/docs/guides/retrieval
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-18
+
+  # ---------------------------------------------------------------- Google
+  - id: google_rag_engine
+    title: RAG Engine overview
+    publisher: Google Cloud
+    url: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/rag-engine/rag-overview
+    type: official_docs
+    version: last updated 2026-10-16 (page brands it part of Gemini Enterprise Agent Platform)
+    accessed: 2026-10-18
+  - id: google_grounding
+    title: Grounding overview
+    publisher: Google Cloud
+    url: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/grounding/overview
+    type: official_docs
+    version: last updated 2026-10-15
+    accessed: 2026-10-18
+
+  # ------------------------------------------------- libraries & frameworks
+  - id: faiss_guidelines
+    title: Guidelines to choose an index (wiki)
+    publisher: Meta AI Research — facebookresearch/faiss
+    url: https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index
+    type: official_docs
+    version: GitHub wiki page at access date
+    accessed: 2026-10-18
+  - id: faiss_metrics
+    title: MetricType and distances (wiki)
+    publisher: Meta AI Research — facebookresearch/faiss
+    url: https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances
+    type: official_docs
+    version: GitHub wiki page at access date
+    accessed: 2026-10-18
+  - id: sbert_retrieve_rerank
+    title: Retrieve & Re-Rank
+    publisher: Sentence Transformers documentation (Hugging Face)
+    url: https://sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html
+    type: framework_docs
+    version: docs for sentence-transformers v6.1.0
+    accessed: 2026-10-18
+  - id: sbert_cross_encoder
+    title: Cross-Encoders
+    publisher: Sentence Transformers documentation (Hugging Face)
+    url: https://sbert.net/examples/cross_encoder/applications/README.html
+    type: framework_docs
+    version: docs for sentence-transformers v6.1.0
+    accessed: 2026-10-18
+  - id: langchain_recursive_splitter
+    title: Recursive text splitter
+    publisher: LangChain documentation
+    url: https://docs.langchain.com/oss/python/integrations/splitters/recursive_text_splitter
+    type: framework_docs
+    version: live page at access date
+    accessed: 2026-10-18
+  - id: elasticsearch_similarity
+    title: Similarity settings (BM25 defaults)
+    publisher: Elastic documentation
+    url: https://www.elastic.co/docs/reference/elasticsearch/index-settings/similarity
+    type: reference
+    version: live page at access date
+    accessed: 2026-10-18

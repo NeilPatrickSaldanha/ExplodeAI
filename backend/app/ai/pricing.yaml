@@ -1,0 +1,15 @@
+# Paid model allow-list and prices used for SPENDING ESTIMATES.
+#
+# Fail-closed by design: a provider/model pair can only be called if it is listed
+# here with both prices filled in. Prices change; copy them from the provider's
+# official pricing page and record the date you checked. ExplodeAI ships with an
+# empty list so no paid call is possible until you add one deliberately.
+#
+# Example (values intentionally left blank — fill from the official page):
+# - provider: anthropic          # anthropic | openai | gemini
+#   model: <model id from the provider docs>
+#   input_usd_per_million_tokens: <number>
+#   output_usd_per_million_tokens: <number>
+#   price_checked: YYYY-MM-DD
+#   price_source: <official pricing URL>
+models: []

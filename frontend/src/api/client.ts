@@ -1,0 +1,69 @@
+import type {
+  ChallengeCheck,
+  Lesson,
+  LessonSummary,
+  Progress,
+  RagConfig,
+  RagParams,
+  RagResult,
+  ReconstructionResult,
+} from './types'
+
+const LEARNER_KEY = 'explodeai.learner'
+
+/** Anonymous per-browser id. Not personal data; never leaves our own backend. */
+export function learnerId(): string {
+  try {
+    let id = localStorage.getItem(LEARNER_KEY)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(LEARNER_KEY, id)
+    }
+    return id
+  } catch {
+    return 'anonymous'
+  }
+}
+
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', 'X-Learner-Id': learnerId(), ...init?.headers },
+  })
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`
+    try {
+      const body = await res.json()
+      const d = body.detail
+      message = typeof d === 'string' ? d : Array.isArray(d) ? d.map((e) => e.msg).join('; ') : d?.message ?? message
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiError(res.status, message)
+  }
+  return res.json() as Promise<T>
+}
+
+const post = <T>(path: string, body: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) })
+
+export const api = {
+  lessons: () => request<LessonSummary[]>('/api/lessons'),
+  lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
+  ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
+  runRag: (params: Partial<RagParams>) => post<RagResult>('/api/experiments/rag/run', params),
+  checkChallenge: (lessonId: string, challengeId: string, params: Partial<RagParams>) =>
+    post<ChallengeCheck>(`/api/experiments/rag/challenges/${lessonId}/${challengeId}/check`, params),
+  checkReconstruction: (lessonId: string, order: string[]) =>
+    post<ReconstructionResult>(`/api/lessons/${lessonId}/reconstruction/check`, { order }),
+  progress: (lessonId: string) => request<Progress>(`/api/progress/${lessonId}`),
+  saveProgress: (lessonId: string, update: Partial<Omit<Progress, 'lesson_id'>>) =>
+    request<Progress>(`/api/progress/${lessonId}`, { method: 'PUT', body: JSON.stringify(update) }),
+}

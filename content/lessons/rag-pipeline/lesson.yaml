@@ -1,0 +1,676 @@
+id: rag-pipeline
+title: Retrieval-Augmented Generation, exploded
+summary: >-
+  Take a RAG pipeline apart piece by piece. Run real chunking, embedding,
+  retrieval and prompt assembly, break it on purpose, and rebuild it.
+status: published
+version: 1.0.0
+updated: 2026-10-18
+estimated_minutes: 25
+objectives:
+  - Name the eight stages of a RAG pipeline and what each passes to the next.
+  - Predict how chunk size, overlap, top-k and context budget change what the model sees.
+  - Explain why lexical, dense and hybrid retrieval rank chunks differently.
+  - Diagnose a broken pipeline from its retrieved chunks and assembled prompt.
+prerequisites:
+  - Knowing that a language model reads text in its prompt and writes text back.
+verification_report: reports/RAG pipeline verification.md
+
+# ------------------------------------------------------------------ claims
+# primary = Pass 1 (primary-source research), cross_check = Pass 2,
+# technical = Pass 3 (execution / consistency checks). Pass records are
+# updated only from the written verification report.
+claims:
+  - id: rag-definition
+    kind: definition
+    text: RAG retrieves relevant information from a knowledge base and adds it to the model's prompt before the model answers.
+    citations:
+      - source: anthropic_contextual_retrieval
+        excerpt: "RAG is a method that retrieves relevant information from a knowledge base and appends it to the user's prompt"
+      - source: google_rag_engine
+        excerpt: "The retrieved information becomes the context added to the original user query as a guide for the generative AI model"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpt completed to the full source sentence."}
+      technical: {status: not_applicable, notes: "Definition; the experiment demonstrates it but cannot prove a definition."}
+
+  - id: rag-private-knowledge
+    kind: fact
+    text: A common reason to use RAG is that a model has no knowledge of private documents it was never trained on.
+    citations:
+      - source: google_rag_engine
+        excerpt: "A common problem with LLMs is that they don't understand private knowledge"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Motivation statement; not executable."}
+
+  - id: rag-small-kb
+    kind: provider_specific
+    provider: Anthropic
+    text: In a September 2024 post, Anthropic suggested that a knowledge base under about 200,000 tokens (roughly 500 pages) could simply be placed in the prompt instead of retrieved. That figure matched Claude's context window at the time; many current Claude models accept up to 1M tokens.
+    citations:
+      - source: anthropic_contextual_retrieval
+        excerpt: "smaller than 200,000 tokens (about 500 pages of material)"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Dated: 200k figure is from Sep 2024; current context windows noted."}
+      technical: {status: not_applicable, notes: "Vendor guidance tied to Claude context windows; would need paid calls to test."}
+
+  - id: rag-paper-architecture
+    kind: fact
+    text: The original 2020 RAG model paired a DPR retriever with a BART-large generator, over a dense vector index of Wikipedia.
+    citations:
+      - source: lewis2020rag
+        locator: abstract
+        excerpt: "the parametric memory is a pre-trained seq2seq model and the non-parametric memory is a dense vector index of Wikipedia"
+      - source: lewis2020rag
+        locator: §2.2–2.3
+        excerpt: "The retrieval component pη(z|x) is based on DPR"
+      - source: lewis2020rag
+        locator: §2.3
+        excerpt: "We use BART-large [32], a pre-trained seq2seq transformer [58] with 400M parameters."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added BART-large excerpt (§2.3)."}
+      technical: {status: not_applicable, notes: "Historical fact about a paper."}
+
+  - id: rag-paper-chunks
+    kind: fact
+    text: The RAG paper split a December 2018 Wikipedia dump into disjoint 100-word chunks, about 21 million in total.
+    citations:
+      - source: lewis2020rag
+        locator: §3
+        excerpt: "split into disjoint 100-word chunks, to make a total of 21M documents"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Historical fact about a paper."}
+
+  - id: rag-paper-frozen-index
+    kind: fact
+    text: In the RAG paper the document encoder and index stayed fixed; only the query encoder and generator were fine-tuned. Updating the document encoder would mean periodically rebuilding the index, which the authors called costly and found unnecessary for strong performance.
+    citations:
+      - source: lewis2020rag
+        locator: §2.4
+        excerpt: "keep the document encoder (and index) fixed, only fine-tuning the query encoder"
+      - source: lewis2020rag
+        locator: §2.4
+        excerpt: "is costly as it requires the document index to be periodically updated"
+      - source: lewis2020rag
+        locator: §2.4
+        excerpt: "We do not find this step necessary for strong performance"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added the paper's second reason (not needed for strong performance)."}
+      technical: {status: not_applicable, notes: "Historical fact about a paper."}
+
+  - id: rag-swap-index
+    kind: fact
+    text: Because knowledge lives in the index, it can be updated by replacing the index without retraining the generator.
+    citations:
+      - source: lewis2020rag
+        locator: §4.5
+        excerpt: "we can update RAG's world knowledge by simply replacing its non-parametric memory"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Demonstrate: changing the corpus changes answers with no other change. Evidence: test_replacing_the_corpus_changes_the_answer_without_other_changes."}
+
+  - id: rag-sequence-token
+    kind: fact
+    text: The paper describes two variants. RAG-Sequence uses one retrieved document for the whole answer, while RAG-Token can draw on a different document for each token.
+    citations:
+      - source: lewis2020rag
+        locator: §2.1
+        excerpt: "uses the same retrieved document to generate the complete sequence"
+      - source: lewis2020rag
+        locator: §2.1
+        excerpt: "we can draw a different latent document for each target token"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Describes the paper's model; ExplodeAI does not train generators."}
+
+  - id: chunking-affects-retrieval
+    kind: fact
+    text: Chunk size, chunk boundaries and overlap all change what retrieval can find.
+    citations:
+      - source: anthropic_contextual_retrieval
+        excerpt: "The choice of chunk size, chunk boundary, and chunk overlap can affect retrieval performance"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Demonstrate with the boundary-split challenge. Evidence: test_overlap_keeps_a_boundary_fact_intact; test_challenge_fails_when_broken_and_passes_when_fixed."}
+
+  - id: chunking-overlap
+    kind: fact
+    text: Overlapping chunks reduce the chance that a fact is cut in half at a chunk boundary.
+    citations:
+      - source: langchain_recursive_splitter
+        excerpt: "Overlapping chunks helps to mitigate loss of information when context is divided between chunks."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Unit test: a fact split at overlap 0 survives intact with overlap. Evidence: test_overlap_keeps_a_boundary_fact_intact."}
+
+  - id: chunking-context-loss
+    kind: fact
+    text: Splitting documents into chunks can strip away context a chunk needs to be understood. Anthropic's Contextual Retrieval adds a short chunk-specific explanation before embedding.
+    citations:
+      - source: anthropic_contextual_retrieval
+        excerpt: "traditional RAG solutions remove context when encoding information"
+      - source: anthropic_contextual_retrieval
+        excerpt: "prepending chunk-specific explanatory context to each chunk before embedding"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Generating context per chunk needs a paid model call."}
+
+  - id: openai-chunk-defaults
+    kind: provider_specific
+    provider: OpenAI
+    text: OpenAI vector stores (which back the file search tool) currently default to 800-token chunks with a 400-token overlap. A custom static strategy allows 100–4096-token chunks, with overlap at most half the chunk size.
+    citations:
+      - source: openai_retrieval
+        excerpt: "By default, `max_chunk_size_tokens` is set to `800` and `chunk_overlap_tokens` is set to `400`"
+      - source: openai_retrieval
+        excerpt: "`max_chunk_size_tokens` must be between 100 and 4096 inclusive."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Scoped to vector stores; \"currently\" qualifier added."}
+      technical: {status: not_applicable, notes: "Provider default; verifying it would need the paid API."}
+
+  - id: embedding-definition
+    kind: definition
+    text: An embedding is a vector of numbers. Small distances between vectors suggest related text, and large distances suggest unrelated text.
+    citations:
+      - source: openai_embeddings
+        excerpt: "An embedding is a vector (list) of floating point numbers."
+      - source: openai_embeddings
+        excerpt: "Small distances suggest high relatedness and large distances suggest low relatedness."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Test: related chunks score higher than unrelated ones for a query. Evidence: test_neural_embedding_places_a_paraphrase_closer_than_unrelated_text (bge-small-en-v1.5, local)."}
+
+  - id: cosine-dot-normalized
+    kind: fact
+    text: For vectors normalised to length 1, the dot product equals cosine similarity, which is why many systems normalise first.
+    citations:
+      - source: openai_embeddings
+        excerpt: "Cosine similarity can be computed slightly faster using just a dot product"
+      - source: faiss_metrics
+        excerpt: "This is not by itself cosine similarity, unless the vectors are normalized"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Numeric test on random and real vectors. Evidence: test_dot_product_equals_cosine_for_unit_vectors."}
+
+  - id: openai-embedding-dims
+    kind: provider_specific
+    provider: OpenAI
+    text: OpenAI's text-embedding-3-small returns 1536 dimensions and text-embedding-3-large returns 3072 by default, normalised to length 1.
+    citations:
+      - source: openai_embeddings
+        excerpt: "By default, the length of the embedding vector is `1536` for `text-embedding-3-small` or `3072` for `text-embedding-3-large`"
+      - source: openai_embeddings
+        excerpt: "OpenAI embeddings are normalized to length 1"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpt now includes \"By default\"."}
+      technical: {status: not_applicable, notes: "Provider behaviour; verifying it would need the paid API."}
+
+  - id: anthropic-no-embeddings
+    kind: provider_specific
+    provider: Anthropic
+    text: Anthropic does not offer its own embedding model. Its docs use Voyage AI (now part of MongoDB) as an example provider and recommend setting input_type to query or document for retrieval.
+    citations:
+      - source: anthropic_embeddings
+        excerpt: "Anthropic does not offer its own embedding model."
+      - source: anthropic_embeddings
+        excerpt: "One embeddings provider with a wide variety of models and capabilities is Voyage AI by MongoDB."
+      - source: anthropic_embeddings
+        excerpt: "Do not omit `input_type` or set `input_type=None`."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Voyage is one example provider; input_type is recommended, not required."}
+      technical: {status: not_applicable, notes: "Provider documentation fact."}
+
+  - id: bi-encoder
+    kind: fact
+    text: A bi-encoder embeds queries and passages separately, so passages can be embedded once, ahead of time, and compared with any later query.
+    citations:
+      - source: sbert_retrieve_rerank
+        excerpt: "The bi-encoder produces embeddings independently for your paragraphs and for your search queries."
+      - source: reimers2019sbert
+        locator: abstract
+        excerpt: "derive semantically meaningful sentence embeddings that can be compared using cosine-similarity"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Consistency check: the pipeline embeds chunks before and independently of the query. Evidence: test_chunk_vectors_do_not_depend_on_the_query (consistency of ExplodeAI pipeline)."}
+
+  - id: dpr-dot-product
+    kind: fact
+    text: Dense Passage Retrieval scores a passage by the inner (dot) product of separate question and passage encodings.
+    citations:
+      - source: karpukhin2020dpr
+        locator: §3.1
+        excerpt: "we thus choose the simpler inner product function"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Describes the paper's model."}
+
+  - id: flat-index-exact
+    kind: fact
+    text: A flat index compares the query with every stored vector, so its results are exact. Approximate indexes such as HNSW trade some accuracy for much faster search.
+    citations:
+      - source: faiss_guidelines
+        excerpt: "The only index that can guarantee exact results is the IndexFlatL2 or IndexFlatIP."
+      - source: malkov2016hnsw
+        locator: abstract
+        excerpt: "We present a new approach for the approximate K-nearest neighbor search based on navigable small world graphs with controllable hierarchy"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Replaced HNSW excerpt with one that states approximation; Faiss guidelines excerpt added."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Test: ExplodeAI's flat index matches a brute-force sort exactly. HNSW itself is not executed. Evidence: test_flat_index_matches_brute_force_ordering. Exactness only; HNSW speed/accuracy trade-off rests on sources.."}
+
+  - id: hnsw-log-scaling
+    kind: fact
+    text: HNSW's authors report search cost that scales logarithmically with the number of stored vectors. Their analysis assumes idealised graphs and matches their experiments on low-dimensional data.
+    citations:
+      - source: malkov2016hnsw
+        locator: abstract
+        excerpt: "allows a logarithmic complexity scaling"
+      - source: malkov2016hnsw
+        locator: §4.2
+        excerpt: "the overall complexity scaling is O(log(N)), in agreement with the simulations on low dimensional datasets"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "Authors' claim; full text not read."}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Qualified: idealised graphs, low-dimensional experiments (full text §4.2)."}
+      technical: {status: not_applicable, notes: "No HNSW implementation in this lesson."}
+
+  - id: bm25-mechanics
+    kind: fact
+    text: BM25 scores keyword matches with diminishing returns for repeated terms (controlled by k1) and adjusts for document length (controlled by b; b = 0 turns length normalisation off).
+    citations:
+      - source: robertson2009bm25
+        locator: §3.4
+        excerpt: "any one term's contribution to the document score cannot exceed a saturation point"
+      - source: robertson2009bm25
+        locator: §3.4
+        excerpt: "setting b = 1 will perform full document-length normalisation, while b = 0 will switch normalisation off"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Unit tests on ExplodeAI's BM25: saturation bound and b = 0. Evidence: test_bm25_term_frequency_saturates; test_bm25_b_zero_ignores_document_length."}
+
+  - id: bm25-defaults
+    kind: fact
+    text: k1 = 1.2 and b = 0.75 are Elasticsearch's defaults. Robertson and Zaragoza give ranges (0.5 < b < 0.8, 1.2 < k1 < 2) rather than one correct value.
+    citations:
+      - source: elasticsearch_similarity
+        excerpt: "Controls non-linear term frequency normalization (saturation). The default value is `1.2`."
+      - source: elasticsearch_similarity
+        excerpt: "Controls to what degree document length normalizes tf values. The default value is `0.75`."
+      - source: robertson2009bm25
+        locator: §3.5
+        excerpt: "values such as 0.5 < b < 0.8 and 1.2 < k1 < 2 are reasonably good in many circumstances"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added the k1 = 1.2 excerpt."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Consistency check: ExplodeAI's BM25 uses k1 = 1.2, b = 0.75. Evidence: test_bm25_uses_elasticsearch_defaults (consistency)."}
+
+  - id: lexical-misses-synonyms
+    kind: fact
+    text: Plain keyword search only matches the words used, so it misses synonyms and rephrasings unless synonyms or query expansion are added. Neural embedding models are trained to place such paraphrases close together, so they often catch them.
+    citations:
+      - source: sbert_retrieve_rerank
+        excerpt: "It will not recognize synonyms, acronyms or spelling variations."
+      - source: sbert_retrieve_rerank
+        excerpt: "Semantic search overcomes the shortcomings of lexical search and can recognize synonym and acronyms."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Softened: synonym expansion exists; neural models \"often\" catch paraphrases."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Test: a synonym-only query gets zero BM25 score on the target chunk. Evidence: test_lexical_retrieval_misses_a_synonym_only_query; test_neural_retrieval_finds_refunds_where_lexical_fails."}
+
+  - id: rrf
+    kind: fact
+    text: Reciprocal rank fusion merges rankings with score(d) = Σ 1/(k + rank). It uses only ranks, not raw scores, and the paper fixed k = 60.
+    citations:
+      - source: cormack2009rrf
+        excerpt: "where k = 60 was fixed during a pilot investigation and not altered during subsequent validation"
+      - source: cormack2009rrf
+        excerpt: "combines ranks without regard to the arbitrary scores returned by particular ranking methods"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Unit test of ExplodeAI's RRF against the formula and score-invariance. Evidence: test_rrf_matches_formula_and_ignores_raw_scores."}
+
+  - id: hybrid-contextual-results
+    kind: provider_specific
+    provider: Anthropic
+    text: In Anthropic's 2024 tests (averaged across its datasets with the best embedding setup), top-20 retrieval failure fell 35% with contextual embeddings, 49% when contextual BM25 was added, and 67% with reranking on top.
+    citations:
+      - source: anthropic_contextual_retrieval
+        excerpt: "Contextual Embeddings reduced the top-20-chunk retrieval failure rate by 35%"
+      - source: anthropic_contextual_retrieval
+        excerpt: "Combining Contextual Embeddings and Contextual BM25 reduced the top-20-chunk retrieval failure rate by 49%"
+      - source: anthropic_contextual_retrieval
+        excerpt: "reduced the top-20-chunk retrieval failure rate by 67%"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "Setup-specific vendor results (metric: 1 − recall@20)."}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added 49% excerpt; results are averages under the best embedding setup."}
+      technical: {status: not_applicable, notes: "Reproducing needs the vendor's dataset and paid model calls."}
+
+  - id: rerank-cross-encoder
+    kind: fact
+    text: A common pattern is to retrieve many candidates cheaply with a bi-encoder, then rerank them with a slower but more accurate cross-encoder.
+    citations:
+      - source: sbert_cross_encoder
+        excerpt: "use an efficient Bi-Encoder to retrieve e.g. the top-100 most similar sentences for a query"
+      - source: sbert_cross_encoder
+        excerpt: "Cross-Encoder achieve better performances than Bi-Encoders."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "No cross-encoder model in the offline lesson."}
+
+  - id: dpr-beats-bm25
+    kind: fact
+    text: On four of the five open-domain QA benchmarks it was tested on (all except SQuAD), DPR beat a tuned Lucene BM25 baseline by about 9–19 points of top-20 passage retrieval accuracy.
+    citations:
+      - source: karpukhin2020dpr
+        locator: abstract
+        excerpt: "outperforms a strong Lucene-BM25 system largely by 9%-19% absolute"
+      - source: karpukhin2020dpr
+        locator: §5.1
+        excerpt: "With the exception of SQuAD, DPR performs consistently better than BM25 on all datasets."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "DISPUTED as first written (SQuAD exception, §5.1 / Table 2); rewritten from the paper and re-checked."}
+      technical: {status: not_applicable, notes: "Benchmark result from the paper."}
+
+  - id: prompt-docs-first
+    kind: provider_specific
+    provider: Anthropic
+    text: For long inputs (20k+ tokens), Anthropic recommends putting documents at the top of the prompt, above the instructions and the question. With several documents, each goes in its own <document> tag with <source> and <document_content> subtags.
+    citations:
+      - source: anthropic_prompting
+        excerpt: "Place your long documents and inputs near the top of your prompt, above your query, instructions, and examples."
+      - source: anthropic_prompting
+        excerpt: "wrap each document in `<document>` tags with `<document_content>` and `<source>` (and other metadata) subtags"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added the 20k+ token and multi-document qualifiers. Vendors differ (OpenAI GPT-4.1 guide)."}
+      technical: {status: passed, date: 2026-10-18, by: "pass3/pytest", notes: "Consistency check: ExplodeAI's prompt template follows this layout. Evidence: test_prompt_puts_documents_first_and_question_last (template consistency, not model behaviour)."}
+
+  - id: lost-in-middle
+    kind: fact
+    text: In a 2023 study, models used information at the start or end of a long context better than information in the middle, giving a U-shaped accuracy curve.
+    citations:
+      - source: liu2023lost
+        excerpt: "we observe a distinctive U-shaped performance curve"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research", notes: "2023-era models; newer models may differ."}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Needs many paid LLM calls to reproduce."}
+
+  - id: rag-hallucination
+    kind: fact
+    text: Retrieval reduces hallucination but does not eliminate it. A 2024 study found commercial RAG-based legal research tools still hallucinated 17–33% of the time, so answers need checking against their sources.
+    citations:
+      - source: lewis2020rag
+        locator: §4.2
+        excerpt: "RAG models hallucinate less and generate factually correct text more often than BART"
+      - source: magesh2024legal
+        locator: abstract
+        excerpt: "It is the first to assess and report the performance of RAG-based proprietary legal AI tools."
+      - source: magesh2024legal
+        locator: abstract
+        excerpt: "each hallucinate between 17% and 33% of the time"
+      - source: anthropic_hallucinations
+        excerpt: "while these techniques significantly reduce hallucinations, they don't eliminate them entirely. Always validate critical information"
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Added Magesh et al. 2024 (17–33% in RAG legal tools); Anthropic excerpt lengthened."}
+      technical: {status: not_applicable, notes: "Requires LLM evaluation."}
+
+  - id: citations-feature
+    kind: provider_specific
+    provider: Anthropic
+    text: Claude's Citations feature splits plain-text and PDF documents into sentences and returns citations that point back into the documents you supplied.
+    citations:
+      - source: anthropic_citations
+        excerpt: "By default, plain text and PDF documents are automatically chunked into sentences."
+      - source: anthropic_citations
+        excerpt: "citations are guaranteed to contain valid pointers to the provided documents."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Provider feature; needs paid calls."}
+
+  - id: grounding-definition
+    kind: definition
+    text: Grounding means connecting a model's output to sources that can be checked.
+    citations:
+      - source: google_grounding
+        excerpt: "grounding is the ability to connect model output to verifiable sources of information."
+    verification:
+      primary: {status: passed, date: 2026-10-18, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-18, by: "pass2/independent-cross-check", notes: "Excerpts matched verbatim; independent source agrees."}
+      technical: {status: not_applicable, notes: "Definition."}
+
+# --------------------------------------------------------------- 3D model
+# position = assembled (compact) layout; explode = offset applied at full explosion.
+# Exploded layout: ingestion runs left→right along the back row; the stored index
+# (behind) and the query embedding (in front) converge on the retriever, and the
+# answer path runs back right→left through the middle.
+components:
+  - id: corpus
+    label: Knowledge source
+    phase: ingestion
+    short: The documents the model can draw on.
+    detail: Private or recent text the model was never trained on. Here it is six fictional help-centre articles.
+    claims: [rag-definition, rag-private-knowledge, rag-small-kb, rag-swap-index]
+    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    position: [-1.65, 0, -0.55]
+    explode: [-3.75, 0, -2.05]
+  - id: chunker
+    label: Chunker
+    phase: ingestion
+    short: Splits documents into retrievable pieces.
+    detail: Chunks are the unit of retrieval. If a fact is split across a boundary, no single chunk holds all of it.
+    claims: [chunking-affects-retrieval, chunking-overlap, chunking-context-loss, openai-chunk-defaults, rag-paper-chunks]
+    geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
+    position: [-0.55, 0, -0.55]
+    explode: [-1.25, 0, -2.05]
+  - id: embedder
+    label: Chunk embedder
+    phase: ingestion
+    short: Turns each chunk into a vector.
+    detail: Every chunk is encoded once, ahead of time. With a neural embedding model, nearby vectors mean related text. The built-in embedder here is lexical, so only shared words bring vectors together.
+    claims: [embedding-definition, openai-embedding-dims, anthropic-no-embeddings, bi-encoder]
+    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    position: [0.55, 0, -0.55]
+    explode: [1.25, 0, -2.05]
+  - id: vector_index
+    label: Vector index
+    phase: ingestion
+    short: Stores vectors for fast lookup.
+    detail: A flat index checks every vector, so it is exact. Approximate indexes like HNSW scale to millions of vectors.
+    claims: [flat-index-exact, hnsw-log-scaling, rag-paper-frozen-index]
+    geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
+    position: [1.65, 0, -0.55]
+    explode: [3.75, 0, -2.05]
+  - id: query_encoder
+    label: Query embedder
+    phase: query
+    short: Encodes the question into the chunks' vector space.
+    detail: The question must land in the same vector space as the chunks so the two can be compared. Some systems use one model for both; DPR trains a separate question encoder.
+    claims: [bi-encoder, dpr-dot-product, anthropic-no-embeddings]
+    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    position: [1.65, 0, 0.55]
+    explode: [3.75, 0, 2.05]
+  - id: retriever
+    label: Retriever
+    phase: query
+    short: Ranks chunks and keeps the top k.
+    detail: Dense retrieval compares vectors, BM25 matches keywords, and hybrid retrieval fuses both rankings.
+    claims: [cosine-dot-normalized, bm25-mechanics, bm25-defaults, lexical-misses-synonyms, rrf, hybrid-contextual-results, rerank-cross-encoder, dpr-beats-bm25]
+    geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
+    position: [0.55, 0, 0.55]
+    explode: [4.85, 0, -0.55]
+  - id: prompt_builder
+    label: Prompt assembler
+    phase: generation
+    short: Packs retrieved chunks and the question into one prompt.
+    detail: Documents go first, then the instructions and the question. Whatever exceeds the budget is dropped.
+    claims: [prompt-docs-first, lost-in-middle]
+    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    position: [-0.55, 0, 0.55]
+    explode: [2.35, 0, -0.55]
+  - id: generator
+    label: Generator
+    phase: generation
+    short: Writes an answer from the assembled prompt.
+    detail: A language model answers from the context. Offline, ExplodeAI uses a transparent extractive baseline instead.
+    claims: [rag-sequence-token, rag-paper-architecture, rag-hallucination, citations-feature, grounding-definition]
+    geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
+    position: [-1.65, 0, 0.55]
+    explode: [-0.15, 0, -0.55]
+
+connections:
+  - {source: corpus, target: chunker, payload: documents}
+  - {source: chunker, target: embedder, payload: chunks}
+  - {source: embedder, target: vector_index, payload: chunk vectors}
+  - {source: vector_index, target: retriever, payload: searchable index}
+  - {source: query_encoder, target: retriever, payload: query vector}
+  - {source: retriever, target: prompt_builder, payload: top-k chunks}
+  - {source: prompt_builder, target: generator, payload: assembled prompt}
+
+visuals:
+  - id: exploded-view
+    kind: conceptual
+    label: Conceptual diagram
+    description: Positions and shapes are a visual metaphor. Data flow follows the real pipeline order.
+  - id: data-flow
+    kind: conceptual
+    label: Conceptual animation
+    description: Moving packets show which stage feeds which. Their speed carries no meaning.
+  - id: experiment
+    kind: real_execution
+    label: Real execution
+    description: Chunking, embedding, retrieval and prompt assembly run on the ExplodeAI backend with the parameters you set.
+  - id: vector-space
+    kind: real_execution
+    label: Real data, approximate projection
+    description: The real chunk and query vectors are projected to 3D with PCA. 3D distances only approximate the true ones.
+  - id: answer
+    kind: real_execution
+    label: Real execution, not an LLM
+    description: The offline answer is an extractive baseline that quotes retrieved sentences. It is not a language model.
+
+experiment:
+  engine: rag
+  endpoint: /api/experiments/rag/run
+  corpus_note: Fictional sample data; nothing in it is a claim about the world.
+  presets:
+    - label: Return policy
+      query: How long do I have to return a bike, and what must I include?
+    - label: Warranty
+      query: What does the warranty cover for the frame and for components like brakes?
+    - label: Battery storage
+      query: How should I store the battery long term?
+    - label: Synonym test (lexical embedder fails it)
+      query: Can I get my money back?
+
+challenges:
+  - id: boundary-split
+    title: The fact that got cut in half
+    brief: The return window is split across two chunks, so no retrieved chunk contains all of it. Fix the chunking without changing the question, strategy or retriever.
+    broken_params: {query: "How long do I have to return a bike, and what must I include?", strategy: fixed, chunk_size: 8, overlap: 0, top_k: 3, method: dense, context_budget_words: 200}
+    locked_params: [query, strategy, method]
+    checks:
+      - {type: gold_in_retrieved, gold: ["within 30 days of delivery", "original packaging"]}
+    hint: Look at where chunk returns#0 ends and returns#1 begins. Overlap keeps the phrase whole somewhere, but does that chunk rank high enough?
+    explanation: Fixed-size chunks ignore sentence boundaries. Overlap can keep a phrase intact, but tiny chunks carry so few words that the intact one may still rank too low. Here, larger chunks fix both problems; very large chunks can instead bury a fact among unrelated text.
+    claims: [chunking-affects-retrieval, chunking-overlap]
+  - id: too-few-results
+    title: Half an answer
+    brief: The question needs two facts that live in different chunks, but the retriever only returns one. Fix it using retrieval settings only.
+    broken_params: {query: "What does the warranty cover for the frame and for components like brakes?", strategy: sentence, chunk_size: 20, overlap: 0, top_k: 1, method: hybrid, context_budget_words: 200}
+    locked_params: [query, strategy, chunk_size, overlap, method]
+    checks:
+      - {type: gold_in_retrieved, gold: ["lifetime warranty", "covered for 2 years"]}
+    hint: How many chunks does the answer need?
+    explanation: Top-k sets how many chunks the retriever passes on (the context budget can still drop some). Too few, and multi-part answers lose a part; too many, and the prompt fills with noise.
+    claims: [rag-definition]
+  - id: ranking-miss
+    title: The ranker that missed
+    brief: With k = 3, dense retrieval still misses the chunk about the frame's lifetime warranty. Keep k at 3 and change how chunks are ranked.
+    broken_params: {query: "What does the warranty cover for the frame and for components like brakes?", strategy: sentence, chunk_size: 20, overlap: 0, top_k: 3, method: dense, context_budget_words: 200}
+    locked_params: [query, strategy, chunk_size, overlap, top_k]
+    checks:
+      - {type: gold_in_retrieved, gold: ["lifetime warranty", "covered for 2 years"]}
+    hint: Compare the dense rank and the BM25 rank of warranty#0.
+    explanation: Different rankers make different mistakes. Reciprocal rank fusion rewards chunks that rank well in both lists, so a chunk one ranker misses can still make the cut when the other ranks it highly enough.
+    claims: [rrf, bm25-mechanics]
+  - id: budget-overflow
+    title: Retrieved, then dropped
+    brief: The right chunk is retrieved, but it never reaches the model. Fix it without changing retrieval.
+    broken_params: {query: "How should I store the battery long term?", strategy: sentence, chunk_size: 40, overlap: 0, top_k: 3, method: dense, context_budget_words: 15}
+    locked_params: [query, strategy, chunk_size, overlap, top_k, method]
+    checks:
+      - {type: gold_in_prompt, gold: ["between 40 and 60 percent"]}
+    hint: Read the prompt panel. Which chunks were dropped, and why?
+    explanation: Retrieval and prompt assembly are separate stages. In this pipeline, a context budget that is too small silently drops evidence the retriever found.
+    claims: []
+
+reconstruction:
+  prompt: Put the stages in an order that could actually run. Each stage must come after everything it needs.
+  dependencies:
+    corpus: []
+    chunker: [corpus]
+    embedder: [chunker]
+    vector_index: [embedder]
+    query_encoder: []
+    retriever: [vector_index, query_encoder]
+    prompt_builder: [retriever]
+    generator: [prompt_builder]
+
+tour:
+  - component: corpus
+    title: Start with what the model doesn't know
+    body: RAG gives a model text to read at answer time, like private docs or anything newer than its training.
+    claims: [rag-definition, rag-private-knowledge]
+  - component: chunker
+    title: Cut documents into retrievable pieces
+    body: Retrieval returns chunks, not documents, so where you cut decides what can come back.
+    claims: [chunking-affects-retrieval]
+  - component: embedder
+    title: Turn chunks into vectors
+    body: Each chunk becomes a point in a vector space. With a neural model, related text lands close together; this lesson's built-in embedder only groups shared words.
+    claims: [embedding-definition, bi-encoder]
+  - component: vector_index
+    title: Store the vectors
+    body: This index checks every vector, so it is exact. Large systems switch to approximate indexes to stay fast.
+    claims: [flat-index-exact]
+  - component: query_encoder
+    title: Encode the question the same way
+    body: The question is embedded into the same space, so it can be compared with the chunks.
+    claims: [bi-encoder]
+  - component: retriever
+    title: Rank and keep the top k
+    body: Dense, keyword and hybrid retrieval rank chunks differently. Try all three in the experiment.
+    claims: [cosine-dot-normalized, rrf]
+  - component: prompt_builder
+    title: Assemble the prompt
+    body: Chunks go in first, the question last. Whatever doesn't fit the budget never reaches the model.
+    claims: [prompt-docs-first]
+  - component: generator
+    title: Generate, and check the sources
+    body: Grounded answers can still be wrong. Citations let you check them.
+    claims: [rag-hallucination, grounding-definition]

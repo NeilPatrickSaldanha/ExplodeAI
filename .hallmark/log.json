@@ -1,0 +1,13 @@
+[
+  {
+    "date": "2026-10-18",
+    "macrostructure": "Map / Diagram",
+    "theme": "custom",
+    "theme_axes": "dark|light / classical-serif / warm|cool",
+    "vibe": "Lumen-tuned instrument: one 3D apparatus, real readouts",
+    "enrichment": "3D exploded view (interactive apparatus)",
+    "nav": "N9",
+    "footer": "Ft2",
+    "brief": "ExplodeAI · visual-first AI engineering lessons (RAG pipeline)"
+  }
+]

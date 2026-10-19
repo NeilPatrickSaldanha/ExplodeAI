@@ -1,0 +1,39 @@
+[project]
+name = "explodeai-backend"
+version = "0.1.0"
+description = "ExplodeAI API: lesson content, real experiments, progress, and guarded AI proxy."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.146.0",
+    "httpx>=0.28.1",
+    "numpy>=2.5.4",
+    "pydantic-settings>=2.16.0",
+    "pyyaml>=6.0.3",
+    "sqlmodel>=0.0.48",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.optional-dependencies]
+# Local neural embeddings (free, runs offline after a one-time model download).
+neural = ["fastembed"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]  # FastAPI Depends() in defaults is the documented idiom
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
