@@ -48,7 +48,7 @@ Based on the Embeddings concept image. It builds directly on Lessons 01 and 02.
 2. **Tool-using agent, exploded:** planner → tool router → tools → observation → memory loop. The loop is the hero animation; it runs offline with deterministic stub tools, clearly labelled as simulation.
 3. **Evaluation harness, exploded:** dataset → runner → grader → metrics, reusing Lesson 01's challenges as test cases.
 
-## After more lessons: "Ask ExplodeAI" tutor chatbot (planned, requested 2026-10-19)
+## "Ask ExplodeAI" tutor chatbot (built 2026-10-20; the original plan follows)
 
 A small chat tutor grounded only in ExplodeAI's own verified content. It is a RAG
 system built on the lessons themselves.

@@ -69,3 +69,19 @@ test('stage explanations work on a phone: sections open, the demo plays, no side
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect(overflow).toBeLessThanOrEqual(0)
 })
+
+test('the tutor is a roomy sheet on a phone: big buttons, answer visible, no sideways scroll', async ({ page }) => {
+  await page.goto('/lessons/attention')
+  const fab = page.getByRole('button', { name: 'Ask ExplodeAI' })
+  expect((await fab.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await fab.click()
+  const sheet = page.locator('.tutor')
+  await page.getByLabel('Your question').fill('What is the causal mask?')
+  await page.getByRole('button', { name: 'Ask', exact: true }).click()
+  await expect(sheet.locator('.tmsg--tutor')).toBeVisible()
+  const box = (await sheet.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})

@@ -104,6 +104,13 @@ const STEPS: Step[] = [
     place: 'above',
   },
   {
+    id: 'ask',
+    title: 'Ask the tutor',
+    body: 'Stuck? Ask a question in your own words. Answers quote only ExplodeAI\'s verified lessons, with the claims and sources behind every sentence, and the tutor tells you when the lessons do not cover something. It can also quiz you on the stage you have open.',
+    target: '.tutor-fab',
+    place: 'left',
+  },
+  {
     id: 'keys',
     title: 'Keyboard and touch',
     body: 'Tab reaches every control. With the model focused, arrow keys move between stages, Enter isolates one and Escape clears it. On phones, tap a stage card instead of dragging.',

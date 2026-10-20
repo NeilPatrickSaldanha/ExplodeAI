@@ -19,6 +19,16 @@ playable example, expandable depth, links to neighbouring stages), the Tour mode
 itself with a visible countdown, and first-time visitors get an optional interactive
 walkthrough that is remembered and can be replayed from "How to use".
 
+## Ask ExplodeAI (grounded tutor)
+
+A chat tutor in every lesson that answers **only** from ExplodeAI's own verified content: claims,
+stage explanations, tours and challenge write-ups. Each sentence shows the verified claims behind it,
+with their sources one click away. If the lessons do not cover a question it says so instead of
+guessing. It knows which stage you have open, and "Quiz me" asks questions about it. Answers are free
+and offline (hybrid search plus extractive quoting). An optional, paid, per-click "Polish with AI"
+rewrites the answer from the same passages through the backend's spend guard; it is off unless you
+enable it, shows its worst-case cost first, and costs nothing for questions the lessons don't cover.
+
 ## Quick start
 
 Requirements: [uv](https://docs.astral.sh/uv/) ≥ 0.13, Node ≥ 22.

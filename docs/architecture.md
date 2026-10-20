@@ -68,6 +68,16 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   an output projection. Every statement is checked against an independent plain-Python loop
   implementation. Ablation lives in `attend/ablation.py`; checks are `no_future_attention`,
   `not_saturated` and `order_matters`.
+- **Tutor** (`backend/app/tutor/`, `routers/tutor.py`) — a RAG system over the lessons
+  themselves. `index.py` splits every lesson into ~470 passages (claims, stage explanations,
+  tours, challenges), each linked to its verified claims and sources; analogies are flagged as
+  teaching aids. `search.py` fuses BM25 and the local bge embedder with reciprocal rank fusion,
+  nudges towards the open lesson and stage (more when the question is vague), and gates relevance:
+  a question the lessons do not cover returns nothing. `answer.py` quotes the best sentences and
+  attaches the claims and sources behind each. `quiz.py` builds tutor-mode questions from stage
+  explanations. `prompt.py` builds the paid prompt on the server from retrieved passages only and
+  strips any citation to a claim that was not in it. Retrieval quality is measured by
+  `tests/test_tutor_eval.py` on 30 in-scope and 13 out-of-scope questions.
 - **Challenges** are data: broken params, locked params, and checks. Each
   experiment engine declares the check types it can evaluate (`ENGINE_CHECKS` in
   the schema): RAG checks gold phrases in retrieved chunks or the prompt;

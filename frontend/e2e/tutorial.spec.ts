@@ -66,6 +66,8 @@ test('walkthrough: spotlights controls, asks for real actions, and finishes', as
   await expect(page.locator('.tut__task')).toContainText('that worked')
   await next(page).click()
   await next(page).click() // toolbar
+  await expect(page.locator('.tut__title')).toHaveText(/ask the tutor/i)
+  await next(page).click() // ask
   await next(page).click() // keyboard
   await expect(page.locator('.tut__title')).toHaveText(/you are ready/i)
   await next(page).click() // Finish

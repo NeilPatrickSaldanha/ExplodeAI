@@ -11,6 +11,7 @@ import './cine.css'
 import { FlowLegend, type FlowLabels } from './FlowLegend'
 import { StageBar } from './StageBar'
 import { StagePanel } from './StagePanel'
+import { TutorPanel } from '../../../tutor/TutorPanel'
 import { Tutorial } from './Tutorial'
 import { tutorialSeen } from './tutorialStorage'
 
@@ -347,6 +348,13 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
             ))}
           </ul>
         </details>
+        <TutorPanel
+          lessonId={lesson.id}
+          lessonNumber={lesson.number}
+          stageId={view.selectedId}
+          stageLabel={selected?.label ?? null}
+          onGoToStage={goToStage}
+        />
         {tutorialOpen && (
           <Tutorial
             signals={{ mode, selectedId: view.selectedId, explode: view.explode, autoplay }}

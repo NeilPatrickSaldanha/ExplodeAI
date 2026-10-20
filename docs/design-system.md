@@ -53,6 +53,14 @@ same data as a table). Example chips now reach 44px on coarse pointers.
   the camera frames the stretched layout with room for the toolbar, and labels are clamped
   inside the canvas, so parts separate widely without clipping.
 
+## Ask ExplodeAI
+
+- A floating button in every lesson opens a non-modal panel (a sheet on phones). Escape closes
+  it and returns focus to the button; the conversation is a `role="log"` live region.
+- Every tutor sentence carries monospace claim chips, with an Evidence disclosure holding the claim
+  text and source links. Analogies are labelled "teaching aid". A refused question shows what the
+  lessons do cover.
+
 ## Lesson 04 additions (attention)
 
 - The attention grid is a real `<table>`: rows are the asking word, columns the word looked at,

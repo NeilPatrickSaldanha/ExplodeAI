@@ -450,3 +450,76 @@ export interface AttendAblationOutcome {
 export interface AttendCheck extends ChallengeOutcome {
   result: AttendResult
 }
+
+export interface TutorSentence {
+  text: string
+  passage_id: string
+  kind: string
+  claim_ids: string[]
+  lesson_id: string
+  lesson_title: string
+  stage_id: string | null
+  stage_label: string | null
+}
+
+export interface TutorRelated {
+  lesson_id: string
+  lesson_title: string
+  stage_id: string
+  stage_label: string
+}
+
+export interface TutorClaim {
+  id: string
+  lesson_id: string
+  text: string
+}
+
+export interface TutorSource {
+  id: string
+  title: string
+  publisher: string
+  url: string
+  version?: string | null
+}
+
+export interface TutorAnswer {
+  covered: boolean
+  message: string | null
+  sentences: TutorSentence[]
+  analogy: { text: string; stage_label: string | null; note: string } | null
+  claims: TutorClaim[]
+  sources: TutorSource[]
+  related: TutorRelated[]
+  topics: { lesson_id: string; title: string; number: number }[]
+  meta: { method: string; covered: boolean; coverage: number; best_dense: number | null }
+}
+
+export interface TutorCheck {
+  kind: string
+  question: string
+  answer: string
+  hint: string
+  lesson_id: string
+  stage_id: string
+  stage_label: string
+  claim_ids: string[]
+  index: number
+  total: number
+}
+
+export interface TutorLlmAnswer extends Partial<TutorAnswer> {
+  text?: string
+  cited?: string[]
+  removed_citations?: string[]
+  grounded?: boolean
+  covered: boolean
+  provider?: string
+  model?: string
+  input_tokens?: number | null
+  output_tokens?: number | null
+  cost_usd: number
+  max_cost_usd?: number
+  spent_total_usd?: number
+  is_llm: boolean
+}
