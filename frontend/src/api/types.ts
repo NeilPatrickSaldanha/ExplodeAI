@@ -74,6 +74,7 @@ export interface Challenge<P = RagParams> {
 
 export interface Lesson {
   id: string
+  number: number
   title: string
   summary: string
   status: 'draft' | 'published'
@@ -85,7 +86,7 @@ export interface Lesson {
   components: Component[]
   connections: { source: string; target: string; payload: string; flow?: 'document' | 'vector' | 'query' | null }[]
   visuals: Visual[]
-  experiment: { engine: string; presets: { label: string; query?: string; text?: string }[]; corpus_note: string }
+  experiment: { engine: string; presets: { label: string; query?: string; text?: string; note?: string }[]; corpus_note: string }
   challenges: Challenge[]
   reconstruction: { prompt: string; dependencies: Record<string, string[]> }
   tour: { component: string; title: string; body: string; claims: string[] }[]
@@ -302,4 +303,70 @@ export interface TokenizeAblationOutcome {
   decoded: string | null
   round_trip: boolean
   notes: string[]
+}
+
+/* ------------------------------------------------------------ embeddings */
+
+export interface EmbedParams {
+  library_id: string
+  text: string
+  library_embedder: 'neural' | 'lexical'
+  query_embedder: 'neural' | 'lexical'
+  pooling: 'cls' | 'mean'
+  normalize: boolean
+  metric: 'cosine' | 'dot' | 'euclidean'
+  query_instruction: boolean
+  top_k: number
+}
+
+export interface EmbedItem {
+  id: string
+  category: string
+  text: string
+  tokens: number
+  score: number | null
+  rank: number | null
+  point: Vec3
+}
+
+export interface EmbedResult {
+  params: EmbedParams
+  model: { name: string; build: string; dim: number; max_tokens: number | null }
+  library: { id: string; note: string; categories: string[]; items: EmbedItem[] }
+  query: {
+    text: string
+    model_input: string
+    embedder: string
+    tokens: { text: string; id: number | null }[]
+    truncated: boolean
+    token_vectors: number[][] | null
+    pooled_preview: number[]
+    norm_before: number
+    norm_after: number
+    dim: number
+    point: Vec3 | null
+  }
+  comparable: boolean
+  neighbours: { id: string; category: string; text: string; score: number; rank: number }[]
+  votes: Record<string, number>
+  projection: { method: string; explained_variance: number }
+  notes: string[]
+  timings_ms: Record<string, number>
+  stages: string[]
+}
+
+export interface EmbedAblationOutcome {
+  removed: string | null
+  library_vectors: string | null
+  query_vector_dim: number | null
+  token_vectors: string | null
+  neighbours: { id: string; category: string; score: number | null }[]
+  top_category: string | null
+  score_range: [number, number] | null
+  has_map: boolean
+  notes: string[]
+}
+
+export interface EmbedCheck extends ChallengeOutcome {
+  result: EmbedResult
 }

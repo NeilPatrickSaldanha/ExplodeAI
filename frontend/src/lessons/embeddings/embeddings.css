@@ -1,0 +1,164 @@
+/* Lesson 03 components. Tokens only; categorical colours are --cat-1..4 (validated). */
+
+.tokheat {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.tokheat__row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.tokheat__tok {
+  font-family: var(--font-label);
+  font-size: 11px;
+  color: var(--color-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tokheat__cells {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  height: 18px;
+}
+
+.tokheat__cells span {
+  flex: 1;
+  min-width: 2px;
+  height: 100%;
+  background: var(--scene-flow);
+  border-radius: 1px;
+}
+
+.tokheat__cells span.is-neg {
+  background: var(--scene-flow-vector);
+  opacity: 0.75;
+}
+
+.glyph {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+}
+
+.glyph--sphere {
+  border-radius: 50%;
+}
+
+.glyph--box {
+  border-radius: 1px;
+}
+
+.glyph--cylinder {
+  width: 8px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.glyph--cone {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.glyph--query {
+  border: 2px solid var(--color-accent-2);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.neigh {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: 13px;
+}
+
+.neigh li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.neigh__text {
+  color: var(--color-ink-2);
+}
+
+.neigh__score {
+  font-family: var(--font-label);
+  color: var(--color-accent);
+}
+
+.sspace {
+  margin: 0;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.sspace__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.sspace__canvas {
+  height: 320px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sspace__canvas canvas {
+  touch-action: none;
+}
+
+.sspace__flat {
+  width: 100%;
+  max-width: 320px;
+}
+
+.sspace__q {
+  fill: none;
+  stroke: var(--color-accent-2);
+  stroke-width: 3;
+}
+
+.sspace__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  font-size: 13px;
+  color: var(--color-ink-2);
+}
+
+.sspace__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.sspace__hover,
+.sspace__note {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.outcome__list {
+  margin: 0;
+  padding-left: var(--space-md);
+  font-size: 12px;
+}

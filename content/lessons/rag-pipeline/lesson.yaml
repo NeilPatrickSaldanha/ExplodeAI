@@ -1,4 +1,5 @@
 id: rag-pipeline
+number: 1
 title: Retrieval-Augmented Generation, exploded
 summary: >-
   Take a RAG pipeline apart piece by piece. Run real chunking, embedding,

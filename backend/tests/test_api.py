@@ -9,7 +9,7 @@ def test_health(client):
 
 def test_lessons_list_and_detail(client):
     lessons = client.get("/api/lessons").json()
-    assert [lesson["id"] for lesson in lessons] == ["rag-pipeline", "tokenization"]
+    assert [lesson["id"] for lesson in lessons] [:3] == ["rag-pipeline", "tokenization", "embeddings"]
     detail = client.get("/api/lessons/rag-pipeline").json()
     assert len(detail["components"]) == 8
     cited = {c["source"] for claim in detail["claims"] for c in claim["citations"]}

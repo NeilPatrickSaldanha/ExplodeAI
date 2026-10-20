@@ -79,7 +79,7 @@ class Claim(BaseModel):
 
 
 class Geometry(BaseModel):
-    shape: Literal["slab", "stack", "cylinder", "grid", "prism", "lens", "ring"]
+    shape: Literal["slab", "stack", "cylinder", "grid", "prism", "lens", "ring", "card"]
     size: Vec3 = (1.0, 1.0, 1.0)
 
 
@@ -122,6 +122,7 @@ class Visual(BaseModel):
 ENGINE_CHECKS: dict[str, set[str]] = {
     "rag": {"gold_in_retrieved", "gold_in_prompt"},
     "tokenize": {"round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens"},
+    "embed": {"top1_category", "comparable"},
 }
 
 
@@ -129,13 +130,15 @@ class Check(BaseModel):
     type: Literal[
         "gold_in_retrieved", "gold_in_prompt",  # rag
         "round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens",  # tokenize
+        "top1_category", "comparable",  # embed
     ]
     gold: list[str] = []
     limit: int | None = None
 
     @model_validator(mode="after")
     def _needs_operands(self):
-        if self.type in ("gold_in_retrieved", "gold_in_prompt", "single_token") and not self.gold:
+        needs_gold = ("gold_in_retrieved", "gold_in_prompt", "single_token", "top1_category")
+        if self.type in needs_gold and not self.gold:
             raise ValueError(f"{self.type} checks need at least one gold string")
         if self.type == "max_tokens" and self.limit is None:
             raise ValueError("max_tokens checks need a limit")
@@ -168,6 +171,7 @@ class TourStep(BaseModel):
 
 class Lesson(BaseModel):
     id: str
+    number: int = Field(ge=1)  # course order: Lesson 01, 02, …
     title: str
     summary: str
     status: Literal["draft", "published"]

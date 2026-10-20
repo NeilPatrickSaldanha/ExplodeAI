@@ -5,6 +5,7 @@ import { api } from './api/client'
 import type { Lesson, LessonSummary } from './api/types'
 import { RagLessonPage } from './lessons/rag/RagLessonPage'
 import { TokenizationLessonPage } from './lessons/tokenization/TokenizationLessonPage'
+import { EmbeddingsLessonPage } from './lessons/embeddings/EmbeddingsLessonPage'
 
 type Theme = 'light' | 'dark' | null
 const THEME_KEY = 'explodeai.theme'
@@ -125,6 +126,7 @@ function LessonRoute() {
   if (!lesson) return <p className="label page-pad">Loading lesson…</p>
   if (lesson.id === 'rag-pipeline') return <RagLessonPage lesson={lesson} />
   if (lesson.id === 'tokenization') return <TokenizationLessonPage lesson={lesson} />
+  if (lesson.id === 'embeddings') return <EmbeddingsLessonPage lesson={lesson} />
   return <p className="notice page-pad">This lesson has no interactive module yet.</p>
 }
 

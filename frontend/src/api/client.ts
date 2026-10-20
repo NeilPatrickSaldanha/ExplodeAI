@@ -63,6 +63,13 @@ export const api = {
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
   ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
+  runEmbed: (params: Partial<import('./types').EmbedParams>) =>
+    post<import('./types').EmbedResult>('/api/experiments/embed/run', params),
+  ablateEmbed: (params: Partial<import('./types').EmbedParams>, stage: string) =>
+    post<{ baseline: import('./types').EmbedAblationOutcome; ablated: import('./types').EmbedAblationOutcome }>(
+      '/api/experiments/embed/ablate', { ...params, stage }),
+  checkEmbedChallenge: (lessonId: string, challengeId: string, params: Partial<import('./types').EmbedParams>) =>
+    post<import('./types').EmbedCheck>(`/api/experiments/embed/challenges/${lessonId}/${challengeId}/check`, params),
   aiStatus: () => request<import('./types').AIStatus>('/api/ai/status'),
   estimateRagAnswer: (params: Partial<RagParams>, provider: string, model: string) =>
     post<{ max_cost_usd: number; prompt_words: number }>('/api/ai/rag-answer/estimate', { ...params, provider, model }),

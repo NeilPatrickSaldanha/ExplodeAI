@@ -80,6 +80,16 @@ in `frontend/src/lessons/shared/cine/`:
 - Lesson 02 flows: text (solid), symbols & ids (dashed), your text (dotted).
   Token chips in stage cards mark `[UNK]` with a dashed border *and* the text "[UNK]".
 
+## Lesson 03 additions (embeddings)
+
+- Categorical palette `--cat-1..4` (blue, yellow, magenta, green; dark and light
+  sets) validated with the dataviz validator using `--pairs all`. Colour is never
+  the only encoding: each topic also has a shape (sphere, box, cylinder, cone), the
+  legend names them, and the semantic space has a table view.
+- The semantic-space map is labelled "Real data, approximate projection" and states
+  the share of variance PCA kept.
+- Flows: text (solid), vectors (dashed), your text (dotted).
+
 ## From ui-ux-pro-max
 
 - Pattern match: "Interactive 3D Configurator" (scene + minimal overlay UI).

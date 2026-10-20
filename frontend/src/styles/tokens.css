@@ -36,6 +36,11 @@
   --scene-flow: oklch(76% 0.17 50);
   --scene-flow-vector: oklch(86% 0.07 60);
   --scene-flow-query: oklch(74% 0.13 240);
+  /* Categorical series (dataviz reference palette slots 1,4,5,6; validated --pairs all) */
+  --cat-1: #3987e5;
+  --cat-2: #c98500;
+  --cat-3: #d55181;
+  --cat-4: #008300;
   --scene-floor: oklch(96% 0.006 262 / 0.06);
 
   /* ---- type ---- */
@@ -115,6 +120,10 @@
     --scene-flow: oklch(46% 0.24 268);
     --scene-flow-vector: oklch(52% 0.1 268);
     --scene-flow-query: oklch(52% 0.18 18);
+    --cat-1: #2a78d6;
+    --cat-2: #eda100;
+    --cat-3: #e87ba4;
+    --cat-4: #008300;
     --scene-floor: oklch(18% 0.014 265 / 0.08);
     --weight-body: 400;
     color-scheme: light;
@@ -145,6 +154,10 @@
   --scene-flow: oklch(46% 0.24 268);
   --scene-flow-vector: oklch(52% 0.1 268);
   --scene-flow-query: oklch(52% 0.18 18);
+  --cat-1: #2a78d6;
+  --cat-2: #eda100;
+  --cat-3: #e87ba4;
+  --cat-4: #008300;
   --scene-floor: oklch(18% 0.014 265 / 0.08);
   --weight-body: 400;
   color-scheme: light;

@@ -54,11 +54,19 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   replays merges in learned (or, for a challenge, reversed) order with a per-merge
   trace, byte-exact decoding, and a vocabulary-size vs sequence-length sweep.
   Same `STAGE_DEPENDENCIES` contract as RAG.
+- **Embeddings experiment** (`backend/app/experiments/embed/`) — bge-small-en-v1.5
+  (Qdrant's ONNX port via fastembed, local CPU) opened into its stages so each
+  intermediate is real: WordPiece tokens and ids, per-token vectors, [CLS] or mean
+  pooling, L2 normalisation, cosine/dot/Euclidean ranking, and a PCA projection.
+  `tests/test_embed.py` shows the hand-built stages reproduce fastembed's own output.
+  The RAG lexical embedder is available as the contrast. Ablation lives in
+  `embed/ablation.py` and `POST /api/experiments/embed/ablate`.
 - **Challenges** are data: broken params, locked params, and checks. Each
   experiment engine declares the check types it can evaluate (`ENGINE_CHECKS` in
   the schema): RAG checks gold phrases in retrieved chunks or the prompt;
   tokenization checks round trip, unknown tokens, a token budget, single-token
-  words, and merges that cross word boundaries. The server forces locked params
+  words, and merges that cross word boundaries; embeddings checks the top
+  match's topic and whether query and library vectors are comparable. The server forces locked params
   back to their broken values, so the client cannot cheat.
 - **Persistence** — SQLite via SQLModel: `LessonProgress` (merge-only, filtered to
   valid ids), `ExperimentRun` (params + summary of every run), `AIUsage` (ledger

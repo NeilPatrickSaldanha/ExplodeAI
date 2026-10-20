@@ -1,4 +1,5 @@
 id: tokenization
+number: 2
 title: Tokenization, exploded
 summary: >-
   Take a byte-pair-encoding tokenizer apart. Train real merges on a small

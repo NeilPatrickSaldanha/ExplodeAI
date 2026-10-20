@@ -1,0 +1,653 @@
+id: embeddings
+number: 3
+title: Embeddings, exploded
+summary: >-
+  Watch a sentence become 384 numbers and land near sentences that mean the same
+  thing. Run a real embedding model stage by stage, break it on purpose, and rebuild it.
+status: published
+version: 1.0.0
+updated: 2026-10-19
+estimated_minutes: 25
+objectives:
+  - Trace a sentence through tokenizer, encoder, pooling and normalization to one vector.
+  - Explain why related sentences land close together, and when they don't.
+  - Choose a similarity measure, and say when cosine, dot product and Euclidean distance agree.
+  - Diagnose broken setups such as lexical matching, mixed models and missing query instructions.
+prerequisites:
+  - Lesson 02 (tokenization) helps but is not required.
+verification_report: reports/Embeddings verification.md
+
+claims:
+  - id: semantic-similarity
+    kind: definition
+    text: An embedding turns text into a list of numbers. Texts with related meaning get vectors that are close together, and unrelated texts get vectors that are further apart.
+    citations:
+      - source: openai_embeddings
+        excerpt: "Small distances suggest high relatedness and large distances suggest low relatedness."
+      - source: mikolov2013word2vec
+        locator: §1
+        excerpt: "not only will similar words tend to be close to each other, but that words can have multiple degrees of similarity"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Neural model ranks a paraphrase above unrelated sentences."}
+
+  - id: word2vec-static
+    kind: fact
+    text: Early word embeddings such as word2vec learned one vector per word from large text collections, so every sense of a word shared a single vector regardless of context.
+    citations:
+      - source: mikolov2013word2vec
+        locator: abstract
+        excerpt: "computing continuous vector representations of words from very large data sets"
+      - source: ethayarajh2019
+        locator: §1
+        excerpt: "each word had a single vector, regardless of context"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Historical fact about earlier models; ExplodeAI runs no static word embeddings."}
+
+  - id: word2vec-analogy
+    kind: fact
+    text: Word vectors of this era captured some relationships through arithmetic. King − man + woman lands nearest to queen, provided the three input words are excluded from the search. The word2vec paper's own example is Paris − France + Italy ≈ Rome.
+    citations:
+      - source: mikolov2013word2vec
+        locator: §1.1
+        excerpt: "results in a vector that is closest to the vector representation of the word Queen"
+      - source: mikolov2013word2vec
+        locator: §4.1
+        excerpt: "we discard the input question words during this search"
+      - source: mikolov2013word2vec
+        locator: §5
+        excerpt: "Thus for example, Paris - France + Italy = Rome"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Result from the paper's model; not reproduced here."}
+
+  - id: contextual-vectors
+    kind: fact
+    text: Transformer encoders such as BERT give the same word a different vector in each context; a single static vector explains little of that variation.
+    citations:
+      - source: ethayarajh2019
+        locator: abstract
+        excerpt: "less than 5% of the variance in a word's contextualized representations can be explained by a static embedding"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Same word, two contexts, different vectors in the running model."}
+
+  - id: wordpiece-subwords
+    kind: fact
+    text: BERT-style models read WordPiece tokens. BERT used a vocabulary of about 30,000 pieces, and bge-small-en-v1.5's config lists 30,522. Rare words are split into smaller pieces.
+    citations:
+      - source: devlin2018bert
+        locator: §3
+        excerpt: "We use WordPiece embeddings (Wu et al., 2016) with a 30,000 token vocabulary"
+      - source: bge_model_card
+        locator: config.json
+        excerpt: "\"vocab_size\": 30522"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "A rare word is split into ## pieces by the running tokenizer."}
+
+  - id: bert-cls-token
+    kind: fact
+    text: BERT puts a special [CLS] token first. Its final vector is meant to summarize the whole input, but raw BERT's [CLS] is not a good sentence embedding until the model is fine-tuned for it.
+    citations:
+      - source: devlin2018bert
+        locator: §3
+        excerpt: "used as the aggregate sequence representation for classification tasks"
+      - source: devlin2018bert
+        locator: footnote
+        excerpt: "not a meaningful sentence representation without fine-tuning, since it was trained with NSP"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "The running tokenizer wraps input in [CLS] … [SEP]."}
+
+  - id: raw-bert-poor
+    kind: fact
+    text: Without training for similarity, averaged BERT outputs and the [CLS] vector made poor sentence embeddings. Averaged over the seven sentence-similarity benchmarks in the SBERT paper, both scored below simple averaged GloVe word vectors.
+    citations:
+      - source: reimers2019sbert
+        locator: §4.1
+        excerpt: "Averaging the BERT embeddings achieves an average correlation of only 54.81, and using the CLS-token output only achieves an average correlation of 29.19"
+      - source: reimers2019sbert
+        locator: §4.1
+        excerpt: "Both are worse than computing average GloVe embeddings."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Benchmark result from the paper."}
+
+  - id: pooling-strategies
+    kind: fact
+    text: Sentence-BERT compared three ways to pool token vectors into one sentence vector (the [CLS] token, the mean, and the max). With NLI classification training the choice mattered little. With regression training, max pooling did much worse than mean or [CLS].
+    citations:
+      - source: reimers2019sbert
+        locator: §3
+        excerpt: "Using the output of the CLS-token, computing the mean of all output vectors (MEAN-strategy), and computing a max-over-time"
+      - source: reimers2019sbert
+        locator: §6
+        excerpt: "When trained with the classification objective function on NLI data, the pooling strategy has a rather minor impact."
+      - source: reimers2019sbert
+        locator: §6
+        excerpt: "When trained with the regression objective function, we observe that the pooling strategy has a large impact."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Benchmark finding from the paper; the experiment lets you compare CLS and mean on this model."}
+
+  - id: contrastive-training
+    kind: fact
+    text: Embedding models are typically trained contrastively, pulling texts that belong together closer and pushing others apart. BGE was trained this way on large sets of text pairs.
+    citations:
+      - source: gao2021simcse
+        locator: §2
+        excerpt: "pulling semantically close neighbors together and pushing apart non-neighbors"
+      - source: bge_model_card
+        excerpt: "We pre-train the models using retromae and train them on large-scale pairs data using contrastive learning."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Training method; ExplodeAI does not train models."}
+
+  - id: bge-dims
+    kind: provider_specific
+    provider: BAAI
+    text: bge-small-en-v1.5 is a 12-layer BERT-style encoder that outputs 384-dimensional vectors.
+    citations:
+      - source: bge_model_card
+        locator: config.json
+        excerpt: "\"hidden_size\": 384 ... \"num_hidden_layers\": 12"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Running model's output size."}
+
+  - id: bge-max-tokens
+    kind: provider_specific
+    provider: BAAI
+    text: bge-small-en-v1.5 reads at most 512 tokens. Longer text is truncated, so anything past the limit never reaches the model.
+    citations:
+      - source: bge_model_card
+        locator: sentence_bert_config.json
+        excerpt: "\"max_seq_length\": 512"
+      - source: sbert_computing
+        excerpt: "Longer texts will be truncated to the first `model.max_seq_length` tokens"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "A 900-word input is cut to 512 tokens."}
+
+  - id: bge-cls-normalized
+    kind: provider_specific
+    provider: BAAI
+    text: bge-small-en-v1.5 takes the [CLS] token's vector as the sentence vector and normalizes it to length 1. This lesson runs Qdrant's ONNX export of the model through fastembed, which does the same.
+    citations:
+      - source: bge_model_card
+        locator: 1_Pooling/config.json
+        excerpt: "\"pooling_mode_cls_token\": true, \"pooling_mode_mean_tokens\": false"
+      - source: bge_model_card
+        locator: modules.json
+        excerpt: "\"type\": \"sentence_transformers.models.Normalize\""
+      - source: fastembed_code
+        excerpt: "processed_embeddings = embeddings[:, 0] ... return normalize(processed_embeddings)"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Hand-built tokenizer → encoder → [CLS] → L2 reproduces fastembed's output."}
+
+  - id: bge-query-instruction
+    kind: provider_specific
+    provider: BAAI
+    text: For short retrieval queries, BGE recommends adding an instruction to the query ("Represent this sentence for searching relevant passages:"); passages don't need it. For v1.5, leaving it out costs only slightly, so test both on your own task.
+    citations:
+      - source: bge_model_card
+        excerpt: "Represent this sentence for searching relevant passages: "
+      - source: bge_model_card
+        excerpt: "No instruction only has a slight degradation in retrieval performance compared with using instruction."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "The instruction is prepended to the model input (and changes the top result for a short query here)."}
+
+  - id: query-document-asymmetry
+    kind: provider_specific
+    provider: Voyage AI / Google
+    text: Some providers embed queries and documents differently. Voyage prepends different prompts depending on input_type. Gemini's gemini-embedding-001 takes a task_type (RETRIEVAL_QUERY or RETRIEVAL_DOCUMENT); gemini-embedding-2 drops task_type and uses different prefixes for queries and documents instead.
+    citations:
+      - source: anthropic_embeddings
+        excerpt: "special prompts are prepended to the input text prior to embedding."
+      - source: gemini_embeddings
+        excerpt: "Use RETRIEVAL_QUERY for queries; RETRIEVAL_DOCUMENT for documents to be retrieved."
+      - source: gemini_embeddings
+        excerpt: "You cannot use the `task_type` field for the `gemini-embedding-2` model."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Provider behaviour; would need paid calls."}
+
+  - id: unit-vector-metrics
+    kind: fact
+    text: Cosine similarity is the dot product of length-normalized vectors. For vectors of length 1, cosine, dot product and Euclidean distance all rank results the same way.
+    citations:
+      - source: stanford_ir_book
+        locator: §6.3.1
+        excerpt: "can be viewed as the dot product of the normalized versions of the two document vectors"
+      - source: openai_embeddings
+        excerpt: "Cosine similarity and Euclidean distance will result in the identical rankings"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Numerical check: cos = dot, ||a−b||² = 2 − 2cos, identical rankings."}
+
+  - id: scores-uncalibrated
+    kind: fact
+    text: Raw similarity scores are not calibrated. Transformer representations tend to occupy a narrow region of the space, so even unrelated texts can score well above zero. What counts is the order of the scores, and thresholds have to be set on your own data.
+    citations:
+      - source: ethayarajh2019
+        locator: §1
+        excerpt: "anisotropic, occupying a narrow cone in the vector space"
+      - source: bge_model_card
+        excerpt: "what matters is the relative order of the scores, not the absolute value."
+      - source: bge_model_card
+        excerpt: "Suggest to use bge v1.5, which alleviates the issue of the similarity distribution."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Measured here: unrelated-topic sentences average ~0.41 cosine, versus ~0 for random directions."}
+
+  - id: lexical-vs-neural
+    kind: fact
+    text: Keyword matching only finds shared words. A neural embedding can match sentences that mean the same thing using different words.
+    citations:
+      - source: sbert_retrieve_rerank
+        excerpt: "It will not recognize synonyms, acronyms or spelling variations."
+      - source: sbert_retrieve_rerank
+        excerpt: "Semantic search overcomes the shortcomings of lexical search and can recognize synonym and acronyms."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "'a place to put my books' finds the bookshelf with the neural model; lexical scores 0."}
+
+  - id: models-not-comparable
+    kind: fact
+    text: Vectors from different embedding models generally live in different spaces and cannot be compared, unless the provider says a model family shares one space (Voyage's 4 series does). Switching to an incompatible model means re-embedding everything.
+    citations:
+      - source: gemini_embeddings
+        excerpt: "The embedding spaces between `gemini-embedding-001` and `gemini-embedding-2` are **incompatible**."
+      - source: gemini_embeddings
+        excerpt: "you must re-embed all of your existing data."
+      - source: qdrant_model_migration
+        excerpt: "Switching models requires re-embedding all vectors in your collection, which can take time."
+      - source: voyage_embeddings
+        excerpt: "All embeddings created with the 4 series are compatible with each other."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "Mixing the lexical (1024-D) and neural (384-D) models is refused as not comparable."}
+
+  - id: projection-lossy
+    kind: fact
+    text: Drawing high-dimensional vectors in 2D or 3D generally loses information. PCA keeps the directions of greatest spread, so nearby points in the picture are only a hint.
+    citations:
+      - source: vandermaaten2008tsne
+        locator: §6.2
+        excerpt: "it is by definition impossible to fully represent the structure of intrinsically high-dimensional data in two or three dimensions"
+      - source: vandermaaten2008tsne
+        locator: §1
+        excerpt: "linear techniques that focus on keeping the low-dimensional representations of dissimilar datapoints far apart"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: passed, date: 2026-10-19, by: \"pass3/pytest\", notes: "The 3D projection here keeps well under 100% of the variance; the UI states the share."}
+
+  - id: tsne-cautions
+    kind: fact
+    text: In t-SNE plots, cluster sizes and the distances between clusters can mean nothing. This lesson uses PCA instead and labels it as approximate.
+    citations:
+      - source: wattenberg2016tsne
+        excerpt: "you cannot see relative sizes of clusters in a t-SNE plot"
+      - source: wattenberg2016tsne
+        excerpt: "distances between well-separated clusters in a t-SNE plot may mean nothing"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "No t-SNE in this lesson."}
+
+  - id: shorter-dimensions
+    kind: provider_specific
+    provider: OpenAI
+    text: Some models are trained so their vectors can be shortened. OpenAI's text-embedding-3 models accept a dimensions parameter, and if you cut vectors yourself you must re-normalize them.
+    citations:
+      - source: kusupati2022mrl
+        locator: abstract
+        excerpt: "MRL learns coarse-to-fine representations that are at least as accurate and rich"
+      - source: openai_embeddings
+        excerpt: "When you change the dimension manually, you need to be sure to normalize the dimensions of the embedding"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Provider feature; bge-small is not trained for shortening."}
+
+  - id: mteb-no-winner
+    kind: fact
+    text: In the original MTEB paper (2022, 8 task types, 58 datasets, 112 languages, 33 models), no single embedding model was best at every task, so choose by your own task.
+    citations:
+      - source: muennighoff2022mteb
+        locator: abstract
+        excerpt: "MTEB spans 8 embedding tasks covering a total of 58 datasets and 112 languages"
+      - source: muennighoff2022mteb
+        locator: abstract
+        excerpt: "We find that no particular text embedding method dominates across all tasks."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Benchmark result from the paper."}
+
+  - id: embedding-uses
+    kind: fact
+    text: Embeddings are used for search, clustering, recommendations, anomaly detection and classification. Retrieval for RAG (Lesson 01) is a common use.
+    citations:
+      - source: openai_embeddings
+        excerpt: "Search (where results are ranked by relevance to a query string)"
+      - source: gemini_embeddings
+        excerpt: "Retrieval-Augmented Generation (RAG): Embeddings enhance the quality of generated text by retrieving and incorporating relevant information"
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Use-case list."}
+
+  - id: input-limits
+    kind: provider_specific
+    provider: OpenAI / Google
+    text: Hosted models have input limits too. OpenAI's embedding models take up to 8,192 tokens per input. Google documents that gemini-embedding-2 (8,192 tokens) silently truncates longer inputs.
+    citations:
+      - source: openai_embeddings_api
+        excerpt: "The input must not exceed the max input tokens for the model (8192 tokens for all embedding models)"
+      - source: gemini_embeddings
+        excerpt: "The system silently truncates inputs that exceed this limit."
+    verification:
+      primary: {status: passed, date: 2026-10-19, by: "pass1/deep-research"}
+      cross_check: {status: passed, date: 2026-10-19, by: "pass2/independent-agent", notes: "See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied."}
+      technical: {status: not_applicable, notes: "Provider behaviour; would need paid calls."}
+
+# position = assembled (compact) layout; explode = offset applied at full explosion.
+# Exploded layout: the library (back) and your text (front) both enter the tokenizer;
+# the model runs left→right through encoder, pooling and normalizer; the vectors then
+# split into the similarity ranker (back) and the semantic-space map (front).
+components:
+  - id: library
+    label: Sample library
+    phase: inputs
+    short: The sentences your text is compared against.
+    detail: Twenty-four sample sentences in four topics, each embedded once by the same model.
+    claims: [embedding-uses]
+    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    position: [-1.65, 0, -0.55]
+    explode: [-4.4, 0, -2.4]
+    subtitle: Sentences to search
+    icon: Files
+    inputs: [Sample sentences]
+    outputs: [24 sentences]
+    breaks_if_removed: "There is nothing to compare against, so there are no neighbours."
+  - id: your_text
+    label: Your text
+    phase: inputs
+    short: The sentence you want to find neighbours for.
+    detail: For short search queries, BGE suggests prefixing an instruction. Toggle it in the experiment.
+    claims: [bge-query-instruction, query-document-asymmetry]
+    geometry: {shape: card, size: [1.2, 0.7, 0.05]}
+    position: [-1.65, 0, 0.55]
+    explode: [-4.4, 0, 2.0]
+    subtitle: What you type
+    icon: TextAa
+    inputs: [Your text]
+    outputs: [Model input]
+    breaks_if_removed: "There is nothing to embed, so there are no neighbours."
+  - id: tokenizer
+    label: Tokenizer
+    phase: model
+    short: Splits text into WordPiece tokens and ids.
+    detail: The model never sees letters, only token ids. [CLS] goes first and [SEP] last, rare words split into ## pieces, and anything past 512 tokens is cut off.
+    claims: [wordpiece-subwords, bert-cls-token, bge-max-tokens, input-limits]
+    geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
+    position: [-0.55, 0, -0.55]
+    explode: [-1.5, 0, 1.2]
+    subtitle: Text to token ids
+    icon: Scissors
+    inputs: [Sentences, Your text]
+    outputs: [Token ids]
+    breaks_if_removed: "The model reads token ids, not raw text, so no vectors are produced."
+  - id: encoder
+    label: Encoder
+    phase: model
+    short: Twelve transformer layers give every token a context-aware vector.
+    detail: Each token gets 384 numbers that depend on the words around it, so the same word gets a different vector in each sentence.
+    claims: [contextual-vectors, word2vec-static, word2vec-analogy, contrastive-training, bge-dims]
+    geometry: {shape: grid, size: [0.9, 0.5, 0.9]}
+    position: [-0.55, 0, 0.55]
+    explode: [0.1, 0, -2.6]
+    subtitle: Tokens become vectors
+    icon: Cube
+    inputs: [Token ids]
+    outputs: [One vector per token]
+    breaks_if_removed: "Token ids exist, but nothing turns them into vectors."
+  - id: pooling
+    label: Pooling
+    phase: model
+    short: Turns many token vectors into one sentence vector.
+    detail: BGE takes the [CLS] token's vector. Averaging every token is the other common choice. Try both.
+    claims: [bge-cls-normalized, pooling-strategies, raw-bert-poor]
+    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    position: [0.55, 0, -0.55]
+    explode: [0.4, 0, 2.4]
+    subtitle: Many vectors to one
+    icon: ArrowsMerge
+    inputs: [One vector per token]
+    outputs: [One 384-D vector]
+    breaks_if_removed: "There is one vector per token but none for the whole text, so texts of different lengths cannot be compared."
+  - id: normalizer
+    label: Normalizer
+    phase: model
+    short: Scales the vector to length 1.
+    detail: After normalizing, the dot product equals cosine similarity, so scores fall between -1 and 1.
+    claims: [unit-vector-metrics, shorter-dimensions]
+    geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
+    position: [0.55, 0, 0.55]
+    explode: [2.3, 0, -0.8]
+    subtitle: Length becomes 1
+    icon: Hash
+    inputs: [One 384-D vector]
+    outputs: [Unit-length vector]
+    breaks_if_removed: "Vectors keep their raw length, so dot-product scores are no longer bounded between -1 and 1. Cosine itself is unaffected."
+  - id: similarity
+    label: Similarity
+    phase: compare
+    short: Scores your vector against every library vector and ranks them.
+    detail: Related sentences score highest, but even unrelated ones score well above zero. Only the order is meaningful.
+    claims: [semantic-similarity, scores-uncalibrated, lexical-vs-neural, models-not-comparable, mteb-no-winner]
+    geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
+    position: [1.65, 0, -0.55]
+    explode: [4.2, 0, -2.2]
+    subtitle: Rank by closeness
+    icon: MagnifyingGlass
+    inputs: [Your vector, Library vectors]
+    outputs: [Ranked neighbours]
+    breaks_if_removed: "Nothing is ranked: the library comes back in its stored order."
+  - id: semantic_space
+    label: Semantic space
+    phase: compare
+    short: A 3D map of the vectors.
+    detail: PCA squeezes 384 dimensions into 3. Use it to see clusters, but the exact scores live in the neighbours list.
+    claims: [projection-lossy, tsne-cautions]
+    geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
+    position: [1.65, 0, 0.55]
+    explode: [4.2, 0, 2.2]
+    subtitle: See the clusters
+    icon: GridFour
+    inputs: [All vectors]
+    outputs: [3D points]
+    breaks_if_removed: "No 3D map is drawn, yet the neighbours are unchanged: the map is only a view of the real vectors."
+
+connections:
+  - {source: library, target: tokenizer, flow: document, payload: sentences}
+  - {source: your_text, target: tokenizer, flow: query, payload: your text}
+  - {source: tokenizer, target: encoder, flow: document, payload: token ids}
+  - {source: encoder, target: pooling, flow: vector, payload: token vectors}
+  - {source: pooling, target: normalizer, flow: vector, payload: sentence vector}
+  - {source: normalizer, target: similarity, flow: vector, payload: unit vectors}
+  - {source: normalizer, target: semantic_space, flow: vector, payload: unit vectors}
+
+visuals:
+  - id: ablation
+    kind: real_execution
+    label: Real execution, stage removed
+    description: The model really runs without the chosen stage, side by side with the full model.
+  - id: exploded-view
+    kind: conceptual
+    label: Conceptual diagram
+    description: Positions and shapes are a visual metaphor. Data flow follows the real pipeline order.
+  - id: data-flow
+    kind: conceptual
+    label: Conceptual animation
+    description: Moving packets show which stage feeds which. Solid lines carry text, dashed lines carry vectors, and dotted is your text. Speed carries no meaning.
+  - id: experiment
+    kind: real_execution
+    label: Real execution
+    description: bge-small-en-v1.5 (Qdrant's reduced-precision ONNX port, via fastembed) runs locally, stage by stage, on your text.
+  - id: semantic-space
+    kind: real_execution
+    label: Real data, approximate projection
+    description: The real 384-D vectors projected to 3D with PCA. Distances in 3D only approximate the real ones.
+
+experiment:
+  engine: embed
+  endpoint: /api/experiments/embed/run
+  corpus_note: Sample sentences in four topics (generic examples, not claims about the world).
+  presets:
+    - label: Puppy
+      text: A puppy playing fetch in the park
+    - label: Bookshelf
+      text: a place to put my books
+    - label: Commute
+      text: getting to the office
+    - label: Where it goes wrong
+      text: a vehicle that runs on rails
+      note: >-
+        The train sentence never says "rails", and this small model ranks it only 14th of 24, below a
+        truck, a horse and a plane. Nearby in meaning is not the same as correct.
+    - label: Long text
+      text: >-
+        Embedding models read a fixed number of tokens. This one reads at most 512, counting the
+        special CLS and SEP tokens, and anything after that limit is cut off before the model sees
+        it. Imagine a library of recipes. Each recipe has a title, a list of ingredients, a set of
+        steps, and a short story from the cook about where the dish came from. If you embed the
+        whole recipe as one vector, the story, the ingredients and the steps all get blended
+        together. A question about how long to rest the dough has to compete with a paragraph about
+        a grandmother's kitchen in another country. The vector ends up somewhere in the middle of
+        all of those meanings, close to none of them. Now imagine a much longer document, such as a
+        manual for a washing machine. It covers installation, safety warnings, every wash programme,
+        cleaning the filter, error codes, the warranty, and the contact details of the service
+        centre. A manual like that runs to many thousands of words, far more than 512 tokens. If you
+        embed it as a single piece of text, the model reads the first part, perhaps the installation
+        section and a few safety warnings, and silently drops everything else. A question about
+        error code E21 will never match, because the page that explains E21 was never read. This is
+        why retrieval systems split long documents into chunks before embedding them. Each chunk is
+        short enough to fit inside the limit and focused enough to have one clear meaning, so its
+        vector lands near the questions it can answer. Lesson 01 shows a chunker doing exactly this,
+        with a size and an overlap you can change. Chunks that are too small lose context: a
+        sentence like "Turn it off first" means little on its own. Chunks that are too large blur
+        several topics together and may still be cut off at the end. There is no single right size.
+        It depends on the documents, the questions people ask, and the model's limit, and it is
+        worth testing on your own data. Hosted embedding models have limits too, although theirs are
+        usually larger, often several thousand tokens. Some return an error when the input is too
+        long, and others truncate it quietly, so it is worth checking the documentation for the
+        model you use. Either way, the safe habit is the same: keep each piece of text you embed
+        short and about one thing. If you are reading this inside the lesson, look at the Tokens tab
+        now. The warning above it says the text was cut off, and the last tokens it shows are
+        somewhere in the middle of this passage, long before this final sentence, which the model
+        never saw.
+      note: The end of this text is past the 512-token limit, so the model never sees it. Check the Tokens tab.
+
+challenges:
+  - id: synonym-blind
+    title: Same meaning, no shared words
+    brief: No library sentence shares a content word with this question, so the search finds nothing useful. Fix it without changing the question.
+    broken_params: {text: "a place to put my books", library_embedder: lexical, query_embedder: lexical}
+    locked_params: [text]
+    checks:
+      - {type: top1_category, gold: [furniture]}
+    hint: What does each embedder compare, words or meaning?
+    explanation: A lexical embedder can only match shared words. A neural model places "a place to put my books" near "The bookshelf is full of old novels" because they mean related things.
+    claims: [lexical-vs-neural]
+  - id: mixed-models
+    title: Two models, one search
+    brief: The library was embedded with one model and your text with another. Make the search work again without re-embedding the library.
+    broken_params: {text: "A puppy playing fetch in the park", library_embedder: neural, query_embedder: lexical}
+    locked_params: [text, library_embedder]
+    checks:
+      - {type: comparable}
+      - {type: top1_category, gold: [animals]}
+    hint: Compare the two embedders. Are their vectors even the same length?
+    explanation: Vectors from different models generally live in different spaces. Here they don't even have the same number of dimensions. Queries must use the model the library was embedded with.
+    claims: [models-not-comparable]
+  - id: short-query
+    title: The short query
+    brief: For this short search query the top match is a desk, not a way to get to work. Fix it without changing the text, the model or the similarity measure.
+    broken_params: {text: "getting to the office", library_embedder: neural, query_embedder: neural, pooling: cls, metric: cosine, query_instruction: false}
+    locked_params: [text, library_embedder, query_embedder, pooling, metric]
+    checks:
+      - {type: top1_category, gold: [vehicles]}
+    hint: BGE's model card suggests something specific for short retrieval queries.
+    explanation: BGE's model card recommends this instruction for short retrieval queries. Here it moves the query toward the bus sentence, though only narrowly. It is a tendency to test on your own data, not a guarantee.
+    claims: [bge-query-instruction]
+
+reconstruction:
+  prompt: Put the stages in an order that could actually run. Each stage must come after everything it needs.
+  dependencies:
+    library: []
+    your_text: []
+    tokenizer: [library, your_text]
+    encoder: [tokenizer]
+    pooling: [encoder]
+    normalizer: [pooling]
+    similarity: [normalizer]
+    semantic_space: [normalizer]
+
+tour:
+  - component: library
+    title: Start with what you'll search
+    body: Each library sentence is embedded once and stored. Your text will be compared against all of them.
+    claims: [embedding-uses]
+  - component: your_text
+    title: Your text goes in
+    body: Short search queries can carry an instruction. Passages don't need one.
+    claims: [bge-query-instruction]
+  - component: tokenizer
+    title: Text becomes token ids
+    body: The model reads WordPiece ids, with [CLS] first, rare words split up, and a 512-token limit.
+    claims: [wordpiece-subwords, bge-max-tokens]
+  - component: encoder
+    title: Every token gets a vector
+    body: Twelve layers give each token 384 numbers that depend on its context.
+    claims: [contextual-vectors]
+  - component: pooling
+    title: Many vectors become one
+    body: BGE keeps the [CLS] token's vector as the sentence vector.
+    claims: [bge-cls-normalized]
+  - component: normalizer
+    title: Length becomes 1
+    body: After this, dot product and cosine are the same thing.
+    claims: [unit-vector-metrics]
+  - component: similarity
+    title: Rank by closeness
+    body: Related sentences score highest. The raw numbers aren't calibrated, only the order is.
+    claims: [semantic-similarity, scores-uncalibrated]
+  - component: semantic_space
+    title: See the clusters
+    body: The 3D map is a lossy view. The exact answer is in the ranking.
+    claims: [projection-lossy]

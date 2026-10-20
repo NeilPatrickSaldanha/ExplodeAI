@@ -19,11 +19,8 @@ def load_registry(content_dir: Path) -> SourceRegistry:
 
 
 def load_lessons(content_dir: Path) -> dict[str, Lesson]:
-    lessons: dict[str, Lesson] = {}
-    for path in sorted((content_dir / "lessons").glob("*/lesson.yaml")):
-        lesson = Lesson.model_validate(_read_yaml(path))
-        lessons[lesson.id] = lesson
-    return lessons
+    loaded = [Lesson.model_validate(_read_yaml(p)) for p in (content_dir / "lessons").glob("*/lesson.yaml")]
+    return {lesson.id: lesson for lesson in sorted(loaded, key=lambda lesson: lesson.number)}
 
 
 @lru_cache

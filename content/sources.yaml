@@ -29,7 +29,7 @@ sources:
     publisher: arXiv / EMNLP 2019
     url: https://arxiv.org/abs/1908.10084
     type: paper
-    version: arXiv abstract page as of access date (submitted 27 Aug 2019)
+    version: v1 (arXiv PDF 1908.10084v1; abstract page as of access date)
     published: "2019"
     accessed: 2026-10-18
   - id: malkov2016hnsw
@@ -337,3 +337,157 @@ sources:
     type: official_docs
     version: live page at access date (redirected from platform.openai.com/docs/concepts)
     accessed: 2026-10-18
+
+  # ------------------------------------------------- Lesson 03 · embeddings
+  - id: mikolov2013word2vec
+    title: Efficient Estimation of Word Representations in Vector Space
+    authors: [Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean]
+    publisher: arXiv
+    url: https://arxiv.org/abs/1301.3781
+    type: paper
+    version: arXiv v3 (7 Sep 2013)
+    published: "2013"
+    accessed: 2026-10-19
+  - id: mikolov2013phrases
+    title: Distributed Representations of Words and Phrases and their Compositionality
+    authors: [Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, Jeffrey Dean]
+    publisher: arXiv / NeurIPS 2013
+    url: https://arxiv.org/abs/1310.4546
+    type: paper
+    version: arXiv v1 (16 Oct 2013)
+    published: "2013"
+    accessed: 2026-10-19
+  - id: devlin2018bert
+    title: "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+    authors: [Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova]
+    publisher: arXiv / NAACL 2019
+    url: https://arxiv.org/abs/1810.04805
+    type: paper
+    version: arXiv v2 (24 May 2019)
+    published: "2018"
+    accessed: 2026-10-19
+  - id: ethayarajh2019
+    title: How Contextual are Contextualized Word Representations?
+    authors: [Kawin Ethayarajh]
+    publisher: arXiv / EMNLP 2019
+    url: https://arxiv.org/abs/1909.00512
+    type: paper
+    version: arXiv v1 (2 Sep 2019) PDF
+    published: "2019"
+    accessed: 2026-10-19
+  - id: gao2021simcse
+    title: "SimCSE: Simple Contrastive Learning of Sentence Embeddings"
+    authors: [Tianyu Gao, Xingcheng Yao, Danqi Chen]
+    publisher: arXiv / EMNLP 2021
+    url: https://arxiv.org/abs/2104.08821
+    type: paper
+    version: arXiv v4 (18 May 2022)
+    published: "2021"
+    accessed: 2026-10-19
+  - id: kusupati2022mrl
+    title: Matryoshka Representation Learning
+    authors: [Aditya Kusupati, Gantavya Bhatt, Aniket Rege, et al.]
+    publisher: arXiv / NeurIPS 2022
+    url: https://arxiv.org/abs/2205.13147
+    type: paper
+    version: arXiv v4 (8 Feb 2024)
+    published: "2022"
+    accessed: 2026-10-19
+  - id: vandermaaten2008tsne
+    title: Visualizing Data using t-SNE
+    authors: [Laurens van der Maaten, Geoffrey Hinton]
+    publisher: Journal of Machine Learning Research 9 (2008) 2579–2605
+    url: https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf
+    type: paper
+    version: JMLR published PDF
+    published: "2008"
+    accessed: 2026-10-19
+  - id: wattenberg2016tsne
+    title: How to Use t-SNE Effectively
+    authors: [Martin Wattenberg, Fernanda Viégas, Ian Johnson]
+    publisher: Distill (DOI 10.23915/distill.00002)
+    url: https://distill.pub/2016/misread-tsne/
+    type: paper
+    version: published 13 Oct 2016
+    published: "2016"
+    accessed: 2026-10-19
+  - id: muennighoff2022mteb
+    title: "MTEB: Massive Text Embedding Benchmark"
+    authors: [Niklas Muennighoff, Nouamane Tazi, Loïc Magne, Nils Reimers]
+    publisher: arXiv / EACL 2023
+    url: https://arxiv.org/abs/2210.07316
+    type: paper
+    version: arXiv v3 (19 Mar 2023)
+    published: "2022"
+    accessed: 2026-10-19
+  - id: bge_model_card
+    title: BAAI/bge-small-en-v1.5 (model card and config files)
+    publisher: Beijing Academy of Artificial Intelligence (Hugging Face)
+    url: https://huggingface.co/BAAI/bge-small-en-v1.5
+    type: official_docs
+    version: repo commit 5c38ec7 (last modified 2024-02-22)
+    accessed: 2026-10-19
+  - id: qdrant_bge_onnx
+    title: Qdrant/bge-small-en-v1.5-onnx-Q (model card and ort_config.json)
+    publisher: Qdrant (Hugging Face)
+    url: https://huggingface.co/Qdrant/bge-small-en-v1.5-onnx-Q
+    type: official_docs
+    version: repo commit aa8f8b0 (last modified 2026-09-24)
+    accessed: 2026-10-19
+  - id: fastembed_code
+    title: fastembed — ONNX text embedding implementation
+    publisher: Qdrant — qdrant/fastembed (GitHub)
+    url: https://github.com/qdrant/fastembed/blob/main/fastembed/text/onnx_embedding.py
+    type: framework_docs
+    version: main at commit de502ca (2026-10-15)
+    accessed: 2026-10-19
+  - id: stanford_ir_book
+    title: "Introduction to Information Retrieval, §6.3.1 Dot products"
+    authors: [Christopher D. Manning, Prabhakar Raghavan, Hinrich Schütze]
+    publisher: Cambridge University Press (online edition)
+    url: https://nlp.stanford.edu/IR-book/html/htmledition/dot-products-1.html
+    type: reference
+    version: online edition at access date
+    accessed: 2026-10-19
+  - id: sbert_sts
+    title: Semantic Textual Similarity
+    publisher: Sentence Transformers documentation (Hugging Face)
+    url: https://sbert.net/docs/sentence_transformer/usage/semantic_textual_similarity.html
+    type: framework_docs
+    version: live docs at access date (v6.x)
+    accessed: 2026-10-19
+  - id: sbert_computing
+    title: Computing Embeddings
+    publisher: Sentence Transformers documentation (Hugging Face)
+    url: https://sbert.net/examples/sentence_transformer/applications/computing-embeddings/README.html
+    type: framework_docs
+    version: live docs at access date (v6.x)
+    accessed: 2026-10-19
+  - id: gemini_embeddings
+    title: Embeddings (Gemini API)
+    publisher: Google AI for Developers
+    url: https://ai.google.dev/gemini-api/docs/embeddings
+    type: official_docs
+    version: last updated 2026-10-09
+    accessed: 2026-10-19
+  - id: openai_embeddings_api
+    title: Create embeddings (API reference)
+    publisher: OpenAI (API docs)
+    url: https://developers.openai.com/api/reference/resources/embeddings/methods/create
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-19
+  - id: qdrant_model_migration
+    title: Embedding model migration
+    publisher: Qdrant documentation (vector-database vendor)
+    url: https://qdrant.tech/documentation/tutorials-operations/embedding-model-migration/
+    type: reference
+    version: live page at access date
+    accessed: 2026-10-19
+  - id: voyage_embeddings
+    title: Text embeddings
+    publisher: Voyage AI documentation
+    url: https://docs.voyageai.com/docs/embeddings
+    type: official_docs
+    version: live page at access date
+    accessed: 2026-10-19

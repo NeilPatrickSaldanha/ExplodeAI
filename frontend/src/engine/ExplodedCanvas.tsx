@@ -54,8 +54,8 @@ function CameraRig({ goal, reduced, resetSignal, framePoints, center }: { goal: 
   const goalVec = useMemo(() => new Vector3(...goal), [goal])
 
   useEffect(() => {
-    // Leave ~70px either side for the HTML labels that sit on the outermost parts.
-    const margin = Math.min(0.86, 1 - 140 / Math.max(size.width, 200))
+    // Leave ~100px either side for the HTML labels that sit on the outermost parts.
+    const margin = Math.min(0.86, 1 - 200 / Math.max(size.width, 200))
     const aspect = size.width / Math.max(size.height, 1)
     const d = fitDistance(framePoints, center, aspect, margin)
     camera.position.set(...center).addScaledVector(viewDirFor(aspect), d)

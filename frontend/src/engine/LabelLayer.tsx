@@ -29,7 +29,10 @@ export function LabelProjector({
       if (!el) continue
       v.set(a.at[0], a.at[1], a.at[2]).project(camera)
       const visible = v.z < 1 && Math.abs(v.x) < 1.2 && Math.abs(v.y) < 1.2
-      const x = ((v.x + 1) / 2) * size.width
+      // Keep the whole label inside the canvas, whatever the framing.
+      const half = el.offsetWidth / 2 + 6
+      const raw = ((v.x + 1) / 2) * size.width
+      const x = size.width > half * 2 ? Math.min(Math.max(raw, half), size.width - half) : raw
       const y = ((1 - v.y) / 2) * size.height
       el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`
       el.style.visibility = visible ? 'visible' : 'hidden'

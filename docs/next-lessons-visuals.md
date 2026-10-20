@@ -25,7 +25,7 @@ match Lesson 01 once that session finishes:
 - **Signature visual:** a merge replay where the active merge pair lights up in the press and the token strip re-segments in step.
 - **Mini 2D chart:** vocabulary size vs. tokens per input (the lesson's existing trade-off chart), with the current setting marked.
 
-## Lesson 03 · Embeddings, exploded
+## Lesson 03 · Embeddings, exploded (built; the original plan, see content/lessons/embeddings)
 
 Based on the Embeddings concept image. It builds directly on Lessons 01 and 02.
 
