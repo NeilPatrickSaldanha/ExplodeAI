@@ -63,6 +63,13 @@ export const api = {
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
   ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
+  runAttend: (params: Partial<import('./types').AttendParams>) =>
+    post<import('./types').AttendResult>('/api/experiments/attend/run', params),
+  ablateAttend: (params: Partial<import('./types').AttendParams>, stage: string) =>
+    post<{ baseline: import('./types').AttendAblationOutcome; ablated: import('./types').AttendAblationOutcome }>(
+      '/api/experiments/attend/ablate', { ...params, stage }),
+  checkAttendChallenge: (lessonId: string, challengeId: string, params: Partial<import('./types').AttendParams>) =>
+    post<import('./types').AttendCheck>(`/api/experiments/attend/challenges/${lessonId}/${challengeId}/check`, params),
   runEmbed: (params: Partial<import('./types').EmbedParams>) =>
     post<import('./types').EmbedResult>('/api/experiments/embed/run', params),
   ablateEmbed: (params: Partial<import('./types').EmbedParams>, stage: string) =>

@@ -53,6 +53,13 @@ same data as a table). Example chips now reach 44px on coarse pointers.
   the camera frames the stretched layout with room for the toolbar, and labels are clamped
   inside the canvas, so parts separate widely without clipping.
 
+## Lesson 04 additions (attention)
+
+- The attention grid is a real `<table>`: rows are the asking word, columns the word looked at,
+  each cell has a fill bar for the weight AND the printed number; cells hidden by the causal
+  mask are hatched and show "–". Colour is never the only cue.
+- Every number view repeats that the layer is a toy with fixed random weights.
+
 ## Lesson 01 redesign: cinematic exploded view
 
 Hallmark `redesign`, single page, inside the existing boundaries (new components

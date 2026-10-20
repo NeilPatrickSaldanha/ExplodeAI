@@ -1,0 +1,226 @@
+# Deeper explanations for the attention lesson. Facts restate claims in lesson.yaml or describe the toy layer
+# (checked by tests/test_attend*.py). Analogies and examples are teaching aids and are shown as such.
+tokens:
+  what: The sentence, cut into words and punctuation marks. Every word will get its own turn to decide which other
+    words to look at.
+  why: Attention works on a list of items, so the text has to become a list first. Attention was invented for translation,
+    to stop a whole sentence being squeezed into one vector.
+  analogy: Dealing the words of a sentence out as cards, in order. Each card will get a turn to ask a question of
+    the others.
+  happens:
+  - Your sentence is split into words and punctuation marks.
+  - At most 12 are kept in this lesson so the grid stays readable.
+  - Each token keeps its position in the sentence.
+  goes_to: The next step, which gives every word a vector and a position.
+  example:
+    input: the cat sat on the mat
+    steps:
+    - Split at word boundaries
+    - Six tokens, numbered 0 to 5
+    output: 6 words (illustrative)
+  misconfigured: In a real system the words are split into tokens by a tokenizer (Lesson 02). This toy layer uses
+    whole words, so a long or rare word is just one token. This toy splitter also treats only the letters a–z as
+    letters, so an accented letter becomes its own token.
+  learn_more: 'Bahdanau et al. introduced attention for translation to avoid squeezing a whole source sentence into
+    one fixed-length vector. The Transformer''s title does not mean attention is all there is: the original also
+    has embeddings, positional encodings, feed-forward layers, residual connections and layer normalisation.'
+  claims:
+  - attn-origin
+  - attn-not-all-you-need
+embed_pos:
+  what: Each word becomes a vector of 64 numbers, and a position pattern is added so the layer knows where each
+    word sits.
+  why: Attention only compares word vectors, so by itself it cannot tell word order. Position information has to
+    be added.
+  analogy: Writing each word on a card and also stamping on it its seat number.
+  happens:
+  - Each word gets a fixed random vector. The same word always gets the same one.
+  - A sine and cosine pattern for its position is added, and the sum is scaled by 1/√1.5 so the numbers keep a steady
+    size.
+  - The result goes on to the next step.
+  goes_to: The Q·K·V step, which turns each vector into a query, a key and a value.
+  example:
+    input: '"dog" at position 0'
+    steps:
+    - Look up the fixed vector for "dog"
+    - Add the position-0 pattern
+    output: One 64-number vector (illustrative)
+  misconfigured: Without position vectors, and with no mask, each word keeps the same output whatever order the
+    words come in, so "dog bites man" and "man bites dog" look the same to the layer.
+  learn_more: The original Transformer adds fixed sine and cosine waves of different frequencies. The authors hypothesised
+    this helps with relative positions, and learned position embeddings gave nearly identical results. BERT sums
+    token, segment and position embeddings, and rotary embeddings (RoPE) rotate queries and keys by a position-dependent
+    angle.
+  claims:
+  - attn-position-needed
+  - attn-position-encoding
+  - attn-position-alternatives
+qkv:
+  what: 'Every word makes three new vectors: a query (what it is looking for), a key (what it offers) and a value
+    (what it passes on).'
+  why: Splitting a word into these three roles lets the layer decide who to look at (queries against keys) separately
+    from what to take (values).
+  analogy: 'At a library: your question is the query, the labels on the shelves are the keys, and the books are
+    the values. You do not take one book; you get a blend of every book, weighted by how well its label matched.'
+  happens:
+  - Each word vector is multiplied by three learned matrices.
+  - That gives its query, key and value.
+  - With several heads, each head works on its own smaller slice.
+  goes_to: The score grid (queries and keys) and the weighted sum (values).
+  example:
+    input: The vector for "cat"
+    steps:
+    - × W^Q gives its query
+    - × W^K gives its key
+    - × W^V gives its value
+    output: Three vectors per word per head (illustrative)
+  misconfigured: In this toy layer the matrices are fixed and random, so what the queries look for means nothing.
+    In a trained model they are learned.
+  learn_more: In self-attention the queries, keys and values all come from the same sequence. Elhage et al. note
+    a head can be seen as a part that decides where to attend and a part that decides what to move, and call queries,
+    keys and values "in some sense, superficial". When generating text, models keep earlier keys and values in a
+    KV cache, which holds two times the sequence length times heads times head dimension times layers numbers. Multi-query
+    and grouped-query attention share keys and values across heads to shrink it.
+  claims:
+  - attn-qkv-projections
+  - attn-qk-ov
+  - attn-kv-cache
+  - attn-kv-cache-size
+  - attn-mqa-gqa
+scores:
+  what: Every word's query is compared with every word's key, filling a grid of scores. The scores are divided by
+    √d_k.
+  why: A high score means this word's query matches that word's key, so it should pay more attention to it. Scaling
+    keeps large dot products from overwhelming the softmax.
+  analogy: Holding your question next to every shelf label and noting how well each one matches.
+  happens:
+  - Dot each query with every key.
+  - Divide by √d_k (optional here, so you can see why it is there).
+  - The result is an n × n grid per head.
+  goes_to: The mask, which can hide some of the scores.
+  example:
+    input: 6 queries and 6 keys
+    steps:
+    - 36 dot products
+    - Divide each by √d_k
+    output: A 6 × 6 grid of scores (illustrative)
+  misconfigured: Without scaling, a wide head produces scores that are far apart, and the next step then gives almost
+    all the weight to one word. The grid also grows with the square of the sentence length.
+  learn_more: If the components of a query and a key are independent with mean 0 and variance 1, their dot product
+    has variance d_k, so scores grow like √d_k. The authors suspect large dot products push softmax into regions
+    with extremely small gradients. The Transformer uses dot products rather than Bahdanau's small neural network
+    because they are faster and more space-efficient in practice. A layer's cost grows as O(n²·d).
+  claims:
+  - attn-scaled-dot-product
+  - attn-sqrt-dk-scaling
+  - attn-scaling-reason
+  - attn-additive-vs-dot
+  - attn-quadratic-cost
+mask:
+  what: Hides the words a word is not allowed to see. A causal mask hides every word that comes later.
+  why: A model that writes text one word at a time must not look at words it has not written yet.
+  analogy: Covering the rest of the page with a card, so you can only read what is already written.
+  happens:
+  - Scores for later words are set to minus infinity.
+  - The next step turns those into exactly zero weight.
+  - A word can still attend to itself.
+  goes_to: Softmax.
+  example:
+    input: Scores for "sat" in "the cat sat on the mat"
+    steps:
+    - Keep "the", "cat", "sat"
+    - Hide "on", "the", "mat"
+    output: Only three scores remain (illustrative)
+  misconfigured: Turn the mask off in a text-generating model and each word can see the future, which would not
+    exist when generating. Do not confuse it with a padding mask, and note that different libraries use opposite
+    True/False conventions for masks.
+  learn_more: With a causal mask a processed word never changes when later words arrive, which is why a KV cache
+    can reuse earlier keys and values. In Hugging Face the attention mask marks real tokens with 1 and padding with
+    0, a separate thing. In PyTorch's scaled_dot_product_attention a True entry in a boolean mask means may attend,
+    the opposite of MultiheadAttention's key_padding_mask.
+  claims:
+  - attn-causal-mask
+  - attn-padding-vs-causal
+  - attn-mask-polarity
+  - attn-kv-cache-valid
+softmax:
+  what: Turns each row of scores into shares that add up to 100%.
+  why: Raw scores can be any size or sign. Weights that add up to 1 tell each word how to split its attention.
+  analogy: Dividing 100 attention points among the words, with the best matches getting the biggest share.
+  happens:
+  - Subtract the row's largest score (so nothing overflows).
+  - Exponentiate every score.
+  - Divide by the row total.
+  goes_to: The weighted sum.
+  example:
+    input: Scores 2.0, 1.0, 0.0
+    steps:
+    - Exponentiate
+    - Divide by the total
+    output: About 67%, 24%, 9% (illustrative)
+  misconfigured: When one score is much larger than the others, softmax puts nearly all its weight on it. In this
+    toy layer an unscaled 64-wide head gives near one-hot attention.
+  learn_more: Subtracting the largest score first gives the same result but cannot overflow, and FlashAttention
+    uses the same trick. Softmax outputs are non-negative and sum to 1 along the chosen dimension.
+  claims:
+  - attn-softmax-weights
+  - attn-softmax-stable
+  - attn-softmax-saturation
+mix:
+  what: Each word's new vector is the weighted sum of the value vectors, using that word's attention weights.
+  why: 'This is where the information moves: a word takes in a blend of what the other words pass on.'
+  analogy: Mixing paints. Each word's colour is a blend of the others, in proportion to its weights.
+  happens:
+  - Each value vector is multiplied by its weight.
+  - The results are added together.
+  - This is done separately for every word and every head.
+  goes_to: The output step, which joins the heads.
+  example:
+    input: Weights 70%, 30% and values V1, V2
+    steps:
+    - 0.7 × V1
+    - 0.3 × V2
+    - Add
+    output: One blended vector (illustrative)
+  misconfigured: Do not read the weights as a full explanation of the model. Studies of RNN models with attention
+    found they often do not line up with other importance measures, and researchers disagree about what counts as
+    an explanation. Standard attention also needs a table that grows with the square of the sentence length.
+  learn_more: Jain and Wallace caution against telling just-so stories from attention maps, and Wiegreffe and Pinter
+    argue it depends on what you mean by explanation. Both mainly studied recurrent (LSTM) models with attention,
+    not Transformer self-attention. The Transformer authors only showed a few example heads that appear related
+    to sentence structure. FlashAttention computes the same exact result with only O(N) extra memory, but the arithmetic
+    is still quadratic.
+  claims:
+  - attn-weighted-sum
+  - attn-explanation-contested
+  - attn-interpretability-hedged
+  - attn-quadratic-memory
+output:
+  what: The heads' results are joined together and multiplied by one more matrix, giving one new vector per word.
+  why: Several heads let the layer look for different things at once. A single averaged head cannot attend to different
+    kinds of information at different positions.
+  analogy: Several people each read the same page for a different reason, then pool their notes into one summary.
+  happens:
+  - Each head produces a small result per word.
+  - The results are joined side by side into a vector 64 numbers wide.
+  - One more matrix W^O mixes them into the final vector.
+  goes_to: In a full Transformer, a residual connection and layer normalisation, then the next layer.
+  example:
+    input: 2 heads of 32 numbers
+    steps:
+    - Join into 64 numbers
+    - Multiply by W^O
+    output: One 64-number vector per word (illustrative)
+  misconfigured: 'Real models differ in head count and width, from 8 heads of 64 numbers in the original Transformer
+    to 96 heads of 128 in GPT-3 175B. More heads is not automatically better: in the original tests too many heads
+    also hurt.'
+  learn_more: Joining the heads and multiplying by W^O is mathematically the same as multiplying each head by its
+    own slice of W^O and adding. BERT-base has 12 heads on a 768-wide vector, and bge-small-en-v1.5 has 12 heads
+    on a 384-wide vector. In the original Transformer, each sub-layer's output is LayerNorm(x + Sublayer(x)), which
+    this toy layer leaves out.
+  claims:
+  - attn-multihead-concat
+  - attn-heads-additive
+  - attn-multihead-motivation
+  - attn-head-sizes
+  - attn-residual

@@ -1,0 +1,1326 @@
+# Lesson 04. Excerpts are verbatim from the Pass 1 notes in research_notes/Attention primary sources/ (plus a few checked in Pass 2).
+id: attention
+number: 4
+title: Attention, exploded
+summary: Watch every word decide which other words to look at, then blend what it finds. Run a real (toy) attention
+  layer step by step, break it on purpose, and rebuild it.
+status: published
+version: 1.0.0
+updated: '2026-10-20'
+estimated_minutes: 25
+objectives:
+- Trace one self-attention head from words to queries, keys and values, scores, weights and a weighted sum.
+- Explain why scores are scaled, why a mask hides later words, and why position vectors are needed.
+- Read an attention grid without mistaking it for a full explanation of a model.
+- 'Diagnose broken setups: peeking ahead, saturated softmax, and order-blind attention.'
+prerequisites:
+- Lesson 03 (embeddings) helps but is not required.
+verification_report: reports/Attention verification.md
+claims:
+- id: attn-weighted-sum
+  kind: definition
+  text: Attention takes a query and a set of key-value pairs and returns a weighted sum of the values. Each value's
+    weight comes from how well the query matches its key.
+  citations:
+  - source: vaswani2017
+    excerpt: The output is computed as a weighted sum
+    locator: §3.2 (pp.3-4)
+  - source: vaswani2017
+    excerpt: the weight assigned to each value is computed by a compatibility function of the query with the corresponding
+      key
+    locator: §3.2 (p.4)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: The layer matches an independent loop implementation of the weighted sum.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-qkv-projections
+  kind: definition
+  text: In self-attention the queries, keys and values all come from the same sequence. Each is made by multiplying
+    a word's vector by a learned weight matrix (the projections W^Q, W^K and W^V).
+  citations:
+  - source: vaswani2017
+    excerpt: linearly project the queries, keys and values h times with different, learned linear projections to
+      dk, dk and dv dimensions, respectively.
+    locator: §3.2.2 (p.4)
+  - source: vaswani2017
+    excerpt: In a self-attention layer all of the keys, values and queries come from the same place
+    locator: §3.2.3 (p.5)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Q, K and V are built from the same input vectors by three separate matrices, as the reference implementation
+        does.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-scaled-dot-product
+  kind: fact
+  text: 'One head computes softmax(QKᵀ/√d_k)V: dot each query with every key, divide by √d_k, apply a softmax to
+    get weights, then use the weights to mix the values.'
+  citations:
+  - source: vaswani2017
+    excerpt: We compute the dot products of the query with all keys, divide each by √dk, and apply a softmax function
+    locator: §3.2.1, Eq. (1) (p.4)
+  - source: pytorch_sdpa
+    excerpt: scale_factor = 1 / math.sqrt(query.size(-1)) if scale is None else scale
+    locator: pseudo-code
+  - source: pytorch_sdpa
+    excerpt: attn_weight = torch.softmax(attn_weight, dim=-1)
+    locator: pseudo-code
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Matches an independent plain-Python loop implementation for several head counts, masks and settings.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-softmax-weights
+  kind: definition
+  text: Softmax turns each row of scores into non-negative weights that add up to 1, so every word gets a share
+    of attention that is a fraction of its total.
+  citations:
+  - source: pytorch_softmax
+    excerpt: will re-scale them so that the elements lie in the range [0, 1] and sum to 1
+    locator: torch.nn.functional.softmax docs
+  - source: vaswani2017
+    excerpt: We compute the dot products of the query with all keys, divide each by √dk, and apply a softmax function
+    locator: §3.2.1, Eq. (1) (p.4)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Every row of every head sums to 1 and no weight is negative.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-softmax-stable
+  kind: fact
+  text: Softmax is computed by subtracting the largest score from every score first. The result is the same, but
+    huge scores cannot overflow.
+  citations:
+  - source: milakov2018softmax
+    excerpt: There is a safe form of (1), which is immune to this problem
+    locator: §2
+  - source: milakov2018softmax
+    excerpt: the line 3 of the algorithm 1 can overflow or underflow due to the exponent
+    locator: §2 Original softmax, p.2
+  - source: flashattention2022
+    excerpt: For numerical stability, the softmax of vector
+    locator: §3.1 Tiling
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: The lesson's softmax stays finite and sums to 1 for scores around 1000.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-scaling-reason
+  kind: fact
+  text: The Transformer authors divide scores by √d_k because they suspect that, for large d_k, large dot products
+    push softmax into regions where it has extremely small gradients.
+  citations:
+  - source: vaswani2017
+    locator: §3.2.1 (p.4)
+    excerpt: We suspect that for large values of dk, the dot products grow large in magnitude, pushing the softmax
+      function into regions where it has extremely small gradients
+  - source: vaswani2017
+    excerpt: To counteract this effect, we scale the dot products by 1√dk .
+    locator: §3.2.1 (p.4)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: The effect on training gradients is not run here. The forward effect on the weights is shown by attn-softmax-saturation.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-sqrt-dk-scaling
+  kind: fact
+  text: If the components of a query and a key are independent with mean 0 and variance 1, their dot product has
+    mean 0 and variance d_k, so scores typically grow like √d_k. Dividing by √d_k brings the spread back to about
+    1 (that last step is simple arithmetic, not a sentence in the paper).
+  citations:
+  - source: vaswani2017
+    excerpt: assume that the components of q and k are independent random variables with mean 0 and variance 1.
+    locator: footnote 4 (page 4; marker in §3.2.1)
+  - source: vaswani2017
+    excerpt: Then their dot product, q · k = Pdki=1 qiki, has mean 0 and variance dk.
+    locator: footnote 4 (page 4; marker in §3.2.1)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: 'Measured on the toy layer: unscaled score variance is close to d_k, scaled score variance close to
+        1.'
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-softmax-saturation
+  kind: simplification
+  text: When some scores are much larger than the rest, softmax puts nearly all its weight on the largest one (a
+    property of the formula, not stated by the sources). In this lesson's toy layer, a 64-wide head without scaling
+    puts about 90% of a word's attention on a single word on average, and scaling spreads it out.
+  citations:
+  - source: vaswani2017
+    locator: §3.2.1 (p.4)
+    excerpt: We suspect that for large values of dk, the dot products grow large in magnitude, pushing the softmax
+      function into regions where it has extremely small gradients
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Without scaling, a 64-wide head's strongest weight averages over 85%; with scaling it averages under
+        60%.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-multihead-concat
+  kind: fact
+  text: Multi-head attention runs h heads in parallel on different learned projections, concatenates their outputs
+    and applies one more learned projection W^O. In the original base model h = 8 and each head has 64 dimensions.
+  citations:
+  - source: vaswani2017
+    excerpt: On each of these projected versions of queries, keys and values we then perform the attention function
+      in parallel
+    locator: §3.2.2 (pp.4-5)
+  - source: vaswani2017
+    excerpt: MultiHead(Q, K, V) = Concat(head1, ...,headh)W O
+    locator: §3.2.2 (p.5)
+  - source: vaswani2017
+    excerpt: we employ h = 8 parallel attention layers, or heads. For each of these we use dk = dv = dmodel/h =
+      64.
+    locator: §3.2.2 (p.5)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Heads split the model width (d_k = d_model/h) and their concatenation is d_model wide, and the layer
+        matches the independent reference.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-heads-additive
+  kind: fact
+  text: Concatenating the heads and multiplying by W^O is mathematically the same as multiplying each head's output
+    by its own slice of W^O and adding the results.
+  citations:
+  - source: elhage2021
+    excerpt: Attention heads are often described in an alternate “concatenate and multiply” formulation for computational
+      efficiency, but this is mathematically equivalent.
+    locator: Summary, Conceptual Take-Aways
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Both ways give the same numbers on the toy layer.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-multihead-motivation
+  kind: fact
+  text: The authors' reason for several heads is that a single averaged head cannot attend to information from different
+    representation subspaces at different positions. On one English-German translation test, with computation held
+    constant, one head was 0.9 BLEU worse than the best setting, and too many heads also hurt.
+  citations:
+  - source: vaswani2017
+    excerpt: Multi-head attention allows the model to jointly attend to information from different representation
+      subspaces at different positions. With a single attention head, averaging inhibits this.
+    locator: §3.2.2 (p.5)
+  - source: vaswani2017
+    excerpt: While single-head attention is 0.9 BLEU worse than the best setting, quality also drops off with too
+      many heads.
+    locator: §6.2 (p.9)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: A motivation and a translation benchmark from the paper, not something this toy layer can test.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-causal-mask
+  kind: fact
+  text: A causal mask sets the scores of later positions to −∞ before the softmax, so those positions get weight
+    0 and a word cannot look at the words after it. A word can still attend to itself.
+  citations:
+  - source: vaswani2017
+    excerpt: masking out (setting to −∞) all values in the input of the softmax which correspond to illegal connections.
+    locator: §3.2.3 (p.5)
+  - source: vaswani2017
+    excerpt: prevent positions from attending to subsequent positions.
+    locator: §3.1 (p.3)
+  - source: pytorch_sdpa
+    excerpt: attn_bias.masked_fill_(temp_mask.logical_not(), float("-inf"))
+    locator: pseudo-code
+  - source: vaswani2017
+    locator: §3.2.3
+    excerpt: up to and including that position
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: With the mask on, every weight on a later word is exactly 0, the first word attends only to itself,
+        and rows still sum to 1.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-padding-vs-causal
+  kind: definition
+  text: In Hugging Face tokenizers the attention mask marks real tokens with 1 and padding with 0. That is a different
+    thing from the causal mask, which hides later words.
+  citations:
+  - source: hf_glossary
+    excerpt: The attention mask is a binary tensor indicating the position of the padded indices so that the model
+      does not attend to them.
+    locator: Glossary, "attention mask"
+  - source: hf_glossary
+    excerpt: 1 indicates a value that should be attended to, while 0 indicates a padded value
+    locator: same
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Library convention (Hugging Face Transformers v5.20.2 docs); the toy layer has no padding.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+  provider: Hugging Face
+- id: attn-mask-polarity
+  kind: provider_specific
+  text: In PyTorch's scaled_dot_product_attention a True entry in a boolean mask means "may attend". That is the
+    opposite of MultiheadAttention's key_padding_mask, so the same word "mask" can mean opposite things.
+  citations:
+  - source: pytorch_sdpa
+    excerpt: The boolean mask semantics for attn_mask are the inverse of MultiheadAttention’s key_padding_mask.
+    locator: '''Note'' on boolean mask semantics'
+  - source: pytorch_sdpa
+    excerpt: In scaled_dot_product_attention(), True indicates values to participate in attention.
+    locator: same note
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: API behaviour of PyTorch 2.14, a beta function; not reproduced here.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+  provider: PyTorch
+- id: attn-position-needed
+  kind: fact
+  text: Self-attention alone has no sense of word order, so position information has to be added. In this lesson's
+    toy layer, with no position vectors and no mask, every word's output is the same whatever order the words arrive
+    in.
+  citations:
+  - source: vaswani2017
+    excerpt: in order for the model to make use of the order of the sequence, we must inject some information about
+      the relative or absolute position
+    locator: §3.5 (p.6)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: Reversing the sentence only reverses the outputs when positions and the mask are off, and changes them
+        when either is on.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-position-encoding
+  kind: fact
+  text: The original Transformer adds fixed sine and cosine waves of different frequencies to the word vectors to
+    encode each position.
+  citations:
+  - source: vaswani2017
+    excerpt: we add "positional encodings" to the input embeddings at the bottoms of the encoder and decoder stacks.
+    locator: §3.5 (p.6)
+  - source: vaswani2017
+    excerpt: The wavelengths form a geometric progression from 2π to 10000 · 2π.
+    locator: §3.5 (p.6)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: The toy layer's positions match the published sin and cos formula.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-position-alternatives
+  kind: fact
+  text: Sinusoidal positions were chosen on a hypothesis, and learned position embeddings gave nearly identical
+    results. BERT sums token, segment and position embeddings, and rotary embeddings (RoPE) rotate the word vector
+    by an angle that depends on its position.
+  citations:
+  - source: vaswani2017
+    excerpt: we hypothesized it would allow the model to easily learn to attend by relative positions
+    locator: §3.5 (p.6)
+  - source: vaswani2017
+    excerpt: found that the two versions produced nearly identical results (see Table 3 row (E)).
+    locator: §3.5 (p.6)
+  - source: devlin2018bert
+    excerpt: constructed by summing the corresponding token, segment, and position embeddings
+    locator: §3 Input/Output Representations
+  - source: su2021roformer
+    locator: §1
+    excerpt: simply rotate the affine-transformed word embedding vector by amount of angle multiples of its position
+      index
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Design history and alternatives from papers; the toy layer uses only sinusoids.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-quadratic-cost
+  kind: fact
+  text: 'Self-attention compares every word with every other word, so a layer''s cost grows with the square of the
+    sequence length n: O(n²·d) for vector width d.'
+  citations:
+  - source: vaswani2017
+    excerpt: n is the sequence length, d is the representation dimension
+    locator: Table 1 caption, p.6
+  - source: vaswani2017
+    excerpt: Self-Attention O(n2 · d) O(1) O(1)
+    locator: Table 1 row 1, p.6
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: The score grid has n×n entries per head, so doubling the words quadruples it.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-quadratic-memory
+  kind: fact
+  text: In standard attention both time and memory grow quadratically with sequence length. FlashAttention computes
+    the same exact result with only O(N) extra memory, but the arithmetic is still quadratic.
+  citations:
+  - source: flashattention2022
+    excerpt: time and memory complexity of self-attention are quadratic in sequence length
+    locator: Abstract
+  - source: flashattention2022
+    locator: §3.1, Theorem 1
+    excerpt: requires O(N) additional memory beyond inputs and output
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: A hardware and kernel result from the FlashAttention paper, not reproduced by this toy layer.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-kv-cache
+  kind: definition
+  text: When a model generates text it keeps the keys and values of the words already processed (the KV cache) and
+    reuses them instead of recomputing them for every new word.
+  citations:
+  - source: hf_cache_explanation
+    excerpt: A key-value (KV) cache eliminates this inefficiency by storing kv pairs derived from the attention
+      layers of previously processed tokens.
+    locator: '"How caching works", para 1'
+  - source: hf_cache_explanation
+    excerpt: The stored kv pairs are retrieved from the cache and reused for subsequent tokens, avoiding the need
+      to recompute.
+    locator: same
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Library behaviour (Hugging Face Transformers v5.20.2 docs); the validity of the idea is tested by attn-kv-cache-valid.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+  provider: Hugging Face
+- id: attn-kv-cache-valid
+  kind: fact
+  text: The cache is valid because, with a causal mask, a word that has been processed never changes when later
+    words arrive.
+  citations:
+  - source: hf_cache_explanation
+    excerpt: Once a token is processed, its representation never changes with respect to future tokens
+    locator: '"How caching works", Attention matrices'
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: passed
+      date: '2026-10-20'
+      by: pass3/pytest
+      notes: With the causal mask on, the outputs for the first words are identical whether or not later words are
+        present.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-kv-cache-size
+  kind: provider_specific
+  text: 'For one sequence in plain multi-head attention, the KV cache holds keys and values for every earlier word,
+    every layer and every head: two times the sequence length times the number of heads times the head dimension
+    times the number of layers. Multi-query and grouped-query attention use fewer key-value heads.'
+  citations:
+  - source: hf_llm_optimization
+    excerpt: two times the sequence length times the number of attention heads times the attention head dimension
+      and times the number of layers
+    locator: §3.2 key-value cache
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Memory accounting from the Hugging Face optimisation guide (v5.20.2 docs).
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+  provider: Hugging Face
+- id: attn-mqa-gqa
+  kind: fact
+  text: Multi-query attention shares one set of keys and values across all heads, which shrinks the KV cache. Grouped-query
+    attention lets groups of query heads share a key and value head, between multi-head and multi-query.
+  citations:
+  - source: shazeer2019mqa
+    excerpt: multi-query attention, where the keys and values are shared across all of the different attention "heads"
+    locator: Abstract
+  - source: ainslie2023gqa
+    excerpt: Grouped-query attention divides query heads into G groups, each of which shares a single key head and
+      value head.
+    locator: §2.2 Grouped-query attention
+  - source: ainslie2023gqa
+    excerpt: reducing the size of the key-value cache and therefore amount of data that needs to be loaded by a
+      factor of H
+    locator: §2.2
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Architecture variants from papers; the toy layer is plain multi-head attention.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-head-sizes
+  kind: provider_specific
+  text: 'Real models differ in head count and head width: BERT-base has 12 heads on a 768-wide vector (64 each),
+    GPT-3 175B has 96 heads of 128 dimensions, and bge-small-en-v1.5 has 12 heads on a 384-wide vector (32 each).'
+  citations:
+  - source: devlin2018bert
+    excerpt: BERTBASE (L=12, H=768, A=12, Total Param-
+    locator: §3 Model Architecture, p.3
+  - source: brown2020gpt3
+    excerpt: GPT-3 175B or “GPT-3” 175.0B 96 12288 96 128 3.2M 0.6× 10−4
+    locator: Table 2.1
+  - source: bge_model_card
+    excerpt: '"num_attention_heads": 12'
+    locator: config.json
+  - source: bge_model_card
+    excerpt: '"hidden_size": 384'
+    locator: config.json @ 5c38ec7
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Model configurations from papers and a pinned model card; the per-head widths are divisions of the
+        published sizes.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+  provider: BERT / OpenAI / BAAI
+- id: attn-not-all-you-need
+  kind: fact
+  text: Attention is not the whole Transformer. The original also has embeddings, positional encodings, position-wise
+    feed-forward layers, residual connections and layer normalisation; its title means it dropped recurrence and
+    convolutions.
+  citations:
+  - source: vaswani2017
+    excerpt: We propose a new simple network architecture, the Transformer, based solely on attention mechanisms,
+      dispensing with recurrence and convolutions entirely.
+    locator: Abstract (p.1)
+  - source: vaswani2017
+    excerpt: each of the layers in our encoder and decoder contains a fully connected feed-forward network, which
+      is applied to each position separately and identically.
+    locator: §3.3 (p.5)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Architecture description from the paper.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-residual
+  kind: fact
+  text: 'Around each sub-layer the original Transformer adds the input back and then applies layer normalisation:
+    LayerNorm(x + Sublayer(x)). This lesson''s toy layer stops at the attention output.'
+  citations:
+  - source: vaswani2017
+    excerpt: We employ a residual connection [11] around each of the two sub-layers, followed by layer normalization
+      [ 1].
+    locator: §3.1 (p.3)
+  - source: vaswani2017
+    excerpt: the output of each sub-layer is LayerNorm(x + Sublayer(x))
+    locator: §3.1 (p.3)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Not part of the toy layer; described from the paper.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-origin
+  kind: fact
+  text: Bahdanau et al. (2014) introduced attention to neural translation so that a whole source sentence need not
+    be squeezed into one fixed-length vector. In their test the plain encoder-decoder dropped sharply on long sentences,
+    while the attention model trained on longer sentences (RNNsearch-50) showed no deterioration even at 50 words
+    or more.
+  citations:
+  - source: bahdanau2014
+    excerpt: it does not attempt to encode a whole input sentence into a single fixed-length vector.
+    locator: §1 (p.2)
+  - source: bahdanau2014
+    excerpt: of RNNencdec dramatically drops as the length of the sentences increases.
+    locator: §5.1 (p.6), Fig. 2
+  - source: bahdanau2014
+    excerpt: RNNsearch-50, especially, shows no performance deterioration even with sentences of length 50 or more.
+    locator: §5.1 (p.6)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: An English-French translation result from the paper.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-additive-vs-dot
+  kind: fact
+  text: Bahdanau's original attention scores each position with a small neural network (additive attention). The
+    Transformer uses scaled dot products instead, which the authors say are much faster and more space-efficient
+    in practice.
+  citations:
+  - source: bahdanau2014
+    excerpt: a(si−1,h j) = v⊤a tanh (Wasi−1 +Uahj),
+    locator: Appendix A.1.2, Alignment Model (p.12)
+  - source: vaswani2017
+    excerpt: dot-product attention is much faster and more space-efficient in practice, since it can be implemented
+      using highly optimized
+    locator: §3.2.1 (p.4)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Design comparison from the papers; the toy layer uses dot products only.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-qk-ov
+  kind: fact
+  text: 'A head can be seen as two parts: one that decides where to attend and one that decides what to move from
+    the attended word. Elhage et al. call queries, keys and values, "in some sense, superficial" by-products of
+    the products of the weight matrices. Their analysis covers small attention-only transformers (ignoring layer
+    norm and biases) and is not peer reviewed.'
+  citations:
+  - source: elhage2021
+    excerpt: a QK (“query-key”) circuit which computes the attention pattern, and an OV (“output-value”) circuit
+      which computes how each token affects the output if attended to.
+    locator: Summary, 'Conceptual Take-Aways'
+  - source: elhage2021
+    excerpt: Keys, queries and value vectors are, in some sense, superficial.
+    locator: '''Observations about Attention Heads'''
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: An interpretive framing from a blog-style publication about toy attention-only models, not tested here.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-explanation-contested
+  kind: fact
+  text: Attention weights are not guaranteed to explain why a model answered as it did. Jain and Wallace found they
+    often do not line up with other importance measures, and Wiegreffe and Pinter argue the answer depends on what
+    you mean by explanation. Both mainly studied recurrent (LSTM) models with attention, not Transformer self-attention.
+  citations:
+  - source: jain2019
+    excerpt: do not provide meaningful explanations and should not be treated as though they do.
+    locator: Abstract (p.1)
+  - source: wiegreffe2019
+    excerpt: 'Whether or not attention is explanation depends on the definition of explainability one is looking
+      for: plausible or faithful explanations (or both).'
+    locator: §6 (p.9)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Empirical findings from two papers about RNN models.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+- id: attn-interpretability-hedged
+  kind: fact
+  text: The Transformer authors suggested self-attention could yield more interpretable models, but they only showed
+    a few example heads, which "appear" related to sentence structure.
+  citations:
+  - source: vaswani2017
+    excerpt: As side benefit, self-attention could yield more interpretable models.
+    locator: §4 (p.7)
+  - source: vaswani2017
+    excerpt: many appear to exhibit behavior related to the syntactic and semantic structure of the sentences.
+    locator: §4 (p.7)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-20'
+      by: pass1/deep-research
+    technical:
+      status: not_applicable
+      notes: Qualitative examples from the paper.
+    cross_check:
+      status: passed
+      date: '2026-10-20'
+      by: pass2/independent-agent
+      notes: See research_notes/Attention primary sources/pass2_cross_check.md; fixes applied.
+components:
+- id: tokens
+  label: Words in
+  phase: input
+  short: The sentence, cut into words.
+  detail: Attention works on a list of words. This toy layer splits your sentence into words and punctuation marks,
+    up to 12.
+  claims:
+  - attn-origin
+  - attn-not-all-you-need
+  geometry:
+    shape: stack
+    size:
+    - 0.9
+    - 0.5
+    - 0.7
+  position:
+  - -2.45
+  - 0
+  - 0
+  explode:
+  - -1.6
+  - 0
+  - -1.2
+  subtitle: Sentence to words
+  icon: TextAa
+  inputs:
+  - Your sentence
+  outputs:
+  - Words
+  breaks_if_removed: There are no words, so there is nothing to attend over.
+- id: embed_pos
+  label: Vectors + position
+  phase: input
+  short: Each word becomes a vector, plus a sense of where it sits.
+  detail: Each word gets a fixed random 64-number vector, and a sine and cosine position pattern is added. Without
+    positions, attention cannot tell word order.
+  claims:
+  - attn-position-needed
+  - attn-position-encoding
+  - attn-position-alternatives
+  geometry:
+    shape: slab
+    size:
+    - 0.9
+    - 0.4
+    - 0.7
+  position:
+  - -1.75
+  - 0
+  - 0
+  explode:
+  - -0.55
+  - 0
+  - -1.2
+  subtitle: Meaning plus place
+  icon: Hash
+  inputs:
+  - Words
+  outputs:
+  - Word vectors
+  breaks_if_removed: Without position vectors, and with no mask, each word's output is the same whatever order the
+    words come in, so the sentence is treated as a bag of words.
+- id: qkv
+  label: Q · K · V
+  phase: project
+  short: Every word makes a query, a key and a value.
+  detail: Three learned matrices turn each word vector into a query (what it looks for), a key (what it offers)
+    and a value (what it passes on). Several heads do this in parallel on smaller slices.
+  claims:
+  - attn-qkv-projections
+  - attn-qk-ov
+  - attn-kv-cache
+  - attn-kv-cache-size
+  - attn-mqa-gqa
+  geometry:
+    shape: prism
+    size:
+    - 0.9
+    - 0.6
+    - 0.7
+  position:
+  - -1.05
+  - 0
+  - 0
+  explode:
+  - 0.55
+  - 0
+  - -1.2
+  subtitle: Three roles per word
+  icon: Funnel
+  inputs:
+  - Word vectors
+  outputs:
+  - Queries
+  - Keys
+  - Values
+  breaks_if_removed: Words are compared directly, so each word's strongest match is itself.
+- id: scores
+  label: Score grid
+  phase: score
+  short: Each query is compared with every key.
+  detail: Dot each word's query with every word's key to fill an n×n grid, then divide by the square root of the
+    head width so the numbers stay a sensible size.
+  claims:
+  - attn-weighted-sum
+  - attn-scaled-dot-product
+  - attn-sqrt-dk-scaling
+  - attn-scaling-reason
+  - attn-additive-vs-dot
+  - attn-quadratic-cost
+  geometry:
+    shape: grid
+    size:
+    - 1.0
+    - 0.35
+    - 1.0
+  position:
+  - -0.35
+  - 0
+  - 0
+  explode:
+  - 1.6
+  - 0
+  - -1.2
+  subtitle: Who matches whom
+  icon: GridFour
+  inputs:
+  - Queries
+  - Keys
+  outputs:
+  - Scores
+  breaks_if_removed: Every visible word gets the same weight, so each output is just an average.
+- id: mask
+  label: Mask
+  phase: score
+  short: Hide the words a word is not allowed to see.
+  detail: A causal mask sets the scores of later words to minus infinity so they end up with zero weight. Padding
+    masks are a different thing.
+  claims:
+  - attn-causal-mask
+  - attn-padding-vs-causal
+  - attn-mask-polarity
+  - attn-kv-cache-valid
+  geometry:
+    shape: lens
+    size:
+    - 0.9
+    - 0.5
+    - 0.7
+  position:
+  - 0.35
+  - 0
+  - 0
+  explode:
+  - 1.6
+  - 0
+  - 1.0
+  subtitle: No peeking ahead
+  icon: Prohibit
+  inputs:
+  - Scores
+  outputs:
+  - Masked scores
+  breaks_if_removed: Every word can attend to the words after it, so it can peek at the future.
+- id: softmax
+  label: Softmax
+  phase: weigh
+  short: Scores become shares that add up to 100%.
+  detail: Softmax turns each row of scores into non-negative weights that sum to 1. Very large scores make it nearly
+    one-hot, which is why scaling matters.
+  claims:
+  - attn-softmax-weights
+  - attn-softmax-stable
+  - attn-softmax-saturation
+  geometry:
+    shape: ring
+    size:
+    - 0.8
+    - 0.5
+    - 0.8
+  position:
+  - 1.05
+  - 0
+  - 0
+  explode:
+  - 0.55
+  - 0
+  - 1.0
+  subtitle: Shares of attention
+  icon: Percent
+  inputs:
+  - Masked scores
+  outputs:
+  - Attention weights
+  breaks_if_removed: Raw scores are used as weights, so rows do not add up to 1 and can be negative.
+- id: mix
+  label: Weighted sum
+  phase: mix
+  short: Blend the values using the weights.
+  detail: 'Each word''s new vector is the weights times the value vectors: a blend that leans towards the words
+    it attends to most.'
+  claims:
+  - attn-weighted-sum
+  - attn-explanation-contested
+  - attn-interpretability-hedged
+  - attn-quadratic-memory
+  geometry:
+    shape: stack
+    size:
+    - 0.9
+    - 0.6
+    - 0.7
+  position:
+  - 1.75
+  - 0
+  - 0
+  explode:
+  - -0.55
+  - 0
+  - 1.0
+  subtitle: Blend what it finds
+  icon: Stack
+  inputs:
+  - Attention weights
+  - Values
+  outputs:
+  - Mixed values
+  breaks_if_removed: There is a table of weights but no weighted sum, so no new word vectors.
+- id: output
+  label: Heads + output
+  phase: output
+  short: Heads are joined and projected back.
+  detail: The heads' results are concatenated and multiplied by one more matrix to give a new vector per word. The
+    full Transformer then adds a residual connection and layer normalisation.
+  claims:
+  - attn-multihead-concat
+  - attn-heads-additive
+  - attn-multihead-motivation
+  - attn-head-sizes
+  - attn-residual
+  geometry:
+    shape: cylinder
+    size:
+    - 0.8
+    - 0.6
+    - 0.8
+  position:
+  - 2.45
+  - 0
+  - 0
+  explode:
+  - -1.6
+  - 0
+  - 1.0
+  subtitle: One vector per word
+  icon: ArrowsMerge
+  inputs:
+  - Mixed values from each head
+  outputs:
+  - New word vectors
+  breaks_if_removed: Each head's result stays separate, so there is no single vector per word.
+connections:
+- source: tokens
+  target: embed_pos
+  flow: document
+  payload: words
+- source: embed_pos
+  target: qkv
+  flow: vector
+  payload: word vectors
+- source: qkv
+  target: scores
+  flow: vector
+  payload: queries and keys
+- source: scores
+  target: mask
+  flow: query
+  payload: scores
+- source: mask
+  target: softmax
+  flow: query
+  payload: masked scores
+- source: softmax
+  target: mix
+  flow: query
+  payload: weights
+- source: qkv
+  target: mix
+  flow: vector
+  payload: values
+- source: mix
+  target: output
+  flow: vector
+  payload: mixed values
+visuals:
+- id: ablation
+  kind: real_execution
+  label: Real execution, step removed
+  description: The toy attention layer really runs without the chosen step, side by side with the full layer.
+- id: exploded-view
+  kind: conceptual
+  label: Conceptual diagram
+  description: Positions and shapes are a visual metaphor. Data flow follows the real order of the computation.
+- id: data-flow
+  kind: conceptual
+  label: Conceptual animation
+  description: Moving packets show which step feeds which. Solid lines carry words, dashed lines carry vectors,
+    dotted lines carry scores and weights. Speed carries no meaning.
+- id: experiment
+  kind: real_execution
+  label: Real execution · toy layer
+  description: A real attention layer with fixed random weights runs on your sentence. It shows the mechanism, not
+    what a trained model attends to.
+experiment:
+  engine: attend
+  endpoint: /api/experiments/attend/run
+  corpus_note: 'A toy layer: every word gets a fixed random vector and the projections are fixed random matrices.
+    Nothing is trained, so patterns show how attention works, not what a trained model attends to.'
+  presets:
+  - label: Cat
+    text: the cat sat on the mat
+    note: Repeated words ("the") start from the same vector, but with random weights that does not make them attend
+      to each other. A trained model learns which words to match.
+  - label: Pronoun
+    text: the animal did not cross the street because it was too tired
+    note: A trained model might link "it" to "animal". This toy layer has random weights, so it will not. Do not
+      read meaning into its grid.
+  - label: Order
+    text: dog bites man
+    note: 'Turn Position vectors off and the Causal mask off: the layer can no longer tell this sentence from "man
+      bites dog". The Order matters check in the stats shows it.'
+challenges:
+- id: peeking
+  title: The model that cheats
+  brief: This layer is meant to write text left to right, so each word may only see the words before it. Right now
+    words look ahead. Fix it without changing the sentence.
+  broken_params:
+    text: the cat sat on the mat
+    heads: 2
+    scale: true
+    causal: false
+    position: true
+  locked_params:
+  - text
+  - heads
+  - scale
+  - position
+  checks:
+  - type: no_future_attention
+  hint: Which control hides later words?
+  explanation: A causal mask sets the scores of later words to minus infinity before the softmax, so they get exactly
+    zero weight. Without it every word can attend to words that, when generating, would not exist yet.
+  claims:
+  - attn-causal-mask
+- id: one-word-takes-all
+  title: One word takes everything
+  brief: With a wide head and no scaling, almost every word attends to a single word. Spread the attention out without
+    changing the sentence.
+  broken_params:
+    text: the animal did not cross the street because it was too tired
+    heads: 1
+    scale: false
+    causal: false
+    position: true
+  locked_params:
+  - text
+  - causal
+  - position
+  checks:
+  - type: not_saturated
+    limit: 80
+  hint: Scores grow with the head width. What did the paper divide them by?
+  explanation: Unscaled dot products have a spread of about √d_k, so a 64-wide head produces scores far apart and
+    softmax becomes nearly one-hot. Dividing by √d_k, or splitting into four or more narrower heads, keeps the weights
+    spread out. Two heads are not enough without scaling.
+  claims:
+  - attn-sqrt-dk-scaling
+  - attn-softmax-saturation
+- id: bag-of-words
+  title: Order-blind attention
+  brief: This layer gives each word the same output for "dog bites man" and "man bites dog", whichever order the
+    words come in. Make it sensitive to word order without changing the sentence.
+  broken_params:
+    text: dog bites man
+    heads: 2
+    scale: true
+    causal: false
+    position: false
+  locked_params:
+  - text
+  - heads
+  - scale
+  - causal
+  checks:
+  - type: order_matters
+  hint: What tells attention where each word sits?
+  explanation: Self-attention only compares word vectors, so without position information it treats the sentence
+    as a set of words. Adding position vectors makes each word's output depend on order. (A causal mask would too,
+    but it is locked in this challenge.)
+  claims:
+  - attn-position-needed
+  - attn-position-encoding
+reconstruction:
+  prompt: Put the steps of one attention layer in an order that could actually run. Each step must come after everything
+    it needs.
+  dependencies:
+    tokens: []
+    embed_pos:
+    - tokens
+    qkv:
+    - embed_pos
+    scores:
+    - qkv
+    mask:
+    - scores
+    softmax:
+    - mask
+    mix:
+    - softmax
+    - qkv
+    output:
+    - mix
+tour:
+- component: tokens
+  title: Start with the words
+  body: The sentence is cut into words, and every word will get its own turn to decide what to look at.
+  claims:
+  - attn-origin
+- component: embed_pos
+  title: Meaning plus position
+  body: Each word becomes a vector, and a position pattern is added because attention alone cannot tell word order.
+  claims:
+  - attn-position-needed
+- component: qkv
+  title: Query, key, value
+  body: Every word makes a query (what it looks for), a key (what it offers) and a value (what it passes on).
+  claims:
+  - attn-qkv-projections
+- component: scores
+  title: Compare everything
+  body: Each query is compared with every key. Scores are divided by √d_k so they do not grow too large.
+  claims:
+  - attn-scaled-dot-product
+  - attn-sqrt-dk-scaling
+- component: mask
+  title: No peeking
+  body: When generating text, later words are hidden so a word cannot see the future.
+  claims:
+  - attn-causal-mask
+- component: softmax
+  title: Scores to shares
+  body: Softmax turns each row into weights that add up to 100%.
+  claims:
+  - attn-softmax-weights
+- component: mix
+  title: Blend the values
+  body: Each word's new vector leans towards the words it attends to most. A heatmap of these weights is not a full
+    explanation of a model.
+  claims:
+  - attn-weighted-sum
+  - attn-explanation-contested
+- component: output
+  title: Join the heads
+  body: Several heads work on smaller slices in parallel. Their results are joined and projected back to one vector
+    per word.
+  claims:
+  - attn-multihead-concat

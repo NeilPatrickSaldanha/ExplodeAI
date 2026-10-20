@@ -147,6 +147,7 @@ ENGINE_CHECKS: dict[str, set[str]] = {
     "rag": {"gold_in_retrieved", "gold_in_prompt"},
     "tokenize": {"round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens"},
     "embed": {"top1_category", "comparable"},
+    "attend": {"no_future_attention", "not_saturated", "order_matters"},
 }
 
 
@@ -155,6 +156,7 @@ class Check(BaseModel):
         "gold_in_retrieved", "gold_in_prompt",  # rag
         "round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens",  # tokenize
         "top1_category", "comparable",  # embed
+        "no_future_attention", "not_saturated", "order_matters",  # attend
     ]
     gold: list[str] = []
     limit: int | None = None
@@ -164,8 +166,8 @@ class Check(BaseModel):
         needs_gold = ("gold_in_retrieved", "gold_in_prompt", "single_token", "top1_category")
         if self.type in needs_gold and not self.gold:
             raise ValueError(f"{self.type} checks need at least one gold string")
-        if self.type == "max_tokens" and self.limit is None:
-            raise ValueError("max_tokens checks need a limit")
+        if self.type in ("max_tokens", "not_saturated") and self.limit is None:
+            raise ValueError(f"{self.type} checks need a limit")
         return self
 
 

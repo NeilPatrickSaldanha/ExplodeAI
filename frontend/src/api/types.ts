@@ -383,3 +383,70 @@ export interface EmbedAblationOutcome {
 export interface EmbedCheck extends ChallengeOutcome {
   result: EmbedResult
 }
+
+export interface AttendParams {
+  text: string
+  heads: 1 | 2 | 4 | 8
+  scale: boolean
+  causal: boolean
+  position: boolean
+  head: number
+}
+
+export interface AttendHead {
+  index: number
+  q: number[][]
+  k: number[][]
+  v: number[][]
+  scores_raw: number[][]
+  scores: number[][]
+  weights: number[][]
+}
+
+export interface AttendResult {
+  params: AttendParams
+  model: { kind: 'toy'; note: string; d_model: number; heads: number; head_dim: number; seed: number }
+  tokens: { index: number; text: string }[]
+  embedding: { word_preview: number[][]; position_preview: number[][] | null; input_preview: number[][] }
+  heads: AttendHead[]
+  selected_head: number
+  weights_mean: number[][]
+  output: { preview: number[][]; norms: number[] }
+  stats: {
+    head_dim: number
+    score_std_raw: number
+    score_std_used: number
+    expected_raw_std: number
+    mean_max_weight: number
+    mean_entropy: number
+    future_mass: number
+    self_weight: number
+    row_sum_min: number
+    row_sum_max: number
+    order_gap: number
+  }
+  notes: string[]
+  timings_ms: Record<string, number>
+  stages: string[]
+}
+
+export interface AttendAblationOutcome {
+  removed: string | null
+  has_weights: boolean
+  has_output: boolean
+  output_shape: string | null
+  weights: number[][] | null
+  row_sum_min: number | null
+  row_sum_max: number | null
+  has_negative: boolean | null
+  future_mass: number | null
+  self_weight: number | null
+  mean_max_weight: number | null
+  order_gap: number | null
+  uniform: boolean | null
+  notes: string[]
+}
+
+export interface AttendCheck extends ChallengeOutcome {
+  result: AttendResult
+}

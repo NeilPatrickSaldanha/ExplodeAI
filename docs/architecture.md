@@ -61,6 +61,13 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   `tests/test_embed.py` shows the hand-built stages reproduce fastembed's own output.
   The RAG lexical embedder is available as the contrast. Ablation lives in
   `embed/ablation.py` and `POST /api/experiments/embed/ablate`.
+- **Attention experiment** (`backend/app/experiments/attend/`) — a *toy* self-attention layer
+  built from scratch in numpy (fixed random word vectors and projections, sinusoidal
+  positions, d_model 64, 1–8 heads): Q/K/V projections, n×n scores with optional 1/√d_k,
+  an optional causal mask, a max-subtracted softmax, a weighted sum, concatenated heads and
+  an output projection. Every statement is checked against an independent plain-Python loop
+  implementation. Ablation lives in `attend/ablation.py`; checks are `no_future_attention`,
+  `not_saturated` and `order_matters`.
 - **Challenges** are data: broken params, locked params, and checks. Each
   experiment engine declares the check types it can evaluate (`ENGINE_CHECKS` in
   the schema): RAG checks gold phrases in retrieved chunks or the prompt;

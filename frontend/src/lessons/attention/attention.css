@@ -1,0 +1,193 @@
+/* Lesson 04 components. Tokens only. Weights are encoded by fill height AND a printed number. */
+
+.agrid {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.agrid__table {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: var(--text-xs);
+}
+
+.agrid__col span {
+  display: block;
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-label);
+  font-weight: 400;
+  color: var(--color-ink-2);
+  padding-bottom: var(--space-3xs);
+}
+
+.agrid__row {
+  text-align: right;
+  font-family: var(--font-label);
+  font-weight: 400;
+  color: var(--color-ink-2);
+  padding-right: var(--space-2xs);
+  white-space: nowrap;
+}
+
+.agrid__row button {
+  all: unset;
+  cursor: pointer;
+  min-height: 24px;
+  padding: 0 var(--space-3xs);
+  border-radius: var(--radius-sm);
+}
+
+.agrid__row button:focus-visible {
+  outline: 2px solid var(--color-accent);
+}
+
+.agrid__row button[aria-pressed="true"] {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.agrid__cell {
+  position: relative;
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 3px;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.agrid--compact .agrid__cell {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+}
+
+.agrid__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--scene-flow);
+  opacity: 0.55;
+}
+
+.agrid__num {
+  position: relative;
+  font-family: var(--font-label);
+  font-size: 10px;
+  color: var(--color-ink);
+}
+
+.agrid__cell.is-hidden {
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--color-rule-2) 4px 5px);
+  color: var(--color-muted);
+}
+
+.agrid tr.is-selected .agrid__cell {
+  border-color: var(--color-accent);
+}
+
+.agrid__note {
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+  min-height: 2.6em;
+}
+
+.look {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.look__tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.look__tok {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  min-width: 3.4rem;
+  min-height: 44px;
+  padding: var(--space-3xs) var(--space-xs);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: center;
+}
+
+.look__tok.is-asker {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.look__fill {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: var(--scene-flow);
+  opacity: 0.35;
+}
+
+.look__text,
+.look__pct {
+  position: relative;
+}
+
+.look__pct {
+  font-family: var(--font-label);
+  font-size: 10px;
+  color: var(--color-ink-2);
+}
+
+.look__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.look__list li {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.look__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-rule);
+}
+
+.look__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--scene-flow);
+}
+
+.look__note {
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.qkv {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.qkv__block {
+  display: grid;
+  gap: var(--space-2xs);
+}

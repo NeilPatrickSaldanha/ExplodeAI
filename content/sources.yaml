@@ -491,3 +491,138 @@ sources:
     type: official_docs
     version: live page at access date
     accessed: 2026-10-19
+  - id: vaswani2017
+    title: Attention Is All You Need
+    authors: [Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, Illia Polosukhin]
+    publisher: arXiv / NIPS 2017
+    url: https://arxiv.org/abs/1706.03762
+    type: paper
+    version: v7 (2 Aug 2023)
+    published: "2017"
+    accessed: 2026-10-19
+  - id: bahdanau2014
+    title: Neural Machine Translation by Jointly Learning to Align and Translate
+    authors: [Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio]
+    publisher: arXiv / ICLR 2015
+    url: https://arxiv.org/abs/1409.0473
+    type: paper
+    version: v7 (19 May 2016)
+    published: "2014"
+    accessed: 2026-10-19
+  - id: jain2019
+    title: Attention is not Explanation
+    authors: [Sarthak Jain, Byron C. Wallace]
+    publisher: arXiv / NAACL 2019
+    url: https://arxiv.org/abs/1902.10186
+    type: paper
+    version: v3 (8 May 2019)
+    published: "2019"
+    accessed: 2026-10-19
+  - id: wiegreffe2019
+    title: Attention is not not Explanation
+    authors: [Sarah Wiegreffe, Yuval Pinter]
+    publisher: arXiv / EMNLP 2019
+    url: https://arxiv.org/abs/1908.04626
+    type: paper
+    version: v2 (5 Sep 2019)
+    published: "2019"
+    accessed: 2026-10-19
+  - id: elhage2021
+    title: A Mathematical Framework for Transformer Circuits
+    authors: [Nelson Elhage, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben Mann, Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, et al.]
+    publisher: Transformer Circuits Thread (Anthropic)
+    url: https://transformer-circuits.pub/2021/framework/index.html
+    type: reference
+    version: published 22 Dec 2021 (page shows no version or commit)
+    published: "2021"
+    accessed: 2026-10-19
+    notes: Blog-style research publication, not peer reviewed. Analyses toy attention-only models.
+  - id: pytorch_sdpa
+    title: torch.nn.functional.scaled_dot_product_attention
+    publisher: PyTorch documentation
+    url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.scaled_dot_product_attention.html
+    type: framework_docs
+    version: PyTorch 2.14 documentation
+    accessed: 2026-10-19
+  - id: flashattention2022
+    title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness"
+    authors: [Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré]
+    publisher: arXiv / NeurIPS 2022
+    url: https://arxiv.org/abs/2205.14135
+    type: paper
+    version: v2
+    published: "2022"
+    accessed: 2026-10-19
+  - id: su2021roformer
+    title: "RoFormer: Enhanced Transformer with Rotary Position Embedding"
+    authors: [Jianlin Su, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, Yunfeng Liu]
+    publisher: arXiv
+    url: https://arxiv.org/abs/2104.09864
+    type: paper
+    version: v5
+    published: "2021"
+    accessed: 2026-10-19
+  - id: shazeer2019mqa
+    title: "Fast Transformer Decoding: One Write-Head is All You Need"
+    authors: [Noam Shazeer]
+    publisher: arXiv
+    url: https://arxiv.org/abs/1911.02150
+    type: paper
+    version: v1
+    published: "2019"
+    accessed: 2026-10-19
+  - id: ainslie2023gqa
+    title: "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints"
+    authors: [Joshua Ainslie, James Lee-Thorp, Michiel de Jong, Yury Zemlyanskiy, Federico Lebrón, Sumit Sanghai]
+    publisher: arXiv / EMNLP 2023
+    url: https://arxiv.org/abs/2305.13245
+    type: paper
+    version: v3
+    published: "2023"
+    accessed: 2026-10-19
+  - id: brown2020gpt3
+    title: Language Models are Few-Shot Learners
+    authors: [Tom B. Brown, Benjamin Mann, Nick Ryder, et al.]
+    publisher: arXiv / NeurIPS 2020
+    url: https://arxiv.org/abs/2005.14165
+    type: paper
+    version: v4
+    published: "2020"
+    accessed: 2026-10-19
+  - id: milakov2018softmax
+    title: Online normalizer calculation for softmax
+    authors: [Maxim Milakov, Natalia Gimelshein]
+    publisher: arXiv
+    url: https://arxiv.org/abs/1805.02867
+    type: paper
+    version: v2
+    published: "2018"
+    accessed: 2026-10-19
+  - id: hf_cache_explanation
+    title: How caching works
+    publisher: Hugging Face Transformers documentation
+    url: https://huggingface.co/docs/transformers/v5.20.2/en/cache_explanation
+    type: framework_docs
+    version: Transformers v5.20.2 docs (page shows no date)
+    accessed: 2026-10-19
+  - id: hf_glossary
+    title: Glossary
+    publisher: Hugging Face Transformers documentation
+    url: https://huggingface.co/docs/transformers/v5.20.2/en/glossary
+    type: framework_docs
+    version: Transformers v5.20.2 docs (page shows no date)
+    accessed: 2026-10-19
+  - id: hf_llm_optimization
+    title: Optimizing LLMs for Speed and Memory
+    publisher: Hugging Face Transformers documentation
+    url: https://huggingface.co/docs/transformers/v5.20.2/en/llm_tutorial_optimization
+    type: framework_docs
+    version: Transformers v5.20.2 docs (page shows no date)
+    accessed: 2026-10-19
+  - id: pytorch_softmax
+    title: torch.nn.functional.softmax
+    publisher: PyTorch documentation
+    url: https://docs.pytorch.org/docs/2.14/generated/torch.nn.functional.softmax.html
+    type: framework_docs
+    version: PyTorch 2.14 documentation
+    accessed: 2026-10-19
