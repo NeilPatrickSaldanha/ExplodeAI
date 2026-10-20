@@ -24,10 +24,14 @@ walkthrough that is remembered and can be replayed from "How to use".
 A chat tutor in every lesson that answers **only** from ExplodeAI's own verified content: claims,
 stage explanations, tours and challenge write-ups. Each sentence shows the verified claims behind it,
 with their sources one click away. If the lessons do not cover a question it says so instead of
-guessing. It knows which stage you have open, and "Quiz me" asks questions about it. Answers are free
-and offline (hybrid search plus extractive quoting). An optional, paid, per-click "Polish with AI"
-rewrites the answer from the same passages through the backend's spend guard; it is off unless you
-enable it, shows its worst-case cost first, and costs nothing for questions the lessons don't cover.
+guessing. It knows which stage you have open, remembers the conversation ("explain it simpler", "give
+me an example", "tell me more" refer back to what you were just discussing), answers small talk, and
+"Quiz me" asks questions about the open stage. By default answers are free and offline: the stage's
+plain-words explanation first, then verified quotes with their claims and sources. There is no language
+model in that path. An opt-in **Explain with AI** switch lets a model re-word answers in simpler language
+from the same lesson passages and the recent conversation, through the backend's spend guard: it is off
+by default, shows its model, per-answer cost and budget, and costs nothing for small talk or questions
+the lessons don't cover.
 
 ## Quick start
 

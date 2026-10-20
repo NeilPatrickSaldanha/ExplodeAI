@@ -155,3 +155,22 @@ test('tour steps through every stage with next/back', async ({ page }) => {
   await panel(page).getByRole('button', { name: 'Previous stage' }).click()
   await expect(page.getByText('TOUR · STEP 7 OF 8')).toBeVisible()
 })
+
+test('isolate needs a selected stage, says so when there is none, and works once one is picked', async ({ page }) => {
+  await page.goto('/lessons/tokenization')
+  const iso = page.getByRole('button', { name: /Isolate/ })
+  await expect(page.locator('.part-label.is-selected')).toHaveCount(1) // stage 1 is shown on load
+  await iso.click()
+  await expect(iso).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.part-label.is-dim').first()).toBeVisible()
+  // Clicking empty space clears the selection; Isolate must then be disabled, with a reason.
+  await page.locator('.cine__frame canvas').click({ position: { x: 30, y: 300 } })
+  await expect(page.locator('.part-label.is-selected')).toHaveCount(0)
+  await expect(iso).toBeDisabled()
+  await expect(iso).toHaveAttribute('title', 'Select a stage first, then isolate it')
+  await expect(page.locator('.part-label.is-dim')).toHaveCount(0)
+  await page.getByRole('navigation', { name: 'Pipeline stages' }).getByRole('button', { name: /Encoder/ }).click()
+  await expect(iso).toBeEnabled()
+  await iso.click()
+  await expect(iso).toHaveAttribute('aria-pressed', 'true')
+})

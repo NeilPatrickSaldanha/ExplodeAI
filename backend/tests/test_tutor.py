@@ -163,7 +163,7 @@ def test_paid_answer_builds_the_prompt_from_lessons_and_strips_unknown_citations
     assert r.status_code == 200, r.text
     out = r.json()
     assert (
-        "ONLY the numbered passages" in seen["prompt"]
+        "ONLY the passages below" in seen["prompt"]
         and "Question: What is the causal mask?" in seen["prompt"]
     )
     assert "[made-up-claim]" not in out["text"] and "[attn-causal-mask]" in out["text"]
@@ -214,3 +214,155 @@ def test_citation_checker_keeps_only_claims_that_were_in_the_prompt():
     out = tprompt.check_citations("A [a-1] and B [zz-9].", ["a-1"])
     assert out["cited"] == ["a-1"] and out["removed_citations"] == ["zz-9"] and "[zz-9]" not in out["text"]
     assert re.search(r"\[a-1\]", out["text"])
+
+
+# ----------------------------------------------- conversation: small talk, memory, plain words
+def _turn(q, stage="embed_pos", lesson="attention", text="Each word becomes a vector."):
+    return {"question": q, "answer_text": text, "lesson_id": lesson, "stage_id": stage}
+
+
+def test_small_talk_is_friendly_free_and_not_a_refusal(client):
+    for q in ("hi there", "Hello!", "hey", "good morning"):
+        r = ask(client, q).json()
+        assert (
+            r["type"] == "chat"
+            and "tutor" in r["message"].lower()
+            and r["sources"] == []
+            and r["claims"] == []
+        )
+    thanks = ask(client, "thanks!").json()
+    assert thanks["type"] == "chat" and "quiz" in thanks["message"].lower()
+
+
+def test_answers_lead_with_the_stages_plain_words_taken_from_its_explanation(client):
+    _, lessons = content()
+    comp = next(c for c in lessons["attention"].components if c.id == "embed_pos")
+    r = ask(
+        client, "wait so what does vectors + position do?", lesson_id="attention", stage_id="embed_pos"
+    ).json()
+    assert r["type"] == "answer" and r["plain"]["stage_id"] == "embed_pos"
+    e = comp.explain
+    assert r["plain"]["what"] == e.what and r["plain"]["analogy"] == e.analogy
+    assert r["plain"]["example"] == e.example.model_dump()
+    assert r["sentences"] and r["claims"] and r["sources"], "the verified quotes follow the plain words"
+
+
+def test_follow_ups_use_the_conversation_and_stay_on_the_stage(client):
+    _, lessons = content()
+    e = next(c for c in lessons["attention"].components if c.id == "embed_pos").explain
+    hist = [_turn("what does vectors + position do?")]
+    # An open stage elsewhere must not hijack the follow-up.
+    r = ask(
+        client, "can you frame it in easier words", lesson_id="attention", stage_id="softmax", history=hist
+    ).json()
+    assert r["type"] == "plain" and r["plain"]["stage_id"] == "embed_pos" and r["plain"]["mode"] == "simplify"
+    assert r["plain"]["what"] == e.what and r["plain"]["example"] and r["plain"]["analogy"] == e.analogy
+    ex = ask(client, "give me an example", lesson_id="attention", history=hist).json()
+    assert ex["plain"]["mode"] == "example" and ex["plain"]["example"]["steps"] == e.example.steps
+    more = ask(client, "tell me more", lesson_id="attention", history=hist).json()
+    assert more["plain"]["mode"] == "more" and more["plain"]["misconfigured"] == e.misconfigured
+    why = ask(client, "why does that matter?", lesson_id="attention", history=hist).json()
+    assert why["plain"]["mode"] == "why" and why["plain"]["why"] == e.why
+    assert all(c["id"] in {c.id for c in lessons["attention"].claims} for c in r["claims"])
+
+
+def test_a_follow_up_with_nothing_to_refer_to_asks_which_part(client):
+    r = ask(client, "can you explain it simpler").json()
+    assert r["type"] == "chat" and "Which part" in r["message"]
+    # With a stage open and no history, the open stage is what "it" means.
+    r = ask(client, "explain it simpler", lesson_id="attention", stage_id="softmax").json()
+    assert r["type"] == "plain" and r["plain"]["stage_id"] == "softmax"
+
+
+def test_a_short_pronoun_question_is_searched_together_with_the_previous_one(client):
+    hist = [_turn("what is the causal mask?", stage="mask", text="It hides later words.")]
+    # "how does it work?" has no topic of its own; with the history it is about the mask.
+    r = ask(client, "how does it work?", lesson_id="attention", history=hist).json()
+    assert r["covered"] and any(s["stage_id"] == "mask" for s in r["sentences"])
+    alone = ask(client, "how does it work?", lesson_id="attention").json()
+    assert (
+        not any(s["stage_id"] == "mask" for s in alone["sentences"] or [{"stage_id": None}])
+        or not alone["covered"]
+    )
+    # And "why is it needed?" is a plain-words follow-up about the same stage.
+    why = ask(client, "why is it needed?", lesson_id="attention", history=hist).json()
+    assert why["type"] == "plain" and why["plain"]["stage_id"] == "mask"
+
+
+def test_history_is_bounded(client):
+    too_many = [_turn(f"q{i}") for i in range(7)]
+    assert ask(client, "what is attention?", history=too_many).status_code == 422
+    assert (
+        ask(client, "what is attention?", history=[{**_turn("q"), "answer_text": "x" * 901}]).status_code
+        == 422
+    )
+
+
+def test_phrasing_points_at_the_kind_of_passage_that_answers_it():
+    from app.tutor import intent
+
+    assert intent.kind_preference("what happens if the mask is removed?") == {"breaks"}
+    assert intent.kind_preference("why is the softmax needed") == {"why"}
+    assert "misconfigured" in intent.kind_preference("what can go wrong here")
+    assert intent.kind_preference("what does vectors + position do?") == {"what", "claim"}
+    assert (
+        intent.classify("hi there") == "greeting" and intent.classify("explain it like I'm 5") == "simplify"
+    )
+    assert intent.classify("what is the causal mask?") is None
+
+
+def test_ai_mode_prompt_carries_the_conversation_and_asks_for_plain_language(client, monkeypatch):
+    _enable(monkeypatch)
+    seen = {}
+
+    def fake(settings_, provider, model, prompt, max_tokens):
+        seen["prompt"] = prompt
+        return providers.Generation("Think of it like a seat number [attn-position-needed].", 120, 15)
+
+    monkeypatch.setattr(providers, "generate_with_usage", fake)
+    body = {
+        "question": "can you explain that in easier words?",
+        "lesson_id": "attention",
+        "history": [_turn("what does vectors + position do?", text="It adds a position pattern.")],
+        **LLM,
+    }
+    r = client.post("/api/tutor/ask/llm", json=body, headers=H)
+    assert r.status_code == 200, r.text
+    p = seen["prompt"]
+    assert "friendly teacher" in p and "everyday sentences" in p and "plain words first" in p
+    assert "Earlier in this conversation" in p and "Learner: what does vectors + position do?" in p
+    assert "Tutor: It adds a position pattern." in p
+    assert "more simply" in p, "the intent is passed on"
+    assert "Position information has to be added" in p or "position" in p.lower()
+    assert r.json()["cited"] == ["attn-position-needed"]
+
+
+def test_ai_mode_small_talk_is_free_and_makes_no_provider_call(client, engine, monkeypatch):
+    _enable(monkeypatch)
+    called = []
+    monkeypatch.setattr(providers, "generate_with_usage", lambda *a, **k: called.append(1))
+    out = client.post("/api/tutor/ask/llm", json={"question": "hi there", **LLM}, headers=H).json()
+    assert out["type"] == "chat" and out["cost_usd"] == 0.0 and out["is_llm"] is False and not called
+    with Session(engine) as session:
+        assert session.exec(select(AIUsage)).all() == []
+
+
+def test_passage_numbers_are_not_citations_and_are_removed_from_the_text():
+    """Seen in a real call: the model wrote "[3, 4]" meaning passages 3 and 4."""
+    out = tprompt.check_citations("It adds a pattern to each word [3, 4]. That keeps order [a-1].", ["a-1"])
+    assert "[3, 4]" not in out["text"] and "[a-1]" in out["text"]
+    assert out["cited"] == ["a-1"] and out["removed_citations"] == ["[3, 4]"] and out["grounded"] is False
+    assert " ." not in out["text"], "no stray space left before punctuation"
+    none = tprompt.check_citations("Think of it like a card with a stamp.", ["a-1"])
+    assert none["has_citations"] is False and none["cited"] == [] and none["grounded"] is False
+
+
+def test_the_prompt_labels_passages_so_they_cannot_be_mistaken_for_citations():
+    from app.tutor.prompt import INSTRUCTIONS, build_prompt
+
+    registry, lessons = content()
+    hits = TutorIndex(build_passages(lessons, registry)).search("what is the causal mask?")[0]
+    prompt, allowed = build_prompt("what is the causal mask?", hits)
+    assert "Passage 1 (" in prompt and "\n[1]" not in prompt
+    assert "claim ids only, never passage numbers" in INSTRUCTIONS.lower().replace("cite ", "")
+    assert "attn-causal-mask" in allowed

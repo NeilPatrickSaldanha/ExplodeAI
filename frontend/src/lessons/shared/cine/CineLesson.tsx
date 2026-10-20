@@ -288,7 +288,12 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
                 <Toggle pressed={view.linkCards === 'all'} onChange={(on) => setView((s) => ({ ...s, linkCards: on ? 'all' : 'selected' }))} label="Show data on every link">
                   <Info aria-hidden /> Data
                 </Toggle>
-                <Toggle pressed={view.isolate} onChange={(i) => setView((s) => ({ ...s, isolate: i && !!s.selectedId }))} label="Isolate the selected part">
+                <Toggle
+                  pressed={view.isolate}
+                  disabled={!view.selectedId}
+                  onChange={(i) => setView((s) => ({ ...s, isolate: i && !!s.selectedId }))}
+                  label={view.selectedId ? 'Isolate the selected part' : 'Select a stage first, then isolate it'}
+                >
                   <Crosshair aria-hidden /> Isolate
                 </Toggle>
                 <Toggle pressed={renderMode === '2d'} onChange={(flat) => setRenderMode(flat ? '2d' : '3d')} label="Switch between 3D and 2D">

@@ -44,9 +44,26 @@ happens. The first-ranked passage is not always the best one (25 of 30), though 
 always in the top three. Extractive answers can read as a collage of quotes rather than a single
 explanation, which is why the optional polish exists.
 
-## The optional paid polish
+## Conversation (added after first use)
+
+First real use showed three weaknesses: "hi there" was refused, "can you frame it in easier words"
+had no topic to refer to, and answers read as stiff quotes. Fixes, each covered by tests:
+
+- Small talk (greetings, thanks) gets a friendly reply, free, with no search and no model.
+- The client sends the last few turns back; follow-ups ("easier words", "an example", "more", "why does
+  that matter", short "it/that" questions) are answered about the stage the conversation was on, not the
+  stage that happens to be open. With nothing to refer to, the tutor asks which part to explain.
+- Every answer leads with the stage's plain-words explanation (what it is, an analogy, a worked example),
+  copied from the lesson's own explanation, then the verified quotes. A test checks the plain text equals
+  the stage's `explain` fields exactly.
+- Phrasing steers retrieval ("what if it is removed" prefers failure passages, "why" prefers reasons).
+
+## The optional paid path ("Explain with AI")
 
 - The server builds the prompt from the retrieved passages only; the client cannot send a prompt.
+- It is an opt-in switch in the tutor (off by default, off entirely unless the server enables AI), and a per-answer
+  button when the switch is off. The prompt includes the recent conversation, asks for short everyday-language
+  explanations that define jargon, and passes the learner's intent (simplify, example, more).
 - It goes through the same guard, ledger, budget, rate limit and kill switch as every paid feature,
   and is refused by default.
 - A question the lessons do not cover makes no provider call and costs nothing; the estimate
@@ -58,4 +75,4 @@ explanation, which is why the optional polish exists.
 ## Automated gates
 
 Backend tests `test_tutor.py` (17) and `test_tutor_eval.py` (3), end-to-end `tutor.spec.ts` (6) and a
-phone test, all passing alongside the full suites (ruff, backend, 31 unit, 54 end-to-end tests).
+phone test, all passing alongside the full suites (ruff, backend, 31 unit, 59 end-to-end tests).

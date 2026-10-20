@@ -29,7 +29,7 @@ test('experiment: real model finds the bookshelf by meaning, with a table fallba
   await page.goto(LESSON)
   await openMode(page, 'Experiment')
   await page.getByRole('button', { name: 'Bookshelf' }).click()
-  await expect(page.getByLabel('Your text')).toHaveValue('a place to put my books')
+  await expect(page.locator('#emb-text')).toHaveValue('a place to put my books')
   await page.getByRole('tab', { name: 'Neighbours' }).click()
   await expect(page.locator('.neigh li').first()).toContainText('bookshelf')
   await expect(page.getByText('384-D · NEURAL')).toBeVisible()

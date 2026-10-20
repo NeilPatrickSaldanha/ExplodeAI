@@ -39,7 +39,7 @@ def narrow_claims(sentence: str, claim_ids: tuple[str, ...], keep: int = 2) -> l
 
 def _near_duplicate(text: str, chosen: list[str]) -> bool:
     a = set(terms(text))
-    return any(a and len(a & set(terms(c))) / len(a | set(terms(c))) > 0.6 for c in chosen)
+    return any(a and len(a & set(terms(c))) / len(a | set(terms(c))) > 0.5 for c in chosen)
 
 
 def best_sentences(question: str, passage: Passage, limit: int) -> list[str]:
@@ -72,12 +72,117 @@ def _claim_cards(claim_ids: list[str]) -> list[dict]:
     return [{"id": c, "lesson_id": texts[c][0], "text": texts[c][1]} for c in claim_ids if c in texts]
 
 
-def build_answer(question: str, hits: list[Scored], info: dict, index: TutorIndex) -> dict:
+def _stage_ref(lesson_id: str, stage_id: str):
+    _, lessons = content()
+    lesson = lessons.get(lesson_id)
+    comp = next((c for c in lesson.components if c.id == stage_id), None) if lesson else None
+    return lesson, comp
+
+
+def plain_block(lesson_id: str, stage_id: str, mode: str = "simplify") -> dict | None:
+    """The stage's beginner-friendly explanation (hand-written for the lesson, tied to verified claims)."""
+    lesson, comp = _stage_ref(lesson_id, stage_id)
+    if comp is None or comp.explain is None:
+        return None
+    e = comp.explain
+    block = {
+        "lesson_id": lesson_id,
+        "stage_id": stage_id,
+        "stage_label": comp.label,
+        "mode": mode,
+        "what": None,
+        "why": None,
+        "analogy": None,
+        "example": None,
+        "happens": [],
+        "misconfigured": None,
+        "more": None,
+    }
+    if mode in ("simplify", "answer"):
+        block.update(
+            what=e.what,
+            analogy=e.analogy,
+            example=e.example.model_dump(),
+            happens=list(e.happens) if mode == "simplify" else [],
+        )
+    elif mode == "example":
+        block.update(example=e.example.model_dump(), happens=list(e.happens), analogy=e.analogy)
+    elif mode == "why":
+        block.update(why=e.why, analogy=e.analogy)
+    elif mode == "more":
+        spans = [e.learn_more[a:b].strip() for a, b in sentence_spans(e.learn_more)][:3]
+        block.update(why=e.why, misconfigured=e.misconfigured, more=" ".join(spans))
+    return block
+
+
+def _empty(kind: str, message: str | None, info: dict, **extra) -> dict:
+    base = {
+        "type": kind,
+        "covered": True,
+        "message": message,
+        "sentences": [],
+        "analogy": None,
+        "plain": None,
+        "claims": [],
+        "sources": [],
+        "related": [],
+        "topics": [],
+        "meta": info,
+    }
+    base.update(extra)
+    return base
+
+
+def chat_reply(message: str, info: dict | None = None) -> dict:
+    return _empty(
+        "chat", message, info or {"method": "chat", "covered": True, "coverage": 1.0, "best_dense": None}
+    )
+
+
+def plain_reply(lesson_id: str, stage_id: str, mode: str, info: dict) -> dict | None:
+    block = plain_block(lesson_id, stage_id, mode)
+    if block is None:
+        return None
+    lesson, comp = _stage_ref(lesson_id, stage_id)
+    claim_ids = list(comp.explain.claims)[:3]
+    by_claim = {c.id: c for c in lesson.claims}
+    sources: list[str] = []
+    for cid in claim_ids:
+        for cit in by_claim[cid].citations if cid in by_claim else []:
+            if cit.source not in sources:
+                sources.append(cit.source)
+    return _empty(
+        "plain",
+        None,
+        info,
+        plain=block,
+        claims=_claim_cards(claim_ids),
+        sources=_source_cards(sources[:6]),
+        related=[
+            {
+                "lesson_id": lesson_id,
+                "lesson_title": lesson.title,
+                "stage_id": stage_id,
+                "stage_label": comp.label,
+            }
+        ],
+    )
+
+
+def build_answer(
+    question: str,
+    hits: list[Scored],
+    info: dict,
+    index: TutorIndex,
+    open_stage: tuple[str, str] | None = None,
+) -> dict:
     if not hits:
         registry_lessons = sorted({(p.lesson_number, p.lesson_id, p.lesson_title) for p in index.passages})
         return {
+            "type": "none",
             "covered": False,
             "message": NOT_COVERED,
+            "plain": None,
             "sentences": [],
             "analogy": None,
             "claims": [],
@@ -111,9 +216,18 @@ def build_answer(question: str, hits: list[Scored], info: dict, index: TutorInde
             for c in cites:
                 if c not in used_claims:
                     used_claims.append(c)
-    top_stage = facts[0].passage.stage_id if facts else None
-    analogy = next(
-        (h.passage for h in hits if h.passage.teaching_aid and h.passage.stage_id == top_stage), None
+    # Plain words go first. They explain the stage the answer is about: the open stage if the answer
+    # touches it, otherwise the best-matching stage.
+    stages = [(h.passage.lesson_id, h.passage.stage_id) for h in facts[:3] if h.passage.stage_id]
+    chosen = open_stage if open_stage in stages else (stages[0] if stages else None)
+    plain = plain_block(chosen[0], chosen[1], "answer") if chosen else None
+    top_stage = chosen[1] if chosen else None
+    analogy = (
+        None
+        if plain
+        else next(
+            (h.passage for h in hits if h.passage.teaching_aid and h.passage.stage_id == top_stage), None
+        )
     )
     source_ids: list[str] = []
     _, lessons = content()
@@ -136,8 +250,10 @@ def build_answer(question: str, hits: list[Scored], info: dict, index: TutorInde
                 }
             )
     return {
+        "type": "answer",
         "covered": True,
         "message": None,
+        "plain": plain,
         "sentences": sentences,
         "analogy": None
         if analogy is None

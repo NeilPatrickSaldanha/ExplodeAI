@@ -74,8 +74,11 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   teaching aids. `search.py` fuses BM25 and the local bge embedder with reciprocal rank fusion,
   nudges towards the open lesson and stage (more when the question is vague), and gates relevance:
   a question the lessons do not cover returns nothing. `answer.py` quotes the best sentences and
-  attaches the claims and sources behind each. `quiz.py` builds tutor-mode questions from stage
-  explanations. `prompt.py` builds the paid prompt on the server from retrieved passages only and
+  attaches the claims and sources behind each, led by the stage's plain-words block (`plain_block`,
+  taken verbatim from `explain.yaml`). `intent.py` and `chat.py` handle small talk and follow-ups: the
+  client sends the last few turns back (the server keeps no conversation state), and "simpler",
+  "example", "more" and "why does that matter" are answered about the stage the conversation was on.
+  `quiz.py` builds tutor-mode questions from stage explanations. `prompt.py` builds the paid prompt on the server from retrieved passages only and
   strips any citation to a claim that was not in it. Retrieval quality is measured by
   `tests/test_tutor_eval.py` on 30 in-scope and 13 out-of-scope questions.
 - **Challenges** are data: broken params, locked params, and checks. Each

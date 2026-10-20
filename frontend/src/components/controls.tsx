@@ -99,9 +99,9 @@ export function Segmented<T extends string>({ label, value, options, onChange, d
   )
 }
 
-export function Toggle({ pressed, onChange, children, label }: { pressed: boolean; onChange: (v: boolean) => void; children: ReactNode; label: string }) {
+export function Toggle({ pressed, onChange, children, label, disabled }: { pressed: boolean; onChange: (v: boolean) => void; children: ReactNode; label: string; disabled?: boolean }) {
   return (
-    <button type="button" className="btn btn--toggle" aria-pressed={pressed} onClick={() => onChange(!pressed)} title={label}>
+    <button type="button" className="btn btn--toggle" aria-pressed={pressed} disabled={disabled} onClick={() => onChange(!pressed)} title={label}>
       {children}
     </button>
   )

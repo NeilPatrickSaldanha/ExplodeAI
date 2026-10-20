@@ -72,8 +72,8 @@ test('the optional paid polish is clearly off when the server has no AI enabled'
   await openTutor(page)
   await ask(page, 'What is BM25?')
   const answer = panel(page).locator('.tmsg--tutor').last()
-  await answer.getByRole('button', { name: /Polish with AI/ }).click()
-  await expect(answer).toContainText('AI polish is off on this server')
+  await answer.getByRole('button', { name: /Re-explain this with AI/ }).click()
+  await expect(answer).toContainText('AI is off on this server')
 })
 
 test('every lesson has the tutor button, and the page never scrolls sideways with it open', async ({ page }) => {
@@ -84,4 +84,47 @@ test('every lesson has the tutor button, and the page never scrolls sideways wit
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
   }
+})
+
+test('small talk gets a friendly reply, not a refusal', async ({ page }) => {
+  await page.goto('/lessons/attention')
+  await openTutor(page)
+  await ask(page, 'hi there')
+  const reply = panel(page).locator('.tmsg--chat')
+  await expect(reply).toContainText("I'm the ExplodeAI tutor")
+  await expect(panel(page)).not.toContainText("don't cover that")
+})
+
+test('answers lead with plain words, and follow-ups like "easier words" remember the topic', async ({ page }) => {
+  await page.goto('/lessons/attention')
+  await openTutor(page)
+  await ask(page, 'wait so what does vectors + position do?')
+  const first = panel(page).locator('.tmsg--tutor').last()
+  await expect(first.locator('.tplain')).toContainText('IN PLAIN WORDS · VECTORS + POSITION')
+  await expect(first.locator('.tplain__what')).toContainText('vector of 64 numbers')
+  await expect(first.locator('.tmsg__body')).toContainText('FROM THE LESSONS · VERIFIED')
+  // The follow-up has no topic of its own: it must be about the same stage.
+  await ask(page, 'can you frame it in easier words')
+  const second = panel(page).locator('.tmsg--tutor').last()
+  await expect(second.locator('.tplain')).toContainText('VECTORS + POSITION')
+  await expect(second.locator('.tmsg__analogy')).toContainText('THINK OF IT LIKE')
+  await expect(second.locator('.tplain__example')).toContainText('EXAMPLE · ILLUSTRATIVE')
+  await expect(panel(page)).not.toContainText("don't cover that")
+  await ask(page, 'give me an example')
+  await expect(panel(page).locator('.tplain__example').last()).toContainText('dog')
+})
+
+test('with a stage open, "explain it simpler" is about that stage', async ({ page }) => {
+  await page.goto('/lessons/tokenization')
+  await stages(page).getByRole('button', { name: /Merge learner/ }).click()
+  await openTutor(page)
+  await ask(page, 'explain it simpler')
+  await expect(panel(page).locator('.tplain').last()).toContainText('MERGE LEARNER')
+})
+
+test('the AI explain switch is clearly off when the server has AI disabled', async ({ page }) => {
+  await page.goto('/lessons/embeddings')
+  await openTutor(page)
+  await expect(panel(page).locator('.tutor__ai--off')).toContainText('Explain with AI: off on this server')
+  await expect(panel(page).getByRole('checkbox')).toHaveCount(0)
 })

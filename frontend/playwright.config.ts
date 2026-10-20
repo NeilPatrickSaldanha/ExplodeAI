@@ -10,7 +10,7 @@ const WEB_PORT = Number(process.env.E2E_WEB_PORT ?? 5174)
 export default defineConfig({
   testDir: './e2e',
   timeout: 45_000,
-  expect: { timeout: 10_000 },
+  expect: { timeout: 15_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',

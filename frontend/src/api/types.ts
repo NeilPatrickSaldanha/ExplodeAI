@@ -483,7 +483,30 @@ export interface TutorSource {
   version?: string | null
 }
 
+export interface TutorPlain {
+  lesson_id: string
+  stage_id: string
+  stage_label: string
+  mode: 'answer' | 'simplify' | 'example' | 'why' | 'more'
+  what: string | null
+  why: string | null
+  analogy: string | null
+  example: { input: string; steps: string[]; output: string } | null
+  happens: string[]
+  misconfigured: string | null
+  more: string | null
+}
+
+export interface TutorTurn {
+  question: string
+  answer_text?: string | null
+  lesson_id?: string | null
+  stage_id?: string | null
+}
+
 export interface TutorAnswer {
+  type: 'answer' | 'plain' | 'chat' | 'none' | 'llm'
+  plain: TutorPlain | null
   covered: boolean
   message: string | null
   sentences: TutorSentence[]
@@ -513,6 +536,7 @@ export interface TutorLlmAnswer extends Partial<TutorAnswer> {
   cited?: string[]
   removed_citations?: string[]
   grounded?: boolean
+  has_citations?: boolean
   covered: boolean
   provider?: string
   model?: string

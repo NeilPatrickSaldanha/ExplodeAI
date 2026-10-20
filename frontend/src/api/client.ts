@@ -77,21 +77,21 @@ export const api = {
       '/api/experiments/embed/ablate', { ...params, stage }),
   checkEmbedChallenge: (lessonId: string, challengeId: string, params: Partial<import('./types').EmbedParams>) =>
     post<import('./types').EmbedCheck>(`/api/experiments/embed/challenges/${lessonId}/${challengeId}/check`, params),
-  askTutor: (question: string, lessonId?: string, stageId?: string | null) =>
-    post<import('./types').TutorAnswer>('/api/tutor/ask', { question, lesson_id: lessonId, stage_id: stageId ?? undefined }),
+  askTutor: (question: string, lessonId?: string, stageId?: string | null, history: import('./types').TutorTurn[] = []) =>
+    post<import('./types').TutorAnswer>('/api/tutor/ask', { question, lesson_id: lessonId, stage_id: stageId ?? undefined, history }),
   tutorSuggestions: (lessonId?: string, stageId?: string | null) =>
     request<{ suggestions: string[] }>(
       `/api/tutor/suggestions?${new URLSearchParams({ ...(lessonId ? { lesson_id: lessonId } : {}), ...(stageId ? { stage_id: stageId } : {}) })}`,
     ),
   tutorCheck: (lessonId: string, stageId: string, n: number) =>
     request<import('./types').TutorCheck>(`/api/tutor/check?${new URLSearchParams({ lesson_id: lessonId, stage_id: stageId, n: String(n) })}`),
-  tutorEstimate: (question: string, provider: string, model: string, lessonId?: string, stageId?: string | null) =>
+  tutorEstimate: (question: string, provider: string, model: string, lessonId?: string, stageId?: string | null, history: import('./types').TutorTurn[] = []) =>
     post<{ covered: boolean; max_cost_usd: number }>('/api/tutor/ask/estimate', {
-      question, provider, model, lesson_id: lessonId, stage_id: stageId ?? undefined,
+      question, provider, model, lesson_id: lessonId, stage_id: stageId ?? undefined, history,
     }),
-  askTutorLlm: (question: string, provider: string, model: string, lessonId?: string, stageId?: string | null) =>
+  askTutorLlm: (question: string, provider: string, model: string, lessonId?: string, stageId?: string | null, history: import('./types').TutorTurn[] = []) =>
     post<import('./types').TutorLlmAnswer>('/api/tutor/ask/llm', {
-      question, provider, model, lesson_id: lessonId, stage_id: stageId ?? undefined, confirm_paid: true,
+      question, provider, model, lesson_id: lessonId, stage_id: stageId ?? undefined, history, confirm_paid: true,
     }),
   aiStatus: () => request<import('./types').AIStatus>('/api/ai/status'),
   estimateRagAnswer: (params: Partial<RagParams>, provider: string, model: string) =>

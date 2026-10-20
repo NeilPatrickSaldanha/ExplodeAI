@@ -1,16 +1,35 @@
-import { ChatCircleText, Lock, Question, Sparkle, X } from '@phosphor-icons/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowRight, ChatCircleText, Lock, Question, Sparkle, X } from '@phosphor-icons/react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
-import type { AIStatus, TutorAnswer, TutorCheck, TutorClaim, TutorLlmAnswer, TutorSource } from '../api/types'
+import type { AIStatus, TutorAnswer, TutorCheck, TutorClaim, TutorLlmAnswer, TutorPlain, TutorSource, TutorTurn } from '../api/types'
 import './tutor.css'
 
 const usd = (n: number) => (n < 0.01 ? `$${n.toFixed(5)}` : `$${n.toFixed(2)}`)
 const OPEN_KEY = 'explodeai.tutor.open'
+const AI_KEY = 'explodeai.tutor.ai'
+
+const store = {
+  get: (k: string) => {
+    try {
+      return sessionStorage.getItem(k) === '1'
+    } catch {
+      return false
+    }
+  },
+  set: (k: string, v: boolean) => {
+    try {
+      sessionStorage.setItem(k, v ? '1' : '0')
+    } catch {
+      /* storage unavailable */
+    }
+  },
+}
 
 type Message =
   | { id: number; role: 'user'; text: string }
   | { id: number; role: 'tutor'; question: string; answer: TutorAnswer }
+  | { id: number; role: 'llm'; question: string; out: TutorLlmAnswer }
   | { id: number; role: 'quiz'; check: TutorCheck; revealed: boolean }
   | { id: number; role: 'error'; text: string }
 
@@ -24,20 +43,33 @@ interface Props {
   onGoToStage: (id: string) => void
 }
 
+/** What the tutor said last, in a few words, so the next question can refer back to it. */
+function turnOf(m: Message): TutorTurn | null {
+  if (m.role === 'tutor') {
+    const a = m.answer
+    const stage = a.plain?.stage_id ?? a.related[0]?.stage_id ?? a.sentences[0]?.stage_id ?? null
+    const lesson = a.plain?.lesson_id ?? a.related[0]?.lesson_id ?? a.sentences[0]?.lesson_id ?? null
+    const text = a.plain?.what ?? a.sentences[0]?.text ?? a.message ?? ''
+    return { question: m.question, answer_text: text.slice(0, 600), lesson_id: lesson, stage_id: stage }
+  }
+  if (m.role === 'llm') {
+    const r = m.out.related?.[0]
+    return { question: m.question, answer_text: (m.out.text ?? '').slice(0, 800), lesson_id: r?.lesson_id ?? null, stage_id: r?.stage_id ?? null }
+  }
+  return null
+}
+
 /**
- * "Ask ExplodeAI": a tutor grounded only in the lessons. Answers quote verified lesson content and
- * show the claims and sources behind every sentence. If the lessons do not cover a question it says
- * so. The optional paid polish is off unless the server enables it, shows its worst-case cost first,
- * and needs a click for every request.
+ * "Ask ExplodeAI": a tutor grounded only in the lessons. By default it is free and offline: it leads
+ * with the stage's plain-words explanation, then quotes verified lesson content with the claims and
+ * sources behind each sentence, and remembers the conversation. An opt-in "Explain with AI" switch
+ * lets a language model re-word answers from the same lesson passages; it is paid, shows its cost,
+ * and is off unless the server has AI enabled.
  */
 export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoToStage }: Props) {
-  const [open, setOpen] = useState(() => {
-    try {
-      return sessionStorage.getItem(OPEN_KEY) === '1'
-    } catch {
-      return false
-    }
-  })
+  const [open, setOpen] = useState(() => store.get(OPEN_KEY))
+  const [aiMode, setAiMode] = useState(() => store.get(AI_KEY))
+  const [status, setStatus] = useState<AIStatus | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -50,11 +82,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
 
   const setOpenPersist = (v: boolean) => {
     setOpen(v)
-    try {
-      sessionStorage.setItem(OPEN_KEY, v ? '1' : '0')
-    } catch {
-      /* storage unavailable */
-    }
+    store.set(OPEN_KEY, v)
   }
 
   useEffect(() => {
@@ -67,20 +95,46 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
   }, [open, lessonId, stageId])
 
   useEffect(() => {
+    if (open) api.aiStatus().then(setStatus).catch(() => setStatus(null))
+  }, [open])
+
+  useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight })
   }, [messages])
 
+  const usable = (status?.allowed_models.filter((m) => m.usable) ?? []).sort(
+    (a, b) => a.input_usd_per_million_tokens + a.output_usd_per_million_tokens - (b.input_usd_per_million_tokens + b.output_usd_per_million_tokens),
+  )
+  const model = usable[0]
+  const aiAvailable = !!status?.enabled && !!model
+  const aiOn = aiMode && aiAvailable
+
   const push = useCallback((m: NewMessage) => setMessages((all) => [...all, { ...m, id: next.current++ } as Message]), [])
+  const history = (): TutorTurn[] => messages.map(turnOf).filter((t): t is TutorTurn => !!t).slice(-4)
 
   const ask = async (q: string) => {
     const question = q.trim()
     if (question.length < 3 || busy) return
     setInput('')
+    const past = history()
     push({ role: 'user', text: question })
     setBusy(true)
     try {
-      const answer = await api.askTutor(question, lessonId, stageId)
-      push({ role: 'tutor', question, answer })
+      if (aiOn && model) {
+        try {
+          const out = await api.askTutorLlm(question, model.provider, model.model, lessonId, stageId, past)
+          if (out.is_llm === false) push({ role: 'tutor', question, answer: out as unknown as TutorAnswer })
+          else {
+            push({ role: 'llm', question, out })
+            if (out.spent_total_usd !== undefined) setStatus((s) => (s ? { ...s, limits: { ...s.limits, spent_total_usd: out.spent_total_usd as number } } : s))
+          }
+        } catch (e) {
+          push({ role: 'error', text: `${e instanceof ApiError ? e.message : 'The AI request failed.'} Showing the free answer instead.` })
+          push({ role: 'tutor', question, answer: await api.askTutor(question, lessonId, stageId, past) })
+        }
+      } else {
+        push({ role: 'tutor', question, answer: await api.askTutor(question, lessonId, stageId, past) })
+      }
     } catch (e) {
       push({ role: 'error', text: e instanceof ApiError ? e.message : 'The tutor could not answer just now.' })
     } finally {
@@ -110,14 +164,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
 
   return (
     <>
-      <button
-        ref={fab}
-        type="button"
-        className="tutor-fab"
-        aria-expanded={open}
-        aria-controls="tutor-panel"
-        onClick={() => (open ? close() : setOpenPersist(true))}
-      >
+      <button ref={fab} type="button" className="tutor-fab" aria-expanded={open} aria-controls="tutor-panel" onClick={() => (open ? close() : setOpenPersist(true))}>
         <ChatCircleText weight="fill" aria-hidden /> Ask ExplodeAI
       </button>
       {open && (
@@ -144,11 +191,26 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
           <p className="tutor__promise">Answers come only from ExplodeAI&apos;s verified lessons, with their sources. If the lessons don&apos;t cover it, I&apos;ll say so.</p>
 
           <div className="tutor__log" ref={log} role="log" aria-live="polite" aria-label="Conversation" tabIndex={0}>
-            {messages.length === 0 && <p className="tutor__empty">Ask about anything in the four lessons, or let me quiz you on the stage you are looking at.</p>}
+            {messages.length === 0 && <p className="tutor__empty">Ask in your own words, say “explain it simpler” or “give me an example” after an answer, or press Quiz me.</p>}
             {messages.map((m) => (
-              <MessageView key={m.id} m={m} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} onReveal={() => setMessages((all) => all.map((x) => (x.id === m.id && x.role === 'quiz' ? { ...x, revealed: true } : x)))} onNextQuiz={quiz} onAsk={ask} />
+              <MessageView
+                key={m.id}
+                m={m}
+                lessonId={lessonId}
+                stageId={stageId}
+                onGoToStage={onGoToStage}
+                onReveal={() => setMessages((all) => all.map((x) => (x.id === m.id && x.role === 'quiz' ? { ...x, revealed: true } : x)))}
+                onNextQuiz={quiz}
+                history={history}
+                aiAvailable={aiAvailable}
+                aiOn={aiOn}
+              />
             ))}
-            {busy && <p className="label" role="status">THINKING…</p>}
+            {busy && (
+              <p className="label" role="status">
+                THINKING…
+              </p>
+            )}
           </div>
 
           <div className="tutor__chips" role="group" aria-label="Suggested questions">
@@ -161,6 +223,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
               </button>
             ))}
           </div>
+          <AiSwitch status={status} aiAvailable={aiAvailable} aiMode={aiMode} model={model?.model} onChange={(v) => { setAiMode(v); store.set(AI_KEY, v) }} />
           <form
             className="tutor__form"
             onSubmit={(e) => {
@@ -182,8 +245,27 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
   )
 }
 
+function AiSwitch({ status, aiAvailable, aiMode, model, onChange }: { status: AIStatus | null; aiAvailable: boolean; aiMode: boolean; model?: string; onChange: (v: boolean) => void }) {
+  if (!status) return null
+  if (!aiAvailable) {
+    return (
+      <p className="tutor__ai tutor__ai--off">
+        <Lock aria-hidden /> Explain with AI: off on this server. Answers are free and quote the lessons.
+      </p>
+    )
+  }
+  return (
+    <label className="tutor__ai">
+      <input type="checkbox" checked={aiMode} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        <Sparkle aria-hidden /> Explain with AI <span className="label">PAID · {model} · ABOUT $0.0002 PER ANSWER · {usd(status.limits.spent_total_usd)} OF {usd(status.limits.total_budget_usd)} USED</span>
+      </span>
+    </label>
+  )
+}
+
 function MessageView({
-  m, lessonId, stageId, onGoToStage, onReveal, onNextQuiz, onAsk,
+  m, lessonId, stageId, onGoToStage, onReveal, onNextQuiz, history, aiAvailable, aiOn,
 }: {
   m: Message
   lessonId: string
@@ -191,7 +273,9 @@ function MessageView({
   onGoToStage: (id: string) => void
   onReveal: () => void
   onNextQuiz: () => void
-  onAsk: (q: string) => void
+  history: () => TutorTurn[]
+  aiAvailable: boolean
+  aiOn: boolean
 }) {
   if (m.role === 'user') return <p className="tmsg tmsg--user">{m.text}</p>
   if (m.role === 'error') return <p className="notice notice--error tmsg" role="alert">{m.text}</p>
@@ -216,7 +300,9 @@ function MessageView({
       </div>
     )
   }
+  if (m.role === 'llm') return <LlmView out={m.out} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
   const a = m.answer
+  if (a.type === 'chat') return <p className="tmsg tmsg--tutor tmsg--chat">{a.message}</p>
   if (!a.covered) {
     return (
       <div className="tmsg tmsg--tutor tmsg--none">
@@ -234,42 +320,123 @@ function MessageView({
   }
   return (
     <div className="tmsg tmsg--tutor">
-      <div className="tmsg__body">
-        {a.sentences.map((s) => (
-          <p key={s.passage_id + s.text}>
-            {s.text}{' '}
-            <span className="tmsg__cites" aria-label="Verified claims behind this sentence">
-              {s.claim_ids.map((id) => (
-                <code key={id} className="tmsg__cite">{id}</code>
-              ))}
-            </span>
-          </p>
-        ))}
-      </div>
+      {a.plain && <PlainView plain={a.plain} />}
+      {a.sentences.length > 0 && (
+        <div className="tmsg__body">
+          {a.plain && <span className="label">FROM THE LESSONS · VERIFIED</span>}
+          {a.sentences.map((s) => (
+            <p key={s.passage_id + s.text}>
+              {s.text}{' '}
+              <span className="tmsg__cites" aria-label="Verified claims behind this sentence">
+                {s.claim_ids.map((id) => (
+                  <Fragment key={id}>
+                    <code className="tmsg__cite">{id}</code>{' '}
+                  </Fragment>
+                ))}
+              </span>
+            </p>
+          ))}
+        </div>
+      )}
       {a.analogy && (
         <p className="tmsg__analogy">
           <span className="label">ANALOGY · TEACHING AID</span>
           {a.analogy.text}
         </p>
       )}
-      <Evidence claims={a.claims} sources={a.sources} />
-      {a.related.length > 0 && (
-        <div className="tmsg__related" role="group" aria-label="Open the related stage">
-          {a.related.map((r) =>
-            r.lesson_id === lessonId ? (
-              <button key={r.stage_id} type="button" className="chip" onClick={() => onGoToStage(r.stage_id)} aria-current={r.stage_id === stageId ? 'true' : undefined}>
-                Show me: {r.stage_label}
-              </button>
-            ) : (
-              <Link key={r.lesson_id + r.stage_id} className="chip" to={`/lessons/${r.lesson_id}`}>
-                {r.lesson_title.split(',')[0]} · {r.stage_label}
-              </Link>
-            ),
-          )}
+      {a.claims.length > 0 && <Evidence claims={a.claims} sources={a.sources} />}
+      <Related related={a.related} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
+      {a.meta.method === 'bm25' && <p className="label">KEYWORD MATCHING ONLY: THE LOCAL MEANING MODEL IS NOT INSTALLED</p>}
+      {a.sentences.length > 0 && !aiOn && <Polish question={(m as Extract<Message, { role: 'tutor' }>).question} lessonId={lessonId} stageId={stageId} history={history} available={aiAvailable} />}
+    </div>
+  )
+}
+
+function Related({ related, lessonId, stageId, onGoToStage }: { related: TutorAnswer['related']; lessonId: string; stageId: string | null; onGoToStage: (id: string) => void }) {
+  if (related.length === 0) return null
+  return (
+    <div className="tmsg__related" role="group" aria-label="Open the related stage">
+      {related.map((r) =>
+        r.lesson_id === lessonId ? (
+          <button key={r.stage_id} type="button" className="chip" onClick={() => onGoToStage(r.stage_id)} aria-current={r.stage_id === stageId ? 'true' : undefined}>
+            Show me: {r.stage_label}
+          </button>
+        ) : (
+          <Link key={r.lesson_id + r.stage_id} className="chip" to={`/lessons/${r.lesson_id}`}>
+            {r.lesson_title.split(',')[0]} · {r.stage_label}
+          </Link>
+        ),
+      )}
+    </div>
+  )
+}
+
+/** The stage's beginner explanation: what it is, a picture in words, and a tiny worked example. */
+function PlainView({ plain }: { plain: TutorPlain }) {
+  return (
+    <section className="tplain" aria-label={`In plain words: ${plain.stage_label}`}>
+      <span className="label">IN PLAIN WORDS · {plain.stage_label.toUpperCase()}</span>
+      {plain.what && <p className="tplain__what">{plain.what}</p>}
+      {plain.why && <p>{plain.why}</p>}
+      {plain.analogy && (
+        <p className="tmsg__analogy">
+          <span className="label">THINK OF IT LIKE · TEACHING AID</span>
+          {plain.analogy}
+        </p>
+      )}
+      {plain.happens.length > 0 && (
+        <ol className="tplain__steps">
+          {plain.happens.map((h) => (
+            <li key={h}>{h}</li>
+          ))}
+        </ol>
+      )}
+      {plain.example && (
+        <div className="tplain__example">
+          <span className="label">EXAMPLE · ILLUSTRATIVE</span>
+          <p>
+            <b>{plain.example.input}</b> <ArrowRight aria-hidden /> {plain.example.steps.join(', then ')} <ArrowRight aria-hidden /> <b>{plain.example.output}</b>
+          </p>
         </div>
       )}
-      {a.meta.method === 'bm25' && <p className="label">KEYWORD MATCHING ONLY: THE LOCAL MEANING MODEL IS NOT INSTALLED</p>}
-      <Polish question={(m as Extract<Message, { role: 'tutor' }>).question} lessonId={lessonId} stageId={stageId} onAsk={onAsk} />
+      {plain.misconfigured && (
+        <p>
+          <span className="label">IF IT GOES WRONG</span> {plain.misconfigured}
+        </p>
+      )}
+      {plain.more && <p>{plain.more}</p>}
+    </section>
+  )
+}
+
+const CITE = /\[([a-z0-9][a-z0-9-]*)\]/g
+
+function LlmView({ out, lessonId, stageId, onGoToStage }: { out: TutorLlmAnswer; lessonId: string; stageId: string | null; onGoToStage: (id: string) => void }) {
+  const text = out.text ?? ''
+  const parts: (string | { id: string })[] = []
+  let last = 0
+  for (const match of text.matchAll(CITE)) {
+    parts.push(text.slice(last, match.index), { id: match[1] })
+    last = (match.index ?? 0) + match[0].length
+  }
+  parts.push(text.slice(last))
+  return (
+    <div className="tmsg tmsg--tutor tmsg--llm">
+      <span className="kind-badge kind-badge--real_execution">AI · paid · from the lessons only</span>
+      <p className="tmsg__llmtext">
+        {parts.map((p, i) =>
+          typeof p === 'string' ? (
+            <Fragment key={i}>{p}</Fragment>
+          ) : (
+            <code key={i} className="tmsg__cite">{p.id}</code>
+          ),
+        )}
+      </p>
+      {out.has_citations === false && <p className="label">THIS WORDING HAS NO CITATIONS: THE EVIDENCE BELOW IS WHAT IT WAS BUILT FROM</p>}
+      {out.has_citations !== false && out.grounded === false && <p className="label">SOME CITATIONS WERE REMOVED: CHECK THE EVIDENCE</p>}
+      {(out.claims?.length ?? 0) > 0 && <Evidence claims={out.claims ?? []} sources={out.sources ?? []} />}
+      <Related related={out.related ?? []} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
+      <p className="label">COST {usd(out.cost_usd)} · {out.model}</p>
     </div>
   )
 }
@@ -301,8 +468,8 @@ function Evidence({ claims, sources }: { claims: TutorClaim[]; sources: TutorSou
   )
 }
 
-/** Optional, paid, per-click: an LLM rewrites the answer from the same lesson passages only. */
-function Polish({ question, lessonId, stageId }: { question: string; lessonId: string; stageId: string | null; onAsk: (q: string) => void }) {
+/** Optional, paid, per-click: an LLM re-words this one answer from the same lesson passages. */
+function Polish({ question, lessonId, stageId, history, available }: { question: string; lessonId: string; stageId: string | null; history: () => TutorTurn[]; available: boolean }) {
   const [status, setStatus] = useState<AIStatus | null>(null)
   const [openIt, setOpenIt] = useState(false)
   const [estimate, setEstimate] = useState<number | null>(null)
@@ -324,24 +491,25 @@ function Polish({ question, lessonId, stageId }: { question: string; lessonId: s
   useEffect(() => {
     if (!enabled || !model) return
     let live = true
-    api.tutorEstimate(question, model.provider, model.model, lessonId, stageId).then((e) => live && setEstimate(e.max_cost_usd)).catch(() => live && setEstimate(null))
+    api.tutorEstimate(question, model.provider, model.model, lessonId, stageId, history()).then((e) => live && setEstimate(e.max_cost_usd)).catch(() => live && setEstimate(null))
     return () => {
       live = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, model, question, lessonId, stageId])
 
   if (!openIt) {
     return (
       <button type="button" className="tmsg__polish-open" onClick={() => setOpenIt(true)}>
-        <Sparkle aria-hidden /> Polish with AI (optional, paid)
+        <Sparkle aria-hidden /> Re-explain this with AI (optional, paid)
       </button>
     )
   }
   if (!status) return <p className="label" role="status">CHECKING…</p>
-  if (!enabled) {
+  if (!enabled || !available) {
     return (
       <p className="tmsg__polish-off">
-        <Lock aria-hidden /> AI polish is off on this server. The answer above is the full, free answer.
+        <Lock aria-hidden /> AI is off on this server. The answer above is the full, free answer.
       </p>
     )
   }
@@ -349,7 +517,7 @@ function Polish({ question, lessonId, stageId }: { question: string; lessonId: s
     setState('loading')
     setError(null)
     try {
-      setOut(await api.askTutorLlm(question, model.provider, model.model, lessonId, stageId))
+      setOut(await api.askTutorLlm(question, model.provider, model.model, lessonId, stageId, history()))
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'The request failed.')
     } finally {

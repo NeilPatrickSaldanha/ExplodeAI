@@ -24,6 +24,7 @@ STAGE_BOOST = 0.004  # added to the fused score: a nudge, never an override
 LESSON_BOOST = 0.0015
 # A vague question ("what can go wrong?") matches the same wording in every stage. Then the open
 # stage is the best clue to what is meant, so it counts for more.
+KIND_BOOST = 0.004  # the phrasing ("why", "what if removed") points at a kind of passage
 VAGUE_STAGE_BOOST = 0.02
 VAGUE_LESSON_BOOST = 0.006
 VAGUE_IF_TOP8_SPANS = 5
@@ -57,7 +58,13 @@ class TutorIndex:
         return sum(t in self.vocab for t in q) / len(q) if q else 0.0
 
     def search(
-        self, question: str, *, lesson_id: str | None = None, stage_id: str | None = None, k: int = 5
+        self,
+        question: str,
+        *,
+        lesson_id: str | None = None,
+        stage_id: str | None = None,
+        k: int = 5,
+        prefer: set[str] | None = None,
     ) -> tuple[list[Scored], dict]:
         n = len(self.passages)
         lex = self.bm25.scores(question)
@@ -83,6 +90,10 @@ class TutorIndex:
                 fused[i] += lesson_boost
                 if stage_id and p.stage_id == stage_id:
                     fused[i] += stage_boost
+        if prefer:
+            for i, p in enumerate(self.passages):
+                if p.kind in prefer:
+                    fused[i] += KIND_BOOST
         coverage = self.coverage(question)
         best_dense = float(dense.max()) if dense is not None else None
         if best_dense is None:  # no neural model: shared words are all there is to go on
