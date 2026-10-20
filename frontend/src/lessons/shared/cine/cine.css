@@ -130,12 +130,12 @@
 }
 
 .cine .exploded-view {
-  height: clamp(360px, 62dvh, 560px);
+  height: clamp(340px, 56dvh, 520px);
 }
 
 @media (min-width: 64rem) {
   .cine .exploded-view {
-    height: clamp(560px, 74dvh, 860px);
+    height: clamp(500px, 66dvh, 760px);
   }
 }
 
@@ -266,7 +266,7 @@
 
 @media (min-width: 64rem) {
   .cine__panel {
-    max-height: clamp(560px, 74dvh, 860px);
+    max-height: clamp(500px, 66dvh, 760px);
     overflow-y: auto;
     scrollbar-width: thin;
   }
@@ -344,6 +344,60 @@
 .spanel__tour-ctrl {
   display: flex;
   gap: var(--space-2xs);
+}
+
+.spanel__play {
+  gap: var(--space-2xs);
+  padding-inline: var(--space-sm);
+  font-family: var(--font-label);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spanel__tour-ctrl .spanel__play.is-playing {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.spanel__tour-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.spanel__live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: spanel-pulse 1.2s ease-in-out infinite;
+}
+
+/* Fills while the current step is on screen; the next stage opens when it is full. */
+.spanel__countdown {
+  display: block;
+  height: 3px;
+  margin-top: calc(var(--space-2xs) * -1);
+  border-radius: 2px;
+  background: var(--color-accent);
+  transform-origin: left center;
+  animation: spanel-countdown linear forwards;
+}
+
+@keyframes spanel-countdown {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes spanel-pulse {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spanel__countdown { animation: none; transform: scaleX(1); opacity: 0.4; }
+  .spanel__live { animation: none; }
 }
 
 .spanel__speed {
@@ -857,4 +911,193 @@
 
 .outcome .io-chips {
   margin-top: var(--space-2xs);
+}
+
+/* Understand this stage: short version always visible, depth on demand. */
+.understand {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+}
+
+.understand__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.understand__title svg {
+  color: var(--color-accent);
+}
+
+.understand__what {
+  font-size: var(--text-base);
+  color: var(--color-ink);
+}
+
+.understand__analogy {
+  display: grid;
+  gap: var(--space-3xs);
+  padding-left: var(--space-sm);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.understand__sec {
+  border-top: 1px solid var(--color-rule);
+}
+
+.understand__sec > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-xs) 0;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  list-style: none;
+}
+
+.understand__sec > summary::-webkit-details-marker {
+  display: none;
+}
+
+.understand__sec > summary::after {
+  content: "+";
+  font-family: var(--font-label);
+  color: var(--color-accent);
+}
+
+.understand__sec[open] > summary::after {
+  content: "–";
+}
+
+.understand__sec > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.understand__sec--warn > summary {
+  color: var(--color-ink);
+}
+
+.understand__body {
+  display: grid;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.understand__steps {
+  margin: 0;
+  padding-left: var(--space-md);
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.understand__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+/* Mini demo */
+.demo {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px dashed var(--color-rule-2);
+  border-radius: var(--radius-sm);
+}
+
+.demo__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.demo__ctrl {
+  display: flex;
+  gap: var(--space-2xs);
+}
+
+.demo__flow {
+  display: grid;
+  gap: var(--space-2xs);
+  align-items: center;
+}
+
+@container (min-width: 28rem) {
+  .demo__flow {
+    grid-template-columns: 1fr auto 1.2fr auto 1fr;
+  }
+}
+
+.demo__card,
+.demo__steps li {
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  opacity: 0.4;
+  transition: opacity var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+
+.demo__card {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.demo__card.is-on,
+.demo__steps li.is-on {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+
+.demo__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.demo__arrow {
+  color: var(--color-accent);
+  justify-self: center;
+  transform: rotate(90deg);
+}
+
+@container (min-width: 28rem) {
+  .demo__arrow {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo__card,
+  .demo__steps li {
+    transition: none;
+  }
+}
+
+.cine__howto {
+  justify-self: end;
+  gap: var(--space-2xs);
+  font-size: var(--text-xs);
+}
+
+.understand__connect {
+  display: grid;
+  gap: var(--space-2xs);
 }

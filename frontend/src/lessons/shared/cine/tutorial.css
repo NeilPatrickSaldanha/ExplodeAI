@@ -1,0 +1,150 @@
+/* First-run tutorial: spotlight + card. Tokens only. */
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  /* Let clicks through to the highlighted control; the dim panels and card catch the rest. */
+  pointer-events: none;
+}
+
+.tut__dim {
+  position: fixed;
+  pointer-events: auto;
+  background: oklch(10% 0.01 260 / 0.72);
+}
+
+.tut__ring {
+  position: fixed;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  box-shadow: 0 0 0 4px oklch(76% 0.17 50 / 0.18);
+}
+
+.tut__ring.is-animated {
+  animation: tut-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tut-pulse {
+  50% { box-shadow: 0 0 0 9px oklch(76% 0.17 50 / 0.1); }
+}
+
+.tut__card {
+  position: fixed;
+  display: grid;
+  gap: var(--space-xs);
+  width: min(340px, calc(100vw - 24px));
+  padding: var(--space-md);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  box-shadow: 0 18px 48px oklch(0% 0 0 / 0.45);
+  pointer-events: auto;
+}
+
+.tut__card:focus {
+  outline: none;
+}
+
+.tut__card--center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 24px));
+}
+
+.tut__card--sheet {
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: auto;
+  max-height: 60dvh;
+  overflow-y: auto;
+}
+
+.tut__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tut__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  text-transform: lowercase;
+  line-height: 1.1;
+}
+
+.tut__body {
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.tut__list {
+  margin: 0;
+  padding-left: var(--space-md);
+  display: grid;
+  gap: var(--space-3xs);
+  font-size: var(--text-sm);
+  color: var(--color-ink-2);
+}
+
+.tut__task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px dashed var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.tut__task.is-done {
+  border-style: solid;
+  border-color: var(--color-accent);
+}
+
+.tut__task svg {
+  color: var(--color-accent);
+  flex: none;
+}
+
+.tut__progress {
+  width: 100%;
+  height: 4px;
+}
+
+.tut__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.tut__skip {
+  margin-left: auto;
+}
+
+.tut__next {
+  margin-left: auto;
+}
+
+.tut__skip + .tut__next {
+  margin-left: 0;
+}
+
+.tut__next[data-primary="true"] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.tut__next[data-primary="false"] {
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut__ring.is-animated {
+    animation: none;
+  }
+}

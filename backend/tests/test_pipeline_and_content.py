@@ -27,6 +27,11 @@ def registry():
     return load_registry(CONTENT)
 
 
+@pytest.fixture(scope="module")
+def lessons() -> dict[str, Lesson]:
+    return load_lessons(CONTENT)
+
+
 def test_lesson_content_is_valid(lesson, registry):
     assert validate_lesson(lesson, registry) == []
 
@@ -164,3 +169,25 @@ def test_long_excerpts_are_rejected():
     raw["claims"][0]["citations"][0]["excerpt"] = "word " * 40
     with pytest.raises(ValueError):
         Lesson.model_validate(raw)
+
+
+# -------------------------------------------------- stage explanations (explain.yaml)
+def test_every_stage_of_every_lesson_has_an_explanation(lessons):
+    for lesson in lessons.values():
+        for comp in lesson.components:
+            assert comp.explain is not None, f"{lesson.id}/{comp.id}"
+            assert 1 <= len(comp.explain.happens) <= 5
+            assert comp.explain.example.steps
+
+
+def test_validator_flags_a_stage_without_an_explanation(registry, lessons):
+    lesson = next(iter(lessons.values())).model_copy(deep=True)
+    lesson.components[0].explain = None
+    assert any("no explain section" in p for p in validate_lesson(lesson, registry))
+
+
+def test_validator_flags_an_explanation_citing_a_claim_the_stage_does_not_own(registry, lessons):
+    lesson = next(iter(lessons.values())).model_copy(deep=True)
+    other = lesson.components[1].claims[0]
+    lesson.components[0].explain.claims = [other]
+    assert any("must be among the component's own claims" in p for p in validate_lesson(lesson, registry))

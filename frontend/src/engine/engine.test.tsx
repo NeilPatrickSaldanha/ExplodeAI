@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ExplodedView } from './ExplodedView'
-import { bounds, easeInOutCubic, neighbours, partPosition, quadBezier, stepIndex, topDown } from './math'
+import { bounds, easeInOutCubic, neighbours, partPosition, quadBezier, spreadParts, stepIndex, topDown } from './math'
 import type { AssemblySpec, ViewState } from './types'
 
 const spec: AssemblySpec = {
@@ -47,6 +47,12 @@ describe('engine math', () => {
     expect(stepIndex(-1, -1, 3)).toBe(2)
     expect(stepIndex(2, 1, 3)).toBe(0)
     expect(stepIndex(0, -1, 3)).toBe(2)
+  })
+
+  it('spreads explode offsets per axis without touching assembled positions', () => {
+    const [p] = spreadParts([spec.parts[1]], [2, 1, 3])
+    expect(p.explode).toEqual([0, 0, 9])
+    expect(p.position).toEqual(spec.parts[1].position)
   })
 
   it('bounds grow as the assembly explodes', () => {

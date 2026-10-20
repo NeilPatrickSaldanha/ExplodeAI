@@ -22,7 +22,7 @@ const panel = (page: Page) => page.locator('.cine__panel')
 test('hero scene renders; stages are selectable from the stage bar, the scene and the keyboard', async ({ page }) => {
   await page.goto(LESSON)
   await expect(page.locator('.exploded-view[data-mode="3d"] canvas')).toBeVisible()
-  await expect(page.getByText('Verified: 32/32 claims through all three passes')).toBeVisible()
+  await expect(page.getByText('Verified: 33/33 claims through all three passes')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Flow legend' })).toContainText('Vector flow')
 
   // Live values from a real run appear on the selected part's callout.

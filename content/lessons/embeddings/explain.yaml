@@ -1,0 +1,196 @@
+# Deeper, beginner-friendly explanations for each stage. Every factual statement restates a verified
+# claim in lesson.yaml (ids in `claims`) or describes this lesson's own pipeline (checked against the
+# code in the independent cross-check: research_notes/Stage explanations cross-check.md). Analogies and
+# examples are teaching aids, shown to learners as such, never as claims.
+library:
+  what: Twenty-four sample sentences in four topics that your text is compared against.
+  why: Search needs something to search. Each sentence is turned into a vector once and reused.
+  analogy: A shelf of labelled cards, prepared before anyone asks a question.
+  happens:
+  - With the neural embedder, every sentence goes through the same tokenizer, encoder, pooling and normalizer as
+    your text.
+  - Each ends up as one vector.
+  - They are kept for comparison.
+  goes_to: The tokenizer (as text) and, later, the similarity ranker (as vectors).
+  example:
+    input: The bookshelf is full of old novels.
+    steps:
+    - Tokenised
+    - Encoded
+    - Pooled and normalised
+    output: One 384-number vector
+  misconfigured: If the library is embedded with a different model than your text, the vectors cannot be compared.
+  learn_more: Embeddings are used for search, clustering, recommendations, anomaly detection and classification,
+    and retrieval for RAG is a common use. Vectors from different models generally live in different spaces.
+  claims:
+  - embedding-uses
+  - models-not-comparable
+your_text:
+  what: The sentence you type in. It is embedded the same way as the library.
+  why: To find sentences with a similar meaning, your text needs a vector too.
+  analogy: Asking a question in the same language the library is written in.
+  happens:
+  - Your text may get an instruction prefix for short search queries.
+  - It goes to the tokenizer.
+  - It follows the same path as the library sentences.
+  goes_to: The tokenizer.
+  example:
+    input: a place to put my books
+    steps:
+    - Optional BGE instruction added in front
+    - Sent to the tokenizer
+    output: Model input
+  misconfigured: BGE suggests an instruction for short retrieval queries, not for passages. For v1.5 leaving it
+    out costs only slightly, so test both on your own task.
+  learn_more: Some providers embed queries and documents differently. Voyage prepends different prompts for each
+    input_type, and Gemini's gemini-embedding-001 takes a task_type.
+  claims:
+  - bge-query-instruction
+  - query-document-asymmetry
+tokenizer:
+  what: Splits text into WordPiece tokens and looks up their ids.
+  why: The model never sees letters, only token ids.
+  analogy: Looking each word up in a fixed list of word fragments, and writing down the number of every fragment
+    it finds.
+  happens:
+  - 'Text is split into WordPiece tokens: whole words where the list has them, fragments where it does not.'
+  - '[CLS] is added first (its vector will stand for the whole sentence) and [SEP] last (it marks the end).'
+  - Anything past 512 tokens is cut off.
+  goes_to: The encoder.
+  example:
+    input: Embeddings are unbelievably useful
+    steps:
+    - 'Rare words split into ## pieces'
+    - '[CLS] and [SEP] added'
+    output: A list of token ids
+  misconfigured: Long text is cut at 512 tokens, so the end never reaches the model (this lesson warns you when
+    it happens). Split long documents into chunks first.
+  learn_more: 'BERT used a 30,000-piece WordPiece vocabulary, and bge-small-en-v1.5''s config lists 30,522. Rare
+    words split into smaller pieces. Hosted models have limits too: OpenAI''s embedding models take up to 8,192
+    tokens per input.'
+  claims:
+  - wordpiece-subwords
+  - bert-cls-token
+  - bge-max-tokens
+  - input-limits
+encoder:
+  what: Twelve transformer layers turn every token into a vector of 384 numbers that depends on its context.
+  why: The same word means different things in different sentences. Context-aware vectors capture that.
+  analogy: A reader who understands each word differently depending on the sentence around it.
+  happens:
+  - Token ids go in.
+  - Each token is updated using the words on both sides of it.
+  - One 384-number vector per token comes out.
+  goes_to: Pooling.
+  example:
+    input: '"bank" in two sentences'
+    steps:
+    - Beside a river
+    - Beside money
+    output: Two different vectors for the same word
+  misconfigured: Word2vec-style static vectors give a word one vector everywhere, which cannot separate its senses.
+  learn_more: Embedding models are typically trained contrastively, pulling related texts together and pushing others
+    apart. Earlier word2vec vectors were static, and king − man + woman landed near queen only when the input words
+    were excluded. For contextual models, a static embedding explains less than 5% of the variance of a word's vectors.
+  claims:
+  - contextual-vectors
+  - word2vec-static
+  - word2vec-analogy
+  - contrastive-training
+  - bge-dims
+pooling:
+  what: Combines the token vectors into one vector for the whole sentence.
+  why: To compare whole sentences you need one vector per sentence, not one per token.
+  analogy: Taking a summary card instead of keeping every word's card.
+  happens:
+  - BGE takes the [CLS] token's vector.
+  - The other common choice is the average of all tokens.
+  - One 384-number vector results.
+  goes_to: The normalizer.
+  example:
+    input: 9 token vectors
+    steps:
+    - Keep the [CLS] vector, which was trained to summarise the sentence
+    - The other token vectors were used to build it, then set aside
+    output: One sentence vector
+  misconfigured: Pooling should match how the model was trained (BGE uses [CLS]). In Sentence-BERT's experiments
+    the choice mattered little in one training setup and max pooling did much worse in another. Raw BERT without
+    similarity training makes poor sentence embeddings.
+  learn_more: Sentence-BERT compared [CLS], mean and max pooling. With NLI (natural-language-inference) classification
+    training the choice mattered little, but with regression training max pooling did much worse. Averaged BERT
+    outputs scored below averaged GloVe (a classic word-vector method) on average across the paper's benchmarks.
+  claims:
+  - bge-cls-normalized
+  - pooling-strategies
+  - raw-bert-poor
+normalizer:
+  what: Scales the vector so its length is exactly 1.
+  why: It makes dot product (multiply matching numbers and add them up) and cosine similarity (the angle between
+    two vectors) the same measure.
+  analogy: Giving every arrow the same length so only the direction counts.
+  happens:
+  - The vector's length is measured.
+  - Every number is divided by that length.
+  - The result has length 1.
+  goes_to: The similarity ranker and the semantic-space map.
+  example:
+    input: A vector of length 9
+    steps:
+    - Divide every value by 9
+    output: A vector of length 1
+  misconfigured: Without it, dot-product scores depend on vector length and are no longer bounded between −1 and
+    1. Cosine is unaffected.
+  learn_more: For length-1 vectors, cosine, dot product and Euclidean distance all rank results the same way. If
+    you shorten vectors yourself you must re-normalize them. Some models, such as OpenAI's text-embedding-3 (with
+    its dimensions parameter), are trained so that shortened vectors still work well.
+  claims:
+  - unit-vector-metrics
+  - shorter-dimensions
+similarity:
+  what: Scores your vector against every library vector and sorts them from closest to furthest.
+  why: This is the search itself. The top results are your nearest neighbours.
+  analogy: Sorting the library cards by how close they sit to your question on the map.
+  happens:
+  - Each library vector gets a score.
+  - Scores are sorted.
+  - The top few are shown.
+  goes_to: You, as the ranked neighbours list.
+  example:
+    input: a place to put my books
+    steps:
+    - Score all 24 sentences
+    - Sort
+    output: The bookshelf sentence first
+  misconfigured: The scores are not calibrated. Unrelated sentences can still score well above zero, so rely on
+    order, not a fixed threshold. A lexical embedder finds nothing without shared words.
+  learn_more: Keyword matching only finds shared words, while neural embeddings can match paraphrases. Vectors from
+    different models cannot generally be compared. On the MTEB benchmark no single model won every task, so choose
+    by your own task.
+  claims:
+  - semantic-similarity
+  - scores-uncalibrated
+  - lexical-vs-neural
+  - models-not-comparable
+  - mteb-no-winner
+semantic_space:
+  what: A 3D map of all the vectors, squeezed down from 384 dimensions.
+  why: Seeing clusters makes the idea of "close in meaning" visible.
+  analogy: A flat map of a round planet. Useful, but some distances are stretched.
+  happens:
+  - PCA finds the three directions with the most spread.
+  - Every vector is projected onto them.
+  - Points are drawn, coloured and shaped by topic.
+  goes_to: You. It is a view, not part of the search.
+  example:
+    input: 25 vectors of 384 numbers
+    steps:
+    - Project to 3 numbers each
+    output: 25 points in 3D
+  misconfigured: Do not trust small distances in the picture. The ranking list holds the exact scores. Removing
+    the map changes nothing about the neighbours.
+  learn_more: Drawing high-dimensional data in 2D or 3D generally loses information. t-SNE plots in particular can
+    mislead about cluster size and the distance between clusters, which is why this lesson uses PCA and states the
+    variance kept.
+  claims:
+  - projection-lossy
+  - tsne-cautions

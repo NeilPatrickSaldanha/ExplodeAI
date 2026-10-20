@@ -11,6 +11,13 @@ technical claim links to its sources and records three verification passes.
 [Embeddings, exploded](content/lessons/embeddings/lesson.yaml). See
 [Limitations](#limitations).
 
+## Learning experience
+
+Every stage has an "Understand this stage" panel (plain-language explanation, analogy, a
+playable example, expandable depth, links to neighbouring stages), the Tour mode can play
+itself with a visible countdown, and first-time visitors get an optional interactive
+walkthrough that is remembered and can be replayed from "How to use".
+
 ## Quick start
 
 Requirements: [uv](https://docs.astral.sh/uv/) ≥ 0.13, Node ≥ 22.

@@ -37,6 +37,22 @@ Next / slider always; autoplay only when motion is allowed), and a single-series
 trade-off line chart (one y-axis, current setting marked, hover readout, and the
 same data as a table). Example chips now reach 44px on coarse pointers.
 
+## Learning aids (all lessons)
+
+- **Understand this stage** (`shared/cine/Understand.tsx`): short version always visible
+  (what it does, a labelled analogy, connected-stage chips, a step-through example),
+  everything else in native `<details>` sections (why, what happens to the data, where it
+  goes, if set up wrong, learn more). Keyboard and screen-reader friendly, 44px rows.
+- **First-run tutorial** (`shared/cine/Tutorial.tsx`): a spotlight dims everything but one
+  control, a card explains it, and some steps ask the learner to do it (drag, zoom, move the
+  slider, pick a stage, press Play). Next, Back, Skip, Finish, Esc to skip; a bottom sheet on
+  phones. Remembered in `localStorage` (`explodeai.tutorial`), replayable from "How to use".
+- **Tour Play/Pause**: a labelled Play/Pause button, a "PLAYING · NEXT STAGE IN 8s" state with
+  a countdown bar, restart on the last step. Calm/reduced motion removes the animation.
+- **Exploded layout**: each lesson adapter sets a per-axis `SPREAD` for its explode offsets;
+  the camera frames the stretched layout with room for the toolbar, and labels are clamped
+  inside the canvas, so parts separate widely without clipping.
+
 ## Lesson 01 redesign: cinematic exploded view
 
 Hallmark `redesign`, single page, inside the existing boundaries (new components

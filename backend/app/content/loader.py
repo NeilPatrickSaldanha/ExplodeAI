@@ -18,8 +18,21 @@ def load_registry(content_dir: Path) -> SourceRegistry:
     return SourceRegistry.model_validate(_read_yaml(content_dir / "sources.yaml"))
 
 
+def read_lesson_data(path: Path) -> dict:
+    """A lesson's raw data: lesson.yaml, with each stage's explain.yaml entry merged in."""
+    data = _read_yaml(path)
+    explain_path = path.with_name("explain.yaml")
+    if explain_path.exists():
+        explain = _read_yaml(explain_path)
+        for comp in data["components"]:
+            if comp["id"] in explain:
+                comp["explain"] = explain[comp["id"]]
+    return data
+
+
 def load_lessons(content_dir: Path) -> dict[str, Lesson]:
-    loaded = [Lesson.model_validate(_read_yaml(p)) for p in (content_dir / "lessons").glob("*/lesson.yaml")]
+    paths = (content_dir / "lessons").glob("*/lesson.yaml")
+    loaded = [Lesson.model_validate(read_lesson_data(p)) for p in paths]
     return {lesson.id: lesson for lesson in sorted(loaded, key=lambda lesson: lesson.number)}
 
 

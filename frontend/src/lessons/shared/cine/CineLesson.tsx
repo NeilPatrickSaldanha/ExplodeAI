@@ -1,5 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import { ArrowsClockwise, CornersOut, Crosshair, Cube, Info, Pause, Play, SealCheck, Square, Wind } from '@phosphor-icons/react'
+import { ArrowsClockwise, CornersOut, Crosshair, Cube, Info, Pause, Play, Question, SealCheck, Square, Wind } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api } from '../../../api/client'
 import type { Component, Lesson, Source } from '../../../api/types'
@@ -11,6 +11,8 @@ import './cine.css'
 import { FlowLegend, type FlowLabels } from './FlowLegend'
 import { StageBar } from './StageBar'
 import { StagePanel } from './StagePanel'
+import { Tutorial } from './Tutorial'
+import { tutorialSeen } from './tutorialStorage'
 
 export type Mode = 'explore' | 'tour' | 'experiment' | 'challenges' | 'rebuild'
 
@@ -78,6 +80,8 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
   const [explored, setExplored] = useState<string[]>([])
   const [solved, setSolved] = useState<string[]>([])
   const [rebuilt, setRebuilt] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  const replayRef = useRef<HTMLButtonElement>(null)
 
   // One orchestrated entrance: the machine explodes open, then stage 01 lights up.
   useEffect(() => {
@@ -85,6 +89,13 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
     const id = setTimeout(() => setView((v) => ({ ...v, explode: 0.85, selectedId: v.selectedId ?? stageIds[0] })), reducedMotion ? 0 : 350)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // First visit ever: offer the walkthrough once the scene has opened up.
+  useEffect(() => {
+    if (tutorialSeen()) return
+    const id = setTimeout(() => setTutorialOpen(true), 1200)
+    return () => clearTimeout(id)
   }, [])
 
   useEffect(() => {
@@ -144,6 +155,13 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
     return () => clearTimeout(id)
   }, [autoplay, mode, tourStep, speed, lesson.tour, goToStage])
 
+  // Play from here; on the last step, Play restarts the tour from the first stage.
+  const togglePlay = () => {
+    if (autoplay) return setAutoplay(false)
+    if (tourStep >= lesson.tour.length - 1) goToStage(lesson.tour[0].component)
+    setAutoplay(true)
+  }
+
   const onTab = (m: string) => {
     setMode(m as Mode)
     if (m === 'tour') goToStage(lesson.tour[tourStep].component)
@@ -184,6 +202,7 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
       sources={sources}
       reducedMotion={reducedMotion}
       onStep={step}
+      onGoTo={goToStage}
       tour={
         withTour
           ? {
@@ -192,8 +211,9 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
               title: tour.title,
               body: tour.body,
               autoplay,
+              dwell: AUTOPLAY_SECONDS / speed,
               speed,
-              onToggleAutoplay: () => setAutoplay((a) => !a),
+              onToggleAutoplay: togglePlay,
               onSpeed: setSpeed,
             }
           : undefined
@@ -223,6 +243,9 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
             <p className="label">
               EXPLORED {explored.length}/{lesson.components.length} · FIXED {solved.length}/{lesson.challenges.length} · REBUILT {rebuilt ? 'YES' : 'NO'}
             </p>
+            <button ref={replayRef} type="button" className="btn cine__howto" onClick={() => setTutorialOpen(true)}>
+              <Question aria-hidden /> How to use
+            </button>
             <Tabs.List className="cine__modes" aria-label="Mode">
               <Tabs.Trigger className="cine__mode" value="explore">Explore</Tabs.Trigger>
               <Tabs.Trigger className="cine__mode" value="tour">Tour</Tabs.Trigger>
@@ -258,8 +281,8 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
                 <div className="cine__explode">
                   <Slider id="explode" label="Explode" min={0} max={1} step={0.01} value={view.explode} format={(v) => `${Math.round(v * 100)}%`} onChange={(v) => setView((s) => ({ ...s, explode: v }))} />
                 </div>
-                <Toggle pressed={view.flow} onChange={(f) => setView((s) => ({ ...s, flow: f }))} label="Animate data flow">
-                  {view.flow ? <Pause aria-hidden /> : <Play aria-hidden />} Flow
+                <Toggle pressed={view.flow} onChange={(f) => setView((s) => ({ ...s, flow: f }))} label={view.flow ? 'Pause the data-flow animation' : 'Play the data-flow animation'}>
+                  {view.flow ? <Pause aria-hidden /> : <Play aria-hidden />} {view.flow ? 'Flow on' : 'Flow off'}
                 </Toggle>
                 <Toggle pressed={view.linkCards === 'all'} onChange={(on) => setView((s) => ({ ...s, linkCards: on ? 'all' : 'selected' }))} label="Show data on every link">
                   <Info aria-hidden /> Data
@@ -324,6 +347,23 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
             ))}
           </ul>
         </details>
+        {tutorialOpen && (
+          <Tutorial
+            signals={{ mode, selectedId: view.selectedId, explode: view.explode, autoplay }}
+            actions={{
+              setMode: (m) => {
+                setMode(m)
+                if (m === 'tour') goToStage(lesson.tour[tourStep].component)
+              },
+              stopAutoplay: () => setAutoplay(false),
+            }}
+            reducedMotion={reducedMotion}
+            onClose={() => {
+              setTutorialOpen(false)
+              replayRef.current?.focus()
+            }}
+          />
+        )}
       </article>
     </Tabs.Root>
   )

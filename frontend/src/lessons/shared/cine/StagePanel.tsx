@@ -4,6 +4,7 @@ import type { Claim, Component, Lesson, Source } from '../../../api/types'
 import type { PartSpec } from '../../../engine/types'
 import { ClaimCard } from '../../rag/Inspector'
 import { StageIcon } from './StageIcon'
+import { Understand } from './Understand'
 
 const PartCloseup = lazy(() => import('./PartCloseup').then((m) => ({ default: m.PartCloseup })))
 
@@ -13,6 +14,8 @@ export interface TourState {
   title: string
   body: string
   autoplay: boolean
+  /** Seconds the current step stays on screen while playing. */
+  dwell: number
   speed: 1 | 2
   onToggleAutoplay: () => void
   onSpeed: (s: 1 | 2) => void
@@ -30,6 +33,8 @@ interface Props {
   sources: Map<string, Source>
   reducedMotion: boolean
   onStep: (delta: number) => void
+  /** Jump to another stage (from the connected-stage chips). */
+  onGoTo: (id: string) => void
   tour?: TourState
 }
 
@@ -41,7 +46,7 @@ const passed = (c: Claim) =>
  * goes in and comes out (real data), what breaks if it is removed (a real run),
  * and compact, source-backed facts that expand to their citations.
  */
-export function StagePanel({ lesson, component, part, index, io, breaks, sources, reducedMotion, onStep, tour }: Props) {
+export function StagePanel({ lesson, component, part, index, io, breaks, sources, reducedMotion, onStep, onGoTo, tour }: Props) {
   const [openClaim, setOpenClaim] = useState<string | null>(null)
   const total = lesson.components.length
 
@@ -71,15 +76,32 @@ export function StagePanel({ lesson, component, part, index, io, breaks, sources
               TOUR · STEP {tour.step + 1} OF {tour.total}
             </span>
             <span className="spanel__tour-ctrl">
-              <button type="button" className="btn btn--icon" aria-pressed={tour.autoplay} aria-label={tour.autoplay ? 'Pause auto-play' : 'Auto-play the tour'} onClick={tour.onToggleAutoplay}>
-                {tour.autoplay ? <Pause aria-hidden /> : <Play aria-hidden />}
+              <button
+                type="button"
+                className={`btn spanel__play${tour.autoplay ? ' is-playing' : ''}`}
+                aria-pressed={tour.autoplay}
+                title={tour.autoplay ? 'Pause the tour here' : tour.step >= tour.total - 1 ? 'Replay the tour from the start' : 'Play: the tour moves to the next stage by itself'}
+                onClick={tour.onToggleAutoplay}
+              >
+                {tour.autoplay ? <Pause weight="fill" aria-hidden /> : <Play weight="fill" aria-hidden />}
+                {tour.autoplay ? 'Pause' : tour.step >= tour.total - 1 ? 'Replay' : 'Play'}
               </button>
-              <button type="button" className="btn spanel__speed" aria-label={`Auto-play speed ${tour.speed}x`} onClick={() => tour.onSpeed(tour.speed === 1 ? 2 : 1)}>
+              <button type="button" className="btn spanel__speed" aria-label={`Auto-play speed ${tour.speed}x. Press to change.`} title="Change auto-play speed" onClick={() => tour.onSpeed(tour.speed === 1 ? 2 : 1)}>
                 {tour.speed}×
               </button>
             </span>
           </div>
           <progress className="tour__progress" max={tour.total} value={tour.step + 1} aria-label="Tour progress" />
+          <p className="spanel__tour-state label" role="status">
+            {tour.autoplay ? (
+              <>
+                <span className="spanel__live" aria-hidden /> PLAYING · NEXT STAGE IN {Math.round(tour.dwell)}s
+              </>
+            ) : (
+              'PAUSED · USE PLAY OR THE ARROWS'
+            )}
+          </p>
+          {tour.autoplay && <span key={tour.step} className="spanel__countdown" style={{ animationDuration: `${tour.dwell}s` }} aria-hidden />}
           <p className="spanel__tour-title">{tour.title}</p>
           <p className="spanel__tour-body">{tour.body}</p>
         </div>
@@ -114,6 +136,17 @@ export function StagePanel({ lesson, component, part, index, io, breaks, sources
       </Suspense>
 
       {io}
+
+      {component.explain && (
+        <Understand
+          component={component}
+          explain={component.explain}
+          before={lesson.connections.filter((c) => c.target === component.id).map((c) => lesson.components.find((x) => x.id === c.source)).filter((c): c is Component => !!c)}
+          after={lesson.connections.filter((c) => c.source === component.id).map((c) => lesson.components.find((x) => x.id === c.target)).filter((c): c is Component => !!c)}
+          reducedMotion={reducedMotion}
+          onGoTo={onGoTo}
+        />
+      )}
 
       {breaks}
 

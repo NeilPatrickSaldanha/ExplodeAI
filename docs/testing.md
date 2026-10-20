@@ -9,14 +9,14 @@
 | Neural evidence | pytest (needs `--extra neural`) | `test_neural.py` | semantic-similarity claims with a real local model |
 | Claim coverage | pytest | `test_zz_claim_coverage.py` | for every lesson: claim ids are unique, and every claim marked technically passed had a passing test this run |
 | Frontend unit | Vitest + Testing Library | `frontend/src/**/*.test.tsx` | engine math, 2D fallback keyboard use, readouts, result views, rebuild helpers |
-| End-to-end | Playwright (Chromium) | `frontend/e2e/` (`lesson.spec.ts`, `tokenization.spec.ts`, `embeddings.spec.ts`, `mobile.spec.ts`) | real 3D rendering, keyboard selection, real experiment, full break/fix loop with persistence, rebuild via buttons, 2D + reduced motion, tour, phone layout without horizontal scroll — for all three lessons |
+| End-to-end | Playwright (Chromium) | `frontend/e2e/` (`lesson.spec.ts`, `tokenization.spec.ts`, `embeddings.spec.ts`, `understand.spec.ts`, `tutorial.spec.ts`, `mobile.spec.ts`) | real 3D rendering, keyboard selection, real experiment, full break/fix loop with persistence, rebuild via buttons, 2D + reduced motion, tour, phone layout without horizontal scroll — for all three lessons |
 
 E2E starts its own backend (isolated SQLite file, AI disabled) and frontend on
 ports 8100 and 5174, so it never touches development data.
 
 ```bash
 make test           # everything
-make test-backend   # 185 tests (needs: uv sync --extra neural)
-make test-frontend  # typecheck + 25 unit tests
-make e2e            # 29 browser tests (E2E_API_PORT / E2E_WEB_PORT to move ports)
+make test-backend   # 188 tests (needs: uv sync --extra neural)
+make test-frontend  # typecheck + 31 unit tests
+make e2e            # 40 browser tests (E2E_API_PORT / E2E_WEB_PORT to move ports)
 ```

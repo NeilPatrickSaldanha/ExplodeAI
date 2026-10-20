@@ -21,6 +21,7 @@ Lessons live in `content/lessons/<id>/lesson.yaml`; sources in `content/sources.
 | `status` | `draft` or `published`; the validator blocks publishing until every claim passes |
 | `claims[]` | atomic technical statements; each has `kind` (`fact` · `definition` · `provider_specific` · `simplification`), optional `provider`, ≥ 1 `citations` (source id, locator, excerpt ≤ 30 words), and `verification.{primary, cross_check, technical}` |
 | `components[]` | parts of the exploded view: `id` (= pipeline stage id), label, phase, short/detail text, `claims` it teaches, geometry, assembled `position`, `explode` offset |
+| `components[].explain` | beginner-friendly depth for the stage, kept in `explain.yaml` beside `lesson.yaml` and merged by the loader: `what`, `why`, `analogy`, `happens` (steps), `goes_to`, an illustrative `example` (input → steps → output), `misconfigured`, `learn_more` (technical), and `claims` (must be among the stage's own claims). Facts restate verified claims; analogies and examples are labelled as teaching aids. The validator requires one for every stage |
 | `connections[]` | data-flow links between components (must equal the stage dependency graph) |
 | `visuals[]` | every visual declares `real_execution`, `simulation`, or `conceptual` |
 | `experiment` | presets and corpus note for the real experiment |

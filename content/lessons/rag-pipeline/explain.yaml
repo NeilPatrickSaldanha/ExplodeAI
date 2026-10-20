@@ -1,0 +1,223 @@
+# Deeper, beginner-friendly explanations for each stage. Every factual statement restates a verified
+# claim in lesson.yaml (ids in `claims`) or describes this lesson's own pipeline (checked against the
+# code in the independent cross-check: research_notes/Stage explanations cross-check.md). Analogies and
+# examples are teaching aids, shown to learners as such, never as claims.
+corpus:
+  what: The pile of documents the system is allowed to answer from. Here it is six made-up help-centre articles.
+  why: A language model only knows what it was trained on, and that rarely includes your private or newer documents.
+    Retrieval lets it use them without retraining it.
+  analogy: An open-book exam. The student (the model) can still reason, but the answers come from the book on the
+    desk.
+  happens:
+  - Documents are loaded as plain text.
+  - Nothing is changed or summarised yet.
+  - They wait to be cut into pieces in the next stage.
+  goes_to: The chunker, which cuts each document into smaller pieces.
+  example:
+    input: 'Returns policy: items can be returned within 30 days.'
+    steps:
+    - Loaded as plain text
+    - Kept whole, with its title
+    output: One document, ready to be chunked
+  misconfigured: If the documents are missing, out of date or wrong, every later stage can work correctly and the
+    answer is still wrong.
+  learn_more: Because knowledge lives in the index built from these documents, you can update what the system knows
+    by rebuilding the index, without retraining the generator. For a small knowledge base (under about 200,000 tokens,
+    at the time of Anthropic's 2024 post) you could skip retrieval and put everything in the prompt.
+  claims:
+  - rag-definition
+  - rag-private-knowledge
+  - rag-small-kb
+  - rag-swap-index
+chunker:
+  what: Cuts each document into smaller pieces called chunks. A chunk is the unit that retrieval finds and returns.
+  why: A whole document is too big and too mixed to be a good answer. Small focused pieces match a question more
+    precisely and fit in the prompt.
+  analogy: Cutting a textbook into index cards, one idea per card, so you can pull out just the cards you need.
+  happens:
+  - The document text is split into pieces of a chosen size (this lesson counts words, not tokens).
+  - Neighbouring chunks can overlap so a sentence at the edge is not cut in half (overlap starts at zero here).
+  - Each chunk remembers which document it came from.
+  goes_to: The embedder, which turns every chunk into a vector.
+  example:
+    input: Items can be returned within 30 days. Refunds go to the original payment method.
+    steps:
+    - Split into two sentence-sized chunks
+    - With overlap, the end of chunk 1 repeats at the start of chunk 2
+    output: Two chunks that each stand on their own (illustrative)
+  misconfigured: Too small and a chunk loses the context it needs. Too large and several topics blur together. A
+    fact split across a boundary may not be fully inside any single chunk.
+  learn_more: Chunk size, boundaries and overlap all change what retrieval can find. Splitting can also strip context,
+    which Anthropic's Contextual Retrieval fixes by adding a short chunk-specific explanation before embedding.
+    OpenAI's vector stores currently default to 800-token chunks with 400 tokens of overlap, and the original RAG
+    paper used 100-word chunks.
+  claims:
+  - chunking-affects-retrieval
+  - chunking-overlap
+  - chunking-context-loss
+  - openai-chunk-defaults
+  - rag-paper-chunks
+embedder:
+  what: Turns each chunk into a vector, a long list of numbers that stands for the chunk's content.
+  why: Computers can compare numbers much faster than they can compare meaning. Vectors make "is this chunk related
+    to the question?" a distance calculation.
+  analogy: Giving every chunk a map coordinate, so related chunks sit close together and you can search by distance.
+  happens:
+  - Each chunk goes in and a vector comes out.
+  - In a real system this is done once, ahead of time, and stored. This lesson's demo recomputes it on every run.
+  - The built-in embedder here is lexical (it matches shared words), so it matches wording, not meaning.
+  goes_to: The vector index, which stores the vectors for fast lookup.
+  example:
+    input: Items can be returned within 30 days.
+    steps:
+    - Words are turned into features
+    - Features are hashed into a fixed-length vector
+    output: A vector of 1024 numbers (illustrative, not real values)
+  misconfigured: Questions and chunks should be embedded the same way, because vectors from different models generally
+    cannot be compared. A lexical embedder will miss a paraphrase that shares no words with the chunk.
+  learn_more: Small distances between vectors suggest related text. A bi-encoder embeds passages separately from
+    queries, so passages are embedded once, ahead of time. Anthropic does not offer its own embedding model and
+    points to providers such as Voyage AI.
+  claims:
+  - embedding-definition
+  - openai-embedding-dims
+  - anthropic-no-embeddings
+  - bi-encoder
+  - rag-vectors-need-same-model
+vector_index:
+  what: 'Stores all the chunk vectors so they can be searched. ExplodeAI uses a flat index: the vectors themselves,
+    with no extra structure.'
+  why: Search needs the chunk vectors in one place. The index is where the knowledge lives, so updating it updates
+    what the system knows.
+  analogy: 'A library catalogue: it does not hold the books'' meaning, it is the list you search.'
+  happens:
+  - Chunk vectors are stored as rows of one matrix, in the same order as the chunk list.
+  - A search compares the query vector against every row.
+  - The best-scoring rows point back to their chunks.
+  goes_to: The retriever, which searches it.
+  example:
+    input: 11 chunk vectors
+    steps:
+    - Stored in a flat list
+    - Ready to be searched
+    output: A searchable index
+  misconfigured: A flat index is exact but compares everything, so it gets slow with millions of vectors. Approximate
+    indexes such as HNSW (a graph-based fast-search structure) are much faster but can occasionally miss the true
+    best match.
+  learn_more: A flat index compares the query with every stored vector, so its results are exact. HNSW's authors
+    report search cost that grows logarithmically with the number of vectors, in idealised analysis. In the original
+    RAG paper the document index stayed fixed, since rebuilding it was costly.
+  claims:
+  - flat-index-exact
+  - hnsw-log-scaling
+  - rag-paper-frozen-index
+query_encoder:
+  what: Turns the question into a vector in the same space as the chunks.
+  why: A question can only be compared with chunks if both are described in the same way.
+  analogy: Looking up a place by dropping a pin on the same map the library uses.
+  happens:
+  - The question text goes in.
+  - A vector of the same kind as the chunk vectors comes out.
+  - This lesson uses the same embedder for chunks and questions. Some systems train a separate question encoder.
+  goes_to: The retriever, which compares it against the index.
+  example:
+    input: How long do I have to return a blender?
+    steps:
+    - Lowercased and cut into word stems
+    - Hashed into a vector like the chunks
+    output: One query vector (illustrative)
+  misconfigured: If the question were embedded differently from the chunks, their vectors could not be compared
+    and the scores would be meaningless.
+  learn_more: A bi-encoder embeds queries and passages separately. Dense Passage Retrieval scores a passage by the
+    dot product of its separate question and passage encodings.
+  claims:
+  - bi-encoder
+  - dpr-dot-product
+  - anthropic-no-embeddings
+  - rag-vectors-need-same-model
+retriever:
+  what: Ranks chunks by how well they match the question and keeps the best few (top-k).
+  why: The model has limited room in its prompt. The retriever picks the few chunks most likely to contain the answer.
+  analogy: A librarian who hands you the three most relevant cards, not the whole drawer.
+  happens:
+  - Dense retrieval compares vectors. BM25 matches keywords. Hybrid blends both rankings.
+  - Chunks are sorted from best to worst.
+  - The top k are kept.
+  goes_to: The prompt builder, which packs them into the prompt.
+  example:
+    input: Query vector and the searchable index
+    steps:
+    - Score every chunk
+    - Sort by score
+    - Keep the top 3
+    output: Three best-matching chunks
+  misconfigured: Keyword search misses synonyms. In this lesson the default "dense" embedder is lexical, so it behaves
+    much like keyword search. A k that is too small can drop the chunk that holds the answer, and a k that is too
+    large floods the prompt.
+  learn_more: BM25 scores keyword matches with diminishing returns for repeated words (k1) and adjusts for length
+    (b). Reciprocal rank fusion merges rankings using only ranks, with k = 60 in the paper. A common pattern is
+    to retrieve many candidates cheaply and then rerank them with a slower, more accurate cross-encoder (a model
+    that reads the question and a chunk together) (a model that reads the question and a chunk together). Anthropic
+    reported fewer retrieval failures when combining contextual embeddings, BM25 and reranking.
+  claims:
+  - cosine-dot-normalized
+  - bm25-mechanics
+  - bm25-defaults
+  - lexical-misses-synonyms
+  - rrf
+  - hybrid-contextual-results
+  - rerank-cross-encoder
+  - dpr-beats-bm25
+prompt_builder:
+  what: Packs the retrieved chunks and your question into one prompt, within a size budget.
+  why: The generator only sees what is in the prompt. How it is arranged changes how well the model uses it.
+  analogy: Laying out the relevant pages on the desk, then pinning the question on top.
+  happens:
+  - Chunks are placed first, each labelled with its chunk id.
+  - The instructions and the question come after.
+  - A chunk that would push the prompt over the word budget is dropped whole; nothing is cut in half.
+  goes_to: The generator, which reads the prompt and answers.
+  example:
+    input: Three chunks plus the question
+    steps:
+    - Documents go in first
+    - Question goes last
+    - Drop any chunk that would go over the word budget
+    output: One assembled prompt
+  misconfigured: A budget that is too small drops the chunk with the answer. Putting the key chunk in the middle
+    of a long prompt makes it more likely to be overlooked.
+  learn_more: For long inputs Anthropic recommends putting documents at the top, above the instructions and question.
+    A 2023 study found models used information at the start or end of a long context better than information in
+    the middle.
+  claims:
+  - prompt-docs-first
+  - lost-in-middle
+generator:
+  what: Writes the answer from the retrieved context. Offline, ExplodeAI uses a simple extractive baseline instead
+    of a language model.
+  why: This is the step that turns retrieved evidence into a readable answer.
+  analogy: Highlighting the sentences in your notes that best match the question, and noting which page each came
+    from.
+  happens:
+  - The question and the chunks that fit in the prompt go in.
+  - Each sentence is scored by how many of the question's words it shares.
+  - The best two sentences are returned, each cited with the id of its chunk.
+  goes_to: You. The answer comes with citations so you can check it.
+  example:
+    input: The returns policy chunk and your question
+    steps:
+    - Score each sentence by shared words
+    - Keep the best two
+    output: A sentence about returns, cited to its chunk
+  misconfigured: If the right chunk was never retrieved, no generator can answer correctly. Even with the right
+    chunk, a language model can still get things wrong, and this simple baseline only copies sentences.
+  learn_more: 'The original RAG paper paired a DPR retriever with a BART-large generator and described RAG-Sequence
+    (one document for the whole answer) and RAG-Token (a different document per token). Retrieval reduces hallucination
+    without eliminating it: a 2024 study found commercial RAG legal tools still hallucinated 17–33% of the time.
+    Grounding means connecting output to sources that can be checked.'
+  claims:
+  - rag-sequence-token
+  - rag-paper-architecture
+  - rag-hallucination
+  - citations-feature
+  - grounding-definition

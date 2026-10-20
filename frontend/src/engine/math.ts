@@ -10,6 +10,15 @@ export function easeInOutCubic(t: number): number {
 /** Height of the arc parts travel along while exploding (0 at both ends). */
 export const LIFT = 0.9
 
+/**
+ * Stretch each part's explode offset per axis. The scene frame is wide and shallow,
+ * so a lesson chooses how far its parts spread along x, y and z; the camera re-frames
+ * for the stretched layout, which keeps labels and links apart and in view.
+ */
+export function spreadParts<T extends { explode: Vec3 }>(parts: T[], spread: Vec3): T[] {
+  return parts.map((p) => ({ ...p, explode: [p.explode[0] * spread[0], p.explode[1] * spread[1], p.explode[2] * spread[2]] as Vec3 }))
+}
+
 /** World position of a part at explosion factor t. */
 export function partPosition(part: Pick<PartSpec, 'position' | 'explode'>, t: number): Vec3 {
   const e = easeInOutCubic(t)

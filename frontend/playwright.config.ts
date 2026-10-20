@@ -17,6 +17,12 @@ export default defineConfig({
   use: {
     baseURL: `http://127.0.0.1:${WEB_PORT}`,
     trace: 'retain-on-failure',
+    // Most specs are not about the first-run tutorial, so start them as a returning visitor.
+    // tutorial.spec.ts clears this to behave like a first visit.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: `http://127.0.0.1:${WEB_PORT}`, localStorage: [{ name: 'explodeai.tutorial', value: 'done' }] }],
+    },
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1360, height: 900 } }, testIgnore: /mobile\.spec\.ts/ },

@@ -469,6 +469,35 @@ claims:
 # Exploded layout: ingestion runs left→right along the back row; the stored index
 # (behind) and the query embedding (in front) converge on the retriever, and the
 # answer path runs back right→left through the middle.
+  - id: rag-vectors-need-same-model
+    kind: fact
+    text: Vectors from different embedding models generally live in different spaces and cannot be compared, unless
+      the provider says a model family shares one space (Voyage's 4 series does). Switching to an incompatible model
+      means re-embedding everything.
+    citations:
+    - source: gemini_embeddings
+      excerpt: The embedding spaces between `gemini-embedding-001` and `gemini-embedding-2` are **incompatible**.
+    - source: gemini_embeddings
+      excerpt: you must re-embed all of your existing data.
+    - source: qdrant_model_migration
+      excerpt: Switching models requires re-embedding all vectors in your collection, which can take time.
+    - source: voyage_embeddings
+      excerpt: All embeddings created with the 4 series are compatible with each other.
+    verification:
+      primary:
+        status: passed
+        date: 2026-10-19
+        by: pass1/deep-research
+      cross_check:
+        status: passed
+        date: 2026-10-19
+        by: pass2/independent-agent
+        notes: See research_notes/Embeddings primary sources/pass2_cross_check.md; fixes applied.
+      technical:
+        status: not_applicable
+        notes: Verified with a real execution in Lesson 03 (claim rag-vectors-need-same-model, tests/test_embed.py); not
+          re-run here.
+
 components:
   - id: corpus
     label: Knowledge source
@@ -478,7 +507,7 @@ components:
     claims: [rag-definition, rag-private-knowledge, rag-small-kb, rag-swap-index]
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [-1.65, 0, -0.55]
-    explode: [-3.75, 0, -2.05]
+    explode: [-2.3, 0, -1.2]
     subtitle: Docs the model can read
     icon: Files
     inputs: [Help-centre articles]
@@ -492,7 +521,7 @@ components:
     claims: [chunking-affects-retrieval, chunking-overlap, chunking-context-loss, openai-chunk-defaults, rag-paper-chunks]
     geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
     position: [-0.55, 0, -0.55]
-    explode: [-1.25, 0, -2.05]
+    explode: [-1.0, 0, -1.2]
     subtitle: Split into chunks
     icon: Scissors
     inputs: [Documents]
@@ -503,10 +532,10 @@ components:
     phase: ingestion
     short: Turns each chunk into a vector.
     detail: Every chunk is encoded once, ahead of time. With a neural embedding model, nearby vectors mean related text. The built-in embedder here is lexical, so only shared words bring vectors together.
-    claims: [embedding-definition, openai-embedding-dims, anthropic-no-embeddings, bi-encoder]
+    claims: [embedding-definition, openai-embedding-dims, anthropic-no-embeddings, bi-encoder, rag-vectors-need-same-model]
     geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
     position: [0.55, 0, -0.55]
-    explode: [1.25, 0, -2.05]
+    explode: [0.35, 0, -1.2]
     subtitle: Chunks become vectors
     icon: Cube
     inputs: [Chunks]
@@ -520,7 +549,7 @@ components:
     claims: [flat-index-exact, hnsw-log-scaling, rag-paper-frozen-index]
     geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
     position: [1.65, 0, -0.55]
-    explode: [3.75, 0, -2.05]
+    explode: [1.65, 0, -1.2]
     subtitle: Store and search
     icon: Database
     inputs: [Chunk vectors]
@@ -531,10 +560,10 @@ components:
     phase: query
     short: Encodes the question into the chunks' vector space.
     detail: The question must land in the same vector space as the chunks so the two can be compared. Some systems use one model for both; DPR trains a separate question encoder.
-    claims: [bi-encoder, dpr-dot-product, anthropic-no-embeddings]
+    claims: [bi-encoder, dpr-dot-product, anthropic-no-embeddings, rag-vectors-need-same-model]
     geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
     position: [1.65, 0, 0.55]
-    explode: [3.75, 0, 2.05]
+    explode: [3.0, 0, 0.8]
     subtitle: Question becomes a vector
     icon: ChatText
     inputs: [Your question]
@@ -548,7 +577,7 @@ components:
     claims: [cosine-dot-normalized, bm25-mechanics, bm25-defaults, lexical-misses-synonyms, rrf, hybrid-contextual-results, rerank-cross-encoder, dpr-beats-bm25]
     geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
     position: [0.55, 0, 0.55]
-    explode: [4.85, 0, -0.55]
+    explode: [1.65, 0, 0.8]
     subtitle: Find relevant chunks
     icon: MagnifyingGlass
     inputs: [Query vector, Searchable index]
@@ -562,7 +591,7 @@ components:
     claims: [prompt-docs-first, lost-in-middle]
     geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
     position: [-0.55, 0, 0.55]
-    explode: [2.35, 0, -0.55]
+    explode: [0.35, 0, 0.8]
     subtitle: Build the prompt
     icon: Stack
     inputs: [Top-k chunks, Your question]
@@ -576,7 +605,7 @@ components:
     claims: [rag-sequence-token, rag-paper-architecture, rag-hallucination, citations-feature, grounding-definition]
     geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
     position: [-1.65, 0, 0.55]
-    explode: [-0.15, 0, -0.55]
+    explode: [-1.0, 0, 0.8]
     subtitle: Write the answer
     icon: Sparkle
     inputs: [Assembled prompt]

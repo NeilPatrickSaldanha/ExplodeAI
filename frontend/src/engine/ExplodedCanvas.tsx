@@ -57,7 +57,9 @@ function CameraRig({ goal, reduced, resetSignal, framePoints, center }: { goal: 
     // Leave ~100px either side for the HTML labels that sit on the outermost parts.
     const margin = Math.min(0.86, 1 - 200 / Math.max(size.width, 200))
     const aspect = size.width / Math.max(size.height, 1)
-    const d = fitDistance(framePoints, center, aspect, margin)
+    // The view toolbar covers the bottom ~80px and the badges the top, so keep the model clear of both.
+    const marginY = Math.min(0.86, 1 - 170 / Math.max(size.height, 200))
+    const d = fitDistance(framePoints, center, aspect, margin, undefined, marginY)
     camera.position.set(...center).addScaledVector(viewDirFor(aspect), d)
     if (controls) {
       controls.target.set(...center)
@@ -111,7 +113,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
   }, [spec, view.isolate, view.selectedId])
 
   // Lean the camera a little toward the selected part, but keep the whole system in frame.
-  const FOCUS_PULL = 0.28
+  const FOCUS_PULL = 0.1
   const sel = view.selectedId ? positions[view.selectedId] : undefined
   const goal: Vec3 = sel
     ? [0, 1, 2].map((i) => frame.center[i] + (sel[i] - frame.center[i]) * FOCUS_PULL) as Vec3
@@ -196,7 +198,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
               {!p.prop && <span className="callout__num">{num}</span>}
               <span className="callout__body">
                 <span className="callout__name">{p.label}</span>
-                {p.subtitle && !compact && <span className="callout__sub">{p.subtitle}</span>}
+                {p.subtitle && !compact && isSel && <span className="callout__sub">{p.subtitle}</span>}
                 {readout && (!compact || isSel || (p.prop && !tiny)) && <span className="callout__readout">{readout}</span>}
               </span>
             </div>

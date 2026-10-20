@@ -35,6 +35,18 @@ export interface Source {
 
 export type Shape = 'slab' | 'stack' | 'cylinder' | 'grid' | 'prism' | 'lens' | 'ring'
 
+export interface Explain {
+  what: string
+  why: string
+  analogy: string
+  happens: string[]
+  goes_to: string
+  example: { input: string; steps: string[]; output: string }
+  misconfigured: string
+  learn_more: string
+  claims: string[]
+}
+
 export interface Component {
   id: string
   label: string
@@ -51,6 +63,7 @@ export interface Component {
   inputs?: string[]
   outputs?: string[]
   breaks_if_removed?: string | null
+  explain?: Explain | null
 }
 
 export interface Visual {

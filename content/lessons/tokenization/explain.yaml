@@ -1,0 +1,213 @@
+# Deeper, beginner-friendly explanations for each stage. Every factual statement restates a verified
+# claim in lesson.yaml (ids in `claims`) or describes this lesson's own pipeline (checked against the
+# code in the independent cross-check: research_notes/Stage explanations cross-check.md). Analogies and
+# examples are teaching aids, shown to learners as such, never as claims.
+corpus:
+  what: The text the tokenizer studies to learn which letter groups are common.
+  why: Which words become single tokens depends on what is frequent in this text.
+  analogy: Reading a lot of a language to notice which letter combinations keep showing up together.
+  happens:
+  - The training text is read in.
+  - It is cut into word-like pieces (next stage) and each piece is counted.
+  - The counts decide which pairs of symbols are merged first.
+  goes_to: The pre-tokenizer, which cuts it into word-like pieces.
+  example:
+    input: the tide was low, the wind came from the west
+    steps:
+    - Pieces are counted
+    - '"the" at the start is one piece, " the" (with a space) is another, seen twice'
+    output: A table of piece counts, ready for training (illustrative)
+  misconfigured: In this lesson's tokenizer, a corpus that looks nothing like your text produces merges that suit
+    the wrong words, so your text is split into many small tokens.
+  learn_more: BPE began as a data-compression technique. Sennrich et al. adapted it in 2016 to split words into
+    subword units. Pair counts are weighted by word frequency, so training can use a list of distinct words with
+    their counts. Real systems learn tens of thousands of merges, while this lesson's tiny corpus runs out after
+    about 200.
+  claims:
+  - bpe-frequency-weighted
+  - real-merge-counts
+pre_tokenizer:
+  what: Cuts text into word-like pieces before any merging happens.
+  why: It stops merges from gluing separate words together.
+  analogy: Cutting a sentence into words with scissors before you start grouping letters inside each word.
+  happens:
+  - The text is split at word, number and punctuation boundaries.
+  - A single space usually stays attached to the front of the next word.
+  - Merges later work only inside each piece.
+  goes_to: The base alphabet, which spells each piece in starting symbols.
+  example:
+    input: the tide
+    steps:
+    - Split into pieces
+    - Space stays with the next word
+    output: '"the" and " tide"'
+  misconfigured: With no pre-tokenizer, merges can span words, so a token may hold the end of one word and the start
+    of the next.
+  learn_more: 'In GPT-style tokenizers a space usually belongs to the start of the next word, so " the" and "the"
+    are different tokens. GPT-2 also stops merging across character categories. SentencePiece takes a different
+    route and treats whitespace as an ordinary symbol. Hugging Face describes tokenizing as a pipeline: normalization,
+    pre-tokenization, the BPE model, then post-processing.'
+  claims:
+  - bpe-no-cross-word
+  - gpt2-character-categories
+  - leading-space
+  - sentencepiece-raw-text
+  - hf-pipeline
+base_alphabet:
+  what: The starting symbols every piece is spelled with before any merges. A byte is one of the 256 possible values
+    a computer stores text in.
+  why: Everything that can be tokenized has to be spelled from these symbols.
+  analogy: The letter tiles in a word game. Merges are bigger tiles built from the small ones.
+  happens:
+  - Each piece is spelled as a list of base symbols.
+  - With a byte alphabet those symbols are the 256 possible bytes.
+  - With a character alphabet they are the characters seen in training, and any other character becomes [UNK], a
+    placeholder for "unknown".
+  goes_to: The merge learner, which starts combining frequent pairs.
+  example:
+    input: '" tide"'
+    steps:
+    - Spelled byte by byte
+    - One symbol per byte
+    output: Five single-byte symbols
+  misconfigured: A character alphabet built only from the training text turns any unseen character into [UNK], and
+    the original cannot be recovered. A byte alphabet never has that problem.
+  learn_more: GPT-2 runs BPE on bytes. A byte base needs only 256 symbols, where Unicode code points would need
+    over 130,000 before any merges. Every byte is already in the alphabet, so any text can be encoded and no unknown
+    token is needed.
+  claims:
+  - gpt2-byte-level
+  - byte-level-no-unk
+  - char-bpe-unk
+merge_learner:
+  what: Repeatedly finds the most common neighbouring pair of symbols and merges it into a new symbol.
+  why: It builds bigger tokens for common patterns, so common words take fewer tokens.
+  analogy: Noticing that two letter tiles keep appearing side by side, and gluing them into one tile.
+  happens:
+  - Count every adjacent pair, weighted by how often its word occurs.
+  - Merge the winner into a new symbol.
+  - Repeat until the chosen number of merges is reached, or until no pair is left to merge.
+  goes_to: The vocabulary, which records the base symbols and the ordered merges.
+  example:
+    input: Pieces from the training log, such as " the"
+    steps:
+    - 'Most common pair: h + e → he'
+    - 'Next: space + t → " t"'
+    - 'Then: " t" + he → " the"'
+    output: 'Merges in order: he, " t", " the" (from this lesson''s default corpus)'
+  misconfigured: Too few merges leaves long sequences of tiny tokens. More merges shorten the sequence, until the
+    words are already single tokens and extra merges stop helping.
+  learn_more: 'Training starts from single symbols, counts adjacent pairs, merges the most frequent and repeats.
+    Standard BPE is deterministic: the same text always gets the same tokens. Variants such as BPE-dropout add randomness
+    on purpose during training.'
+  claims:
+  - bpe-compression-origin
+  - bpe-training-loop
+  - bpe-frequency-weighted
+  - bpe-deterministic
+vocabulary:
+  what: The table of every token the tokenizer knows, each with an id, plus the ordered list of merges.
+  why: Models work with numbers. The vocabulary is the dictionary between tokens and ids.
+  analogy: A dictionary where every entry has a page number, which is the id.
+  happens:
+  - Base symbols and merged symbols each get an id.
+  - Special tokens such as end-of-text are added.
+  - The merge order is saved, because order is part of the tokenizer.
+  goes_to: The encoder, which uses it to turn new text into ids.
+  example:
+    input: 256 base symbols + 100 merges + 1 special token
+    steps:
+    - Counted up
+    - Each entry numbered
+    output: A 357-entry table (256 + 100 + 1; illustrative arithmetic)
+  misconfigured: Vocabulary size trades against sequence length. A larger vocabulary gives shorter sequences, and
+    a smaller one gives longer sequences.
+  learn_more: 'The vocabulary is the starting alphabet plus one new symbol per merge, plus any special tokens. GPT-2''s
+    has 50,257 tokens: 256 byte tokens, 50,000 merges and one end-of-text token. SentencePiece is configured by
+    final vocabulary size instead of merge count.'
+  claims:
+  - bpe-vocab-formula
+  - gpt2-vocab-size
+  - real-merge-counts
+  - sentencepiece-vocab-size
+  - special-tokens
+  - vocab-length-tradeoff
+input_text:
+  what: The new text you want to turn into tokens. It does not have to resemble the training text.
+  why: The point of a tokenizer is to handle text it has never seen.
+  analogy: A new sentence handed to someone who already knows the alphabet and common word chunks.
+  happens:
+  - Your text is passed to the encoder.
+  - Familiar words are matched to big tokens.
+  - Unfamiliar words are spelled out from smaller pieces.
+  goes_to: The encoder.
+  example:
+    input: lighthouse keeper
+    steps:
+    - Known pieces are reused
+    - Unknown parts are spelled from smaller tokens
+    output: A mix of whole-word and small tokens
+  misconfigured: In this lesson's tokenizer, text unlike the training corpus, such as another language, breaks into
+    many small tokens.
+  learn_more: 'Subword units let a fixed vocabulary handle rare and unseen words by spelling them from smaller known
+    pieces. Tokens are not words or characters: depending on language and tokenizer, one can be shorter than a character
+    or longer than a word.'
+  claims:
+  - subword-open-vocabulary
+  - tokens-not-words
+encoder:
+  what: Turns text into a list of token ids using the pre-tokenizer, alphabet and ordered merges.
+  why: Models read token ids. The token count also drives cost and context limits.
+  analogy: 'Following a recipe card step by step: split, spell, then apply each merge in the saved order.'
+  happens:
+  - Pre-tokenize the text.
+  - Spell each piece in base symbols (in the code, the symbols are already ids).
+  - Apply the learned merges in the order they were learned.
+  goes_to: The decoder (and, in a real model, the model itself).
+  example:
+    input: ' the'
+    steps:
+    - 'Spelled as bytes: space, t, h, e'
+    - 'Apply merges in order: he, then " t", then " the"'
+    output: 'One token: " the" (this lesson''s default tokenizer)'
+  misconfigured: Applying merges in a different order than they were learned gives different tokens. Counts from
+    one tokenizer do not carry over to another.
+  learn_more: Token counts depend on the tokenizer, so the same text can need a different number of tokens on different
+    models. In tiktoken 0.14.0 GPT-4o uses o200k_base and GPT-4 uses cl100k_base. Providers price and limit usage
+    in tokens. Anthropic advises recounting prompts when moving to a model with a newer tokenizer.
+  claims:
+  - bpe-apply-in-order
+  - subword-open-vocabulary
+  - counts-tokenizer-specific
+  - tiktoken-model-encodings
+  - bytes-per-token
+  - openai-rule-of-thumb
+  - gemini-tokens
+  - anthropic-count-tokens
+  - anthropic-new-tokenizer
+  - tokens-meter-usage
+decoder:
+  what: Turns token ids back into bytes and then into text.
+  why: 'It shows whether anything was lost: with a byte alphabet the original text comes back exactly, and it is
+    how model output becomes readable.'
+  analogy: Reading the page numbers back through the dictionary to rebuild the sentence.
+  happens:
+  - Each id is looked up to get its bytes.
+  - The bytes are joined in order.
+  - The result is decoded as text.
+  goes_to: The text you read.
+  example:
+    input: The token " the"
+    steps:
+    - 'Look up its bytes: 20 74 68 65'
+    - Join and decode
+    output: '" the"'
+  misconfigured: With a character alphabet, an unknown character becomes [UNK] and cannot be restored. Decoding
+    only part of a token list can cut a multi-byte character in half.
+  learn_more: 'Byte-level BPE is reversible and lossless: decoding the tokens of any text gives back exactly the
+    original. One token can hold part of a multi-byte character, so tiktoken warns that decoding some tokens alone
+    may not give valid text. SentencePiece''s decoder is the inverse of its encoder on normalised text.'
+  claims:
+  - byte-bpe-lossless
+  - decode-partial-lossy
+  - sentencepiece-lossless

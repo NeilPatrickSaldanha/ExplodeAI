@@ -1,9 +1,13 @@
 import type { Lesson, RagResult } from '../../api/types'
 import type { AssemblySpec, Readouts } from '../../engine/types'
+import { spreadParts } from '../../engine/math'
 import { linkKey } from '../../engine/types'
 
 /** Id of the scenery card for the learner's question (not a pipeline stage). */
 export const QUESTION_PROP = 'question'
+
+/** How far this lesson's parts spread when fully exploded (x, y, z). */
+const SPREAD: [number, number, number] = [2.6, 1.2, 1.25]
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   const parts: AssemblySpec['parts'] = lesson.components.map((c, i) => ({
@@ -38,7 +42,7 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
     })
     links.unshift({ source: QUESTION_PROP, target: qe.id, label: 'question', kind: 'query' })
   }
-  return { parts, links }
+  return { parts: spreadParts(parts, SPREAD), links }
 }
 
 const METHOD_LABEL = { dense: 'DENSE', bm25: 'BM25', hybrid: 'HYBRID · RRF' } as const

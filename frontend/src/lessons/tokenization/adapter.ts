@@ -1,10 +1,14 @@
 import type { Lesson, TokenizeResult } from '../../api/types'
 import type { AssemblySpec, Readouts } from '../../engine/types'
+import { spreadParts } from '../../engine/math'
 import { linkKey } from '../../engine/types'
+
+/** How far this lesson's parts spread when fully exploded (x, y, z). */
+const SPREAD: [number, number, number] = [2.6, 1.2, 1.5]
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   return {
-    parts: lesson.components.map((c, i) => ({
+    parts: spreadParts(lesson.components.map((c, i) => ({
       id: c.id,
       label: c.label,
       group: c.phase,
@@ -14,7 +18,7 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
       explode: c.explode,
       subtitle: c.subtitle ?? undefined,
       number: String(i + 1).padStart(2, '0'),
-    })),
+    })), SPREAD),
     links: lesson.connections.map((c) => ({ source: c.source, target: c.target, label: c.payload, kind: c.flow ?? 'document' })),
   }
 }

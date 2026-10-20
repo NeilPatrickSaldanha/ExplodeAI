@@ -38,6 +38,14 @@
 .callout__body {
   display: grid;
   gap: var(--space-3xs);
+  min-width: 0;
+  max-width: 9.5rem;
+}
+
+.callout__name,
+.callout__readout {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .callout__name {
@@ -48,14 +56,14 @@
 }
 
 .callout__sub {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-muted);
 }
 
 .callout__readout {
   font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-accent);
 }

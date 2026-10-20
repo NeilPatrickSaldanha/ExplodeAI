@@ -13,7 +13,14 @@ export const viewDirFor = (aspect: number) => (aspect < 0.85 ? VIEW_DIR_PORTRAIT
  * Smallest camera distance (along VIEW_DIR) at which every point projects inside
  * the central `margin` of the viewport. Binary search with a scratch camera.
  */
-export function fitDistance(points: Vec3[], center: Vec3, aspect: number, margin = 0.76, dir = viewDirFor(aspect)): number {
+export function fitDistance(
+  points: Vec3[],
+  center: Vec3,
+  aspect: number,
+  margin = 0.76,
+  dir = viewDirFor(aspect),
+  marginY = margin,
+): number {
   const cam = new PerspectiveCamera(FOV, aspect, 0.1, 500)
   const c = new Vector3(...center)
   const v = new Vector3()
@@ -23,7 +30,7 @@ export function fitDistance(points: Vec3[], center: Vec3, aspect: number, margin
     cam.updateMatrixWorld()
     return points.every((p) => {
       v.set(p[0], p[1], p[2]).project(cam)
-      return Math.abs(v.x) <= margin && Math.abs(v.y) <= margin && v.z < 1
+      return Math.abs(v.x) <= margin && Math.abs(v.y) <= marginY && v.z < 1
     })
   }
   let lo = 1

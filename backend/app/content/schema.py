@@ -83,6 +83,29 @@ class Geometry(BaseModel):
     size: Vec3 = (1.0, 1.0, 1.0)
 
 
+class ExampleDemo(BaseModel):
+    """A tiny worked example, shown as input → steps → output. Illustrative, not a claim."""
+
+    input: str
+    steps: list[str] = Field(min_length=1)
+    output: str
+
+
+class Explain(BaseModel):
+    """Beginner-friendly depth for one stage. Facts restate `claims`; analogies and
+    examples are teaching aids and are labelled as such in the UI."""
+
+    what: str
+    why: str
+    analogy: str
+    happens: list[str] = Field(min_length=1)  # what enters, and what is done to it
+    goes_to: str
+    example: ExampleDemo
+    misconfigured: str
+    learn_more: str  # optional technical depth, behind a "Learn more" toggle
+    claims: list[str] = Field(min_length=1)
+
+
 class Component(BaseModel):
     id: str
     label: str
@@ -101,6 +124,7 @@ class Component(BaseModel):
     # What breaks if this stage is removed. Statements here describe THIS
     # lesson's executable pipeline and must be backed by an ablation test.
     breaks_if_removed: str | None = None
+    explain: Explain | None = None
 
 
 class Connection(BaseModel):
@@ -228,6 +252,15 @@ def validate_lesson(lesson: Lesson, registry: SourceRegistry) -> list[str]:
             referenced.add(cid)
             if cid not in claim_ids:
                 problems.append(f"component {comp.id}: unknown claim '{cid}'")
+    for comp in lesson.components:
+        if comp.explain is None:
+            problems.append(f"component {comp.id}: no explain section")
+            continue
+        for cid in comp.explain.claims:
+            if cid not in claim_ids:
+                problems.append(f"component {comp.id}: explain cites unknown claim '{cid}'")
+        if not set(comp.explain.claims) <= set(comp.claims):
+            problems.append(f"component {comp.id}: explain claims must be among the component's own claims")
     for ch in lesson.challenges:
         for cid in ch.claims:
             referenced.add(cid)

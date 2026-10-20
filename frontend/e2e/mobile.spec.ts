@@ -31,3 +31,41 @@ test('tokenization lesson fits a phone screen without horizontal scrolling', asy
   const box = await page.getByRole('button', { name: 'Accents and emoji' }).boundingBox()
   expect(box!.height).toBeGreaterThanOrEqual(40)
 })
+
+test.describe('first visit on a phone', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test('the tutorial is a bottom sheet with big buttons, and the page never scrolls sideways', async ({ page }) => {
+    await page.goto('/lessons/embeddings')
+    const card = page.getByRole('dialog')
+    await expect(card).toBeVisible()
+    const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+    expect(await overflow()).toBeLessThanOrEqual(0)
+    const vh = page.viewportSize()!.height
+    const cardBox = (await card.boundingBox())!
+    expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(vh)
+    for (const name of ['Skip', 'Start']) {
+      const box = (await page.getByRole('button', { name, exact: true }).first().boundingBox())!
+      expect(box.height).toBeGreaterThanOrEqual(40)
+    }
+    await page.locator('.tut__next').click()
+    await expect(page.locator('.tut__ring')).toBeVisible()
+    await page.getByRole('button', { name: 'Skip the tutorial' }).click()
+    await expect(card).toBeHidden()
+  })
+})
+
+test('stage explanations work on a phone: sections open, the demo plays, no sideways scroll', async ({ page }) => {
+  await page.goto('/lessons/embeddings')
+  await page.getByRole('button', { name: /Pooling/ }).first().click()
+  const understand = page.locator('.understand')
+  await understand.scrollIntoViewIfNeeded()
+  await understand.getByRole('button', { name: 'Play', exact: true }).click()
+  await expect(understand.locator('.demo__steps li.is-on').first()).toBeVisible()
+  const summary = understand.locator('summary', { hasText: 'Why it is needed' })
+  expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(40)
+  await summary.click()
+  await expect(understand.getByText('To compare whole sentences')).toBeVisible()
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})
