@@ -99,7 +99,7 @@ const STEPS: Step[] = [
   {
     id: 'toolbar',
     title: 'View controls',
-    body: 'Flow animates the data moving between stages (it can be paused). Data shows what travels on every link. Isolate fades everything but the selected stage. 3D / 2D switches views. Calm reduces motion.',
+    body: 'Flow animates the data moving between stages (it can be paused). Data shows what travels on every link. Move turns dragging into sliding the whole diagram, so you can zoom in and follow the stages (hold Shift, or right-drag, to slide without it). Isolate fades everything but the selected stage. 3D / 2D switches views. Calm reduces motion.',
     target: '.cine__toolbar',
     place: 'above',
   },
@@ -113,7 +113,7 @@ const STEPS: Step[] = [
   {
     id: 'keys',
     title: 'Keyboard and touch',
-    body: 'Tab reaches every control. With the model focused, arrow keys move between stages, Enter isolates one and Escape clears it. On phones, tap a stage card instead of dragging.',
+    body: 'Tab reaches every control. With the model focused, arrow keys move between stages, Enter isolates one and Escape clears it. On phones, two fingers pinch to zoom and slide; one finger rotates, or slides when Move is on.',
     target: '.cine__hints',
     place: 'above',
   },

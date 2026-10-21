@@ -1,5 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import { ArrowsClockwise, CornersOut, Crosshair, Cube, Info, Pause, Play, Question, SealCheck, Square, Wind } from '@phosphor-icons/react'
+import { ArrowsClockwise, CornersOut, Crosshair, Cube, Hand, Info, Pause, Play, Question, SealCheck, Square, Wind } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api } from '../../../api/client'
 import type { Component, Lesson, Source } from '../../../api/types'
@@ -72,7 +72,7 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
   const [motionOverride, setMotionOverride] = useState<boolean | null>(null)
   const reducedMotion = useReducedMotion(motionOverride)
   const [renderMode, setRenderMode] = useState<RenderMode>('3d')
-  const [view, setView] = useState<ViewState>({ explode: 0, selectedId: null, isolate: false, flow: true, linkCards: 'selected' })
+  const [view, setView] = useState<ViewState>({ explode: 0, selectedId: null, isolate: false, flow: true, linkCards: 'selected', pan: false })
   const [resetSignal, setResetSignal] = useState(0)
   const [mode, setMode] = useState<Mode>('explore')
   const [tourStep, setTourStep] = useState(0)
@@ -287,6 +287,14 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
                 </Toggle>
                 <Toggle pressed={view.linkCards === 'all'} onChange={(on) => setView((s) => ({ ...s, linkCards: on ? 'all' : 'selected' }))} label="Show data on every link">
                   <Info aria-hidden /> Data
+                </Toggle>
+                <Toggle
+                  pressed={!!view.pan && renderMode === '3d'}
+                  disabled={renderMode !== '3d'}
+                  onChange={(on) => setView((s) => ({ ...s, pan: on }))}
+                  label={renderMode === '3d' ? 'Move: drag to slide the whole diagram instead of rotating it' : 'Move works in the 3D view'}
+                >
+                  <Hand aria-hidden /> Move
                 </Toggle>
                 <Toggle
                   pressed={view.isolate}

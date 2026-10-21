@@ -49,6 +49,8 @@ export interface ViewState {
   flow: boolean
   /** Which link data cards to show: none, those touching the selected part, or all. */
   linkCards?: 'none' | 'selected' | 'all'
+  /** Hand mode: dragging slides the whole diagram instead of rotating it. */
+  pan?: boolean
 }
 
 /** Live readouts attached to parts and links (real values from an experiment run). */

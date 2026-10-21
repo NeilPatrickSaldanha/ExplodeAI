@@ -1,7 +1,7 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Vector3, type PerspectiveCamera } from 'three'
+import { MOUSE, TOUCH, Vector3, type PerspectiveCamera } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { FOV, fitDistance, viewDirFor } from './camera'
 import { scenePalette } from './colors'
@@ -46,12 +46,40 @@ function useAnimated(target: number, reduced: boolean): number {
   return reduced ? target : value
 }
 
-function CameraRig({ goal, reduced, resetSignal, framePoints, center }: { goal: Vec3; reduced: boolean; resetSignal?: number; framePoints: Vec3[]; center: Vec3 }) {
+function CameraRig({
+  goal,
+  reduced,
+  resetSignal,
+  framePoints,
+  center,
+  focusKey,
+}: {
+  goal: Vec3
+  reduced: boolean
+  resetSignal?: number
+  framePoints: Vec3[]
+  center: Vec3
+  /** Changes when the selected stage changes: the only time the camera drifts towards a goal. */
+  focusKey: string | null
+}) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
   const camera = useThree((s) => s.camera) as PerspectiveCamera
   const size = useThree((s) => s.size)
   const invalidate = useThree((s) => s.invalidate)
   const goalVec = useMemo(() => new Vector3(...goal), [goal])
+  // The camera eases towards the selected stage once, then leaves the view alone, so a pan sticks.
+  const settling = useRef(true)
+  useEffect(() => {
+    settling.current = true
+  }, [focusKey, resetSignal])
+  useEffect(() => {
+    if (!controls) return
+    const stop = () => {
+      settling.current = false
+    }
+    controls.addEventListener('start', stop)
+    return () => controls.removeEventListener('start', stop)
+  }, [controls])
 
   useEffect(() => {
     // Leave ~100px either side for the HTML labels that sit on the outermost parts.
@@ -71,7 +99,7 @@ function CameraRig({ goal, reduced, resetSignal, framePoints, center }: { goal: 
   }, [resetSignal, controls, size.width, size.height])
 
   useFrame(() => {
-    if (!controls) return
+    if (!controls || !settling.current) return
     if (controls.target.distanceTo(goalVec) < 0.005) return
     if (reduced) controls.target.copy(goalVec)
     else controls.target.lerp(goalVec, 0.09)
@@ -147,7 +175,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
   }
 
   return (
-    <div className="scene">
+    <div className="scene" data-pan={view.pan ? 'true' : undefined}>
       <Canvas
         frameloop={animating ? 'always' : 'demand'}
         dpr={[1, 2]}
@@ -174,8 +202,19 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
           />
         ))}
         <Links3D links={spec.links} positions={positions} flow={view.flow} reducedMotion={reducedMotion} activeIds={active} focusId={view.selectedId} palette={palette} />
-        <OrbitControls makeDefault enableDamping={!reducedMotion} minDistance={3} maxDistance={60} maxPolarAngle={Math.PI * 0.47} />
-        <CameraRig goal={goal} reduced={reducedMotion} resetSignal={resetSignal} framePoints={framePoints} center={frame.center} />
+        <OrbitControls
+          makeDefault
+          enableDamping={!reducedMotion}
+          minDistance={3}
+          maxDistance={60}
+          maxPolarAngle={Math.PI * 0.47}
+          screenSpacePanning
+          // Hand mode: a plain drag slides the diagram. Otherwise a plain drag rotates it, right-drag or
+          // Shift-drag slides it, and two fingers always pinch to zoom and slide.
+          mouseButtons={{ LEFT: view.pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: view.pan ? MOUSE.ROTATE : MOUSE.PAN }}
+          touches={{ ONE: view.pan ? TOUCH.PAN : TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN }}
+        />
+        <CameraRig goal={goal} reduced={reducedMotion} resetSignal={resetSignal} framePoints={framePoints} center={frame.center} focusKey={view.selectedId} />
         <SizeReporter onWidth={setSceneWidth} />
         <LabelProjector anchors={anchors} elements={elements} />
       </Canvas>

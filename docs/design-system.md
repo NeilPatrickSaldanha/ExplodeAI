@@ -61,6 +61,24 @@ same data as a table). Example chips now reach 44px on coarse pointers.
   text and source links. Analogies are labelled "teaching aid". A refused question shows what the
   lessons do cover.
 
+## 2D diagram (all lessons)
+
+One component (`engine/FlatDiagram.tsx`, layout in `engine/flatLayout.ts`) draws every lesson's 2D view, so
+they look and behave identically.
+
+- Laid out for the real container size from each part's exploded offset (independent of the Explode slider).
+  Wide screens keep the lesson's rows and columns; phones turn it vertical and scroll, so text is never shrunk.
+- Nodes: number badge, name (wraps to two lines), live readout. Narrow boxes fold the number into the name.
+- Links: colour, dash and arrowhead per kind, matching the legend. Every link label is a pill with a background
+  placed on the line, or beside it with a thin leader when the line is too short; labels never overlap a node
+  or another label (checked by `diagrams-2d.spec.ts` at 1440, 768, 390 and 320 px).
+
+## Move (hand) mode (3D view)
+
+The **Move** toggle makes a plain drag slide the whole diagram instead of rotating it. Shift-drag or right-drag
+slides without it, two fingers pinch and slide on touch screens. After a manual move the camera stays where you
+put it (it only drifts towards a newly selected stage once); Reset camera frames everything again.
+
 ## Lesson 04 additions (attention)
 
 - The attention grid is a real `<table>`: rows are the asking word, columns the word looked at,

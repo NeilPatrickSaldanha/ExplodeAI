@@ -335,13 +335,18 @@ main:focus {
 }
 
 /* flat diagram */
+.flat-diagram-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
 .flat-diagram {
-  width: 100%;
-  height: 100%;
   display: block;
 }
 
-.flat-diagram__part rect {
+.flat-diagram__part rect:first-of-type {
   fill: var(--color-paper-2);
   stroke: var(--color-rule-2);
   stroke-width: 1;
@@ -351,7 +356,15 @@ main:focus {
   cursor: pointer;
 }
 
-.flat-diagram__part.is-selected rect {
+.flat-diagram__part.is-prop {
+  cursor: default;
+}
+
+.flat-diagram__part.is-prop rect:first-of-type {
+  stroke-dasharray: 4 3;
+}
+
+.flat-diagram__part.is-selected rect:first-of-type {
   stroke: var(--color-accent);
   stroke-width: 2;
 }
@@ -360,32 +373,121 @@ main:focus {
   outline: none;
 }
 
-.flat-diagram__part:focus-visible rect {
+.flat-diagram__part:focus-visible rect:first-of-type {
   stroke: var(--color-focus);
   stroke-width: 3;
+}
+
+.flat-diagram__badge {
+  fill: none;
+  stroke: var(--color-rule-2);
+}
+
+.flat-diagram__part.is-selected .flat-diagram__badge {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+}
+
+.flat-diagram__num {
+  fill: var(--color-accent);
+  font-family: var(--font-label);
+  font-size: 11px;
+}
+
+.flat-diagram__part.is-selected .flat-diagram__num {
+  fill: var(--color-on-accent);
 }
 
 .flat-diagram__name {
   fill: var(--color-ink);
   font-family: var(--font-body);
   font-size: 14px;
+  font-weight: 500;
 }
 
-.flat-diagram__meta,
-.flat-diagram__link-label {
-  fill: var(--color-muted);
+.flat-diagram__meta {
+  fill: var(--color-accent);
   font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
 
+/* Links: one colour, dash and arrowhead per kind, matching the legend. */
 .flat-diagram__link {
-  stroke: var(--color-accent);
-  stroke-width: 1.5;
+  fill: none;
+  stroke-width: 2;
+  stroke: var(--scene-flow);
+}
+
+.flat-diagram__link--vector {
+  stroke: var(--scene-flow-vector);
+  stroke-dasharray: 7 5;
+}
+
+.flat-diagram__link--query {
+  stroke: var(--scene-flow-query);
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+}
+
+.flat-diagram__link.is-focus {
+  stroke-width: 3;
 }
 
 .flat-diagram__arrowhead {
-  fill: var(--color-accent);
+  fill: var(--scene-flow);
+}
+
+.flat-diagram__arrowhead--vector {
+  fill: var(--scene-flow-vector);
+}
+
+.flat-diagram__arrowhead--query {
+  fill: var(--scene-flow-query);
+}
+
+/* A label moved off its link keeps a thin leader to it. */
+.flat-diagram__leader {
+  stroke: var(--color-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+/* Link labels: a pill with a background, so they stay readable over lines. */
+.flat-diagram__pill {
+  pointer-events: none;
+}
+
+.flat-diagram__pill rect:first-of-type {
+  fill: var(--color-paper);
+  stroke: var(--color-rule-2);
+  stroke-width: 1;
+}
+
+.flat-diagram__pill-bar {
+  fill: var(--scene-flow);
+}
+
+.flat-diagram__pill--vector .flat-diagram__pill-bar {
+  fill: var(--scene-flow-vector);
+}
+
+.flat-diagram__pill--query .flat-diagram__pill-bar {
+  fill: var(--scene-flow-query);
+}
+
+.flat-diagram__pill-label {
+  fill: var(--color-muted);
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.flat-diagram__pill-text {
+  fill: var(--color-ink);
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 0.03em;
 }
 
 .flat-diagram .is-dim {
