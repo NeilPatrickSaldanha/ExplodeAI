@@ -133,6 +133,30 @@ def _empty(kind: str, message: str | None, info: dict, **extra) -> dict:
     return base
 
 
+def overview_reply(number: int | None = None) -> dict:
+    """The course itself: what each lesson covers. Built from the lessons' own summaries and objectives."""
+    _, lessons = content()
+    items = [
+        {
+            "number": lesson.number,
+            "lesson_id": lesson.id,
+            "title": lesson.title,
+            "summary": lesson.summary,
+            "objectives": list(lesson.objectives),
+            "minutes": lesson.estimated_minutes,
+            "stages": [c.label for c in lesson.components],
+        }
+        for lesson in sorted(lessons.values(), key=lambda lesson: lesson.number)
+        if number is None or lesson.number == number
+    ]
+    if not items:
+        return chat_reply(
+            "There are four lessons, numbered 1 to 4. Ask “what are all four lessons?” to see them."
+        )
+    info = {"method": "course", "covered": True, "coverage": 1.0, "best_dense": None}
+    return _empty("overview", None, info, lessons=items, focus_number=number)
+
+
 def chat_reply(message: str, info: dict | None = None) -> dict:
     return _empty(
         "chat", message, info or {"method": "chat", "covered": True, "coverage": 1.0, "best_dense": None}

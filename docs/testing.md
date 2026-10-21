@@ -16,7 +16,7 @@ ports 8100 and 5174, so it never touches development data.
 
 ```bash
 make test           # everything
-make test-backend   # 252 tests (needs: uv sync --extra neural)
+make test-backend   # 257 tests (needs: uv sync --extra neural)
 make test-frontend  # typecheck + 31 unit tests
-make e2e            # 59 browser tests (E2E_API_PORT / E2E_WEB_PORT to move ports)
+make e2e            # 60 browser tests (E2E_API_PORT / E2E_WEB_PORT to move ports)
 ```

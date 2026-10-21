@@ -504,8 +504,20 @@ export interface TutorTurn {
   stage_id?: string | null
 }
 
+export interface TutorLessonCard {
+  number: number
+  lesson_id: string
+  title: string
+  summary: string
+  objectives: string[]
+  minutes: number
+  stages: string[]
+}
+
 export interface TutorAnswer {
-  type: 'answer' | 'plain' | 'chat' | 'none' | 'llm'
+  type: 'answer' | 'plain' | 'chat' | 'none' | 'llm' | 'overview'
+  lessons?: TutorLessonCard[]
+  focus_number?: number | null
   plain: TutorPlain | null
   covered: boolean
   message: string | null

@@ -303,6 +303,7 @@ function MessageView({
   if (m.role === 'llm') return <LlmView out={m.out} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
   const a = m.answer
   if (a.type === 'chat') return <p className="tmsg tmsg--tutor tmsg--chat">{a.message}</p>
+  if (a.type === 'overview') return <OverviewView lessons={a.lessons ?? []} focus={a.focus_number ?? null} currentLesson={lessonId} />
   if (!a.covered) {
     return (
       <div className="tmsg tmsg--tutor tmsg--none">
@@ -348,6 +349,40 @@ function MessageView({
       <Related related={a.related} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
       {a.meta.method === 'bm25' && <p className="label">KEYWORD MATCHING ONLY: THE LOCAL MEANING MODEL IS NOT INSTALLED</p>}
       {a.sentences.length > 0 && !aiOn && <Polish question={(m as Extract<Message, { role: 'tutor' }>).question} lessonId={lessonId} stageId={stageId} history={history} available={aiAvailable} />}
+    </div>
+  )
+}
+
+/** The course itself: what each lesson covers, from the lessons' own summaries and objectives. */
+function OverviewView({ lessons, focus, currentLesson }: { lessons: NonNullable<TutorAnswer['lessons']>; focus: number | null; currentLesson: string }) {
+  return (
+    <div className="tmsg tmsg--tutor tmsg--overview">
+      <span className="label">{focus ? `LESSON ${String(focus).padStart(2, '0')}` : `${lessons.length} LESSONS`}</span>
+      <ul className="tover">
+        {lessons.map((l) => (
+          <li key={l.lesson_id}>
+            <p className="tover__title">
+              <Link to={`/lessons/${l.lesson_id}`}>
+                Lesson {String(l.number).padStart(2, '0')} · {l.title}
+              </Link>
+              {l.lesson_id === currentLesson && <span className="label"> · YOU ARE HERE</span>}
+            </p>
+            <p>{l.summary}</p>
+            <p className="label">ABOUT {l.minutes} MIN · {l.stages.length} STAGES</p>
+            {focus && (
+              <>
+                <p className="label">YOU WILL BE ABLE TO</p>
+                <ul className="tmsg__claims">
+                  {l.objectives.map((o) => (
+                    <li key={o}>{o}</li>
+                  ))}
+                </ul>
+                <p className="label">STAGES: {l.stages.join(' → ').toUpperCase()}</p>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

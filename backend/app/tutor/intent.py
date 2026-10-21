@@ -6,6 +6,30 @@ it is answered about the stage the conversation was last on.
 
 import re
 
+OVERVIEW = re.compile(
+    r"(\b(what|which|list|show|name|tell me)\b.{0,30}\b(lessons?|topics|chapters|modules|courses)\b|"
+    r"\bwhat (can|do|will) (you|i|we)\b.{0,20}\b(teach|cover|know|help|learn)\b|"
+    r"\bwhat('s| is) (this|explodeai|here)\b( (site|app|website|about|for))*|"
+    r"\b(syllabus|curriculum|table of contents|where (do|should) i (start|begin))\b)",
+    re.I,
+)
+LESSON_ABOUT = re.compile(r"\b(lesson|chapter)\s*(0?([1-4])|(one|two|three|four))\b", re.I)
+HELP = re.compile(
+    r"(how (do|can|should) i use|how does (this|the) (site|app|website|page) work|what are the (modes|tabs)|"
+    r"what (is|does) (the )?(tour|explore|experiment|break (&|and) fix|rebuild)\b|help me (start|use)|"
+    r"how do i (start|begin|get started))",
+    re.I,
+)
+_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4}
+
+
+def lesson_number(question: str) -> int | None:
+    m = LESSON_ABOUT.search(question)
+    if not m:
+        return None
+    return int(m.group(3)) if m.group(3) else _WORDS[m.group(4).lower()]
+
+
 GREETING = re.compile(
     r"^\W*(hi|hello|hey|hiya|yo|howdy|good (morning|afternoon|evening)|sup)\b.{0,20}$", re.I
 )
@@ -32,6 +56,13 @@ GREETING_REPLY = (
     "I can explain a stage simply, give an example, or quiz you on the stage you have open."
 )
 THANKS_REPLY = "Glad it helped. Ask another question, or press “Quiz me” to test yourself on this stage."
+HELP_REPLY = (
+    "Click any part of the 3D machine, or any card in the stage bar, to see what it does. "
+    "The five modes along the top: Explore (click around), Tour (a guided walk, with Play and Pause), "
+    "Experiment (run the real code on your own input), "
+    "Break & fix (repair something that is broken) and Rebuild (put the stages in order). "
+    "The “How to use” button at the top of a lesson replays the guided tutorial."
+)
 NEEDS_TOPIC = (
     "Which part should I explain? Pick a stage or ask a question about it first, then ask me to simplify."
 )
@@ -43,6 +74,16 @@ def classify(question: str) -> str | None:
         return "greeting"
     if THANKS.match(q):
         return "thanks"
+    if HELP.search(q):
+        return "help"
+    if (
+        LESSON_ABOUT.search(q)
+        and re.search(r"\b(about|cover|covers|teach|teaches|in|is|explain|summary|summar)", q, re.I)
+        and len(q.split()) <= 12
+    ):
+        return "lesson_about"
+    if OVERVIEW.search(q) and len(q.split()) <= 14:
+        return "overview"
     if SIMPLIFY.search(q):
         return "simplify"
     if EXAMPLE.search(q) and len(q.split()) <= 8:

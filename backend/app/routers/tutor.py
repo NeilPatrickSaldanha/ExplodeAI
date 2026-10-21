@@ -8,12 +8,15 @@ from app.deps import experiment_limiter, learner_id
 from app.routers.ai import _paid_call
 from app.tutor import intent as intents
 from app.tutor import quiz
-from app.tutor.answer import NOT_COVERED, build_answer, chat_reply, plain_reply
+from app.tutor.answer import NOT_COVERED, build_answer, chat_reply, overview_reply, plain_reply
 from app.tutor.chat import Context, Turn, resolve
 from app.tutor.prompt import build_prompt, check_citations
 from app.tutor.search import get_index
 
 router = APIRouter(prefix="/api/tutor", tags=["tutor"])
+
+
+FREE_INTENTS = ("greeting", "thanks", "help", "overview", "lesson_about")
 
 
 class AskRequest(BaseModel):
@@ -50,6 +53,12 @@ def _free_reply(req: AskRequest, ctx: Context, index, hits, info) -> dict | None
         return chat_reply(intents.GREETING_REPLY)
     if ctx.intent == "thanks":
         return chat_reply(intents.THANKS_REPLY)
+    if ctx.intent == "help":
+        return chat_reply(intents.HELP_REPLY)
+    if ctx.intent == "overview":
+        return overview_reply()
+    if ctx.intent == "lesson_about":
+        return overview_reply(intents.lesson_number(req.question))
     if ctx.intent in ("simplify", "example", "more", "why"):
         if ctx.lesson_id and ctx.stage_id:
             r = plain_reply(ctx.lesson_id, ctx.stage_id, ctx.intent, info)
@@ -100,7 +109,7 @@ def estimate(req: LlmRequest):
     if price is None:
         raise HTTPException(404, {"code": "model_not_allowed", "message": "Model is not allow-listed."})
     index, ctx, hits, info = _retrieve(req, k=6)
-    if ctx.intent in ("greeting", "thanks") or not hits:
+    if ctx.intent in FREE_INTENTS or not hits:
         return {
             "covered": bool(hits),
             "max_cost_usd": 0.0,
@@ -122,7 +131,7 @@ def ask_llm(req: LlmRequest, learner: str = Depends(learner_id), session: Sessio
     lessons do not cover are answered free, with no provider call."""
     experiment_limiter.check(learner)
     index, ctx, hits, info = _retrieve(req, k=6)
-    if ctx.intent in ("greeting", "thanks"):
+    if ctx.intent in FREE_INTENTS:
         return {**_free_reply(req, ctx, index, hits, info), "is_llm": False, "cost_usd": 0.0}
     if not hits:
         return {**_answer(req, ctx, index, hits, info), "is_llm": False, "cost_usd": 0.0}

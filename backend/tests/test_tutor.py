@@ -163,8 +163,7 @@ def test_paid_answer_builds_the_prompt_from_lessons_and_strips_unknown_citations
     assert r.status_code == 200, r.text
     out = r.json()
     assert (
-        "ONLY the passages below" in seen["prompt"]
-        and "Question: What is the causal mask?" in seen["prompt"]
+        "ONLY the passages below" in seen["prompt"] and "Question: What is the causal mask?" in seen["prompt"]
     )
     assert "[made-up-claim]" not in out["text"] and "[attn-causal-mask]" in out["text"]
     assert out["cited"] == ["attn-causal-mask"] and out["removed_citations"] == ["made-up-claim"]
@@ -366,3 +365,69 @@ def test_the_prompt_labels_passages_so_they_cannot_be_mistaken_for_citations():
     assert "Passage 1 (" in prompt and "\n[1]" not in prompt
     assert "claim ids only, never passage numbers" in INSTRUCTIONS.lower().replace("cite ", "")
     assert "attn-causal-mask" in allowed
+
+
+# ------------------------------------------------------------- questions about the course itself
+def test_questions_about_the_course_are_answered_not_refused(client):
+    _, lessons = content()
+    for q in (
+        "What are all four lessons?",
+        "what can you teach me?",
+        "list the topics",
+        "what is explodeai?",
+    ):
+        r = ask(client, q).json()
+        assert r["type"] == "overview", q
+        assert [x["number"] for x in r["lessons"]] == [1, 2, 3, 4]
+        for card in r["lessons"]:
+            lesson = lessons[card["lesson_id"]]
+            assert card["summary"] == lesson.summary and card["title"] == lesson.title
+            assert card["stages"] == [c.label for c in lesson.components]
+        assert "don't cover" not in str(r["message"])
+
+
+def test_asking_about_one_lesson_shows_its_objectives(client):
+    _, lessons = content()
+    for n, lesson_id in ((1, "rag-pipeline"), (3, "embeddings"), (4, "attention")):
+        r = ask(client, f"what's in lesson {n}?").json()
+        assert r["type"] == "overview" and r["focus_number"] == n and len(r["lessons"]) == 1
+        assert r["lessons"][0]["objectives"] == lessons[lesson_id].objectives
+    two = ask(client, "lesson two summary").json()
+    assert two["lessons"][0]["lesson_id"] == "tokenization"
+
+
+def test_how_do_i_use_this_explains_the_modes(client):
+    r = ask(client, "how do I use this?").json()
+    assert r["type"] == "chat" and all(
+        w in r["message"] for w in ("Explore", "Tour", "Experiment", "Break & fix", "Rebuild")
+    )
+    assert "How to use" in r["message"]
+
+
+def test_topic_questions_are_not_mistaken_for_course_questions():
+    from app.tutor import intent
+
+    for q in (
+        "What is the causal mask?",
+        "what is attention?",
+        "why do we split documents into chunks?",
+        "What does an embedding model do?",
+        "what is BM25?",
+    ):
+        assert intent.classify(q) is None, q
+    assert (
+        intent.lesson_number("what's in lesson three?") == 3
+        and intent.lesson_number("no number here") is None
+    )
+
+
+def test_course_questions_are_free_in_ai_mode_too(client, engine, monkeypatch):
+    _enable(monkeypatch)
+    called = []
+    monkeypatch.setattr(providers, "generate_with_usage", lambda *a, **k: called.append(1))
+    for q in ("What are all four lessons?", "how do I use this?", "what's in lesson 4?"):
+        out = client.post("/api/tutor/ask/llm", json={"question": q, **LLM}, headers=H).json()
+        assert out["is_llm"] is False and out["cost_usd"] == 0.0 and out["covered"], q
+    assert not called
+    with Session(engine) as session:
+        assert session.exec(select(AIUsage)).all() == []

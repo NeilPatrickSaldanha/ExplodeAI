@@ -306,3 +306,20 @@
   cursor: default;
   align-items: center;
 }
+
+.tover {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.tover li p {
+  margin: 2px 0;
+}
+
+.tover__title a {
+  color: var(--color-ink);
+  font-weight: 600;
+}
