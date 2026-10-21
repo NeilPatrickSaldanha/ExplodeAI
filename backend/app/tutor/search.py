@@ -65,6 +65,7 @@ class TutorIndex:
         stage_id: str | None = None,
         k: int = 5,
         prefer: set[str] | None = None,
+        vague: bool | None = None,
     ) -> tuple[list[Scored], dict]:
         n = len(self.passages)
         lex = self.bm25.scores(question)
@@ -77,14 +78,18 @@ class TutorIndex:
             dense = self.vectors @ q
             rankings.append(rank(dense))
         fused = rrf(rankings, n)
-        top8 = sorted(range(n), key=lambda i: (-fused[i], i))[:8]
-        vague = (
-            len({(self.passages[i].lesson_id, self.passages[i].stage_id) for i in top8})
-            >= VAGUE_IF_TOP8_SPANS
-        )
+        if vague is None:  # the caller did not say: guess from how spread out the best matches are
+            top8 = sorted(range(n), key=lambda i: (-fused[i], i))[:8]
+            vague = (
+                len({(self.passages[i].lesson_id, self.passages[i].stage_id) for i in top8})
+                >= VAGUE_IF_TOP8_SPANS
+            )
         stage_boost, lesson_boost = (
             (VAGUE_STAGE_BOOST, VAGUE_LESSON_BOOST) if vague else (STAGE_BOOST, LESSON_BOOST)
         )
+        if not vague and prefer and "claim:definition" in prefer:
+            # "What is RAG?" names its topic: the page that happens to be open must not tip it.
+            stage_boost = lesson_boost = 0.0
         for i, p in enumerate(self.passages):
             if lesson_id and p.lesson_id == lesson_id:
                 fused[i] += lesson_boost
@@ -92,7 +97,7 @@ class TutorIndex:
                     fused[i] += stage_boost
         if prefer:
             for i, p in enumerate(self.passages):
-                if p.kind in prefer:
+                if p.kind in prefer or (p.claim_kind and f"claim:{p.claim_kind}" in prefer):
                     fused[i] += KIND_BOOST
         coverage = self.coverage(question)
         best_dense = float(dense.max()) if dense is not None else None

@@ -98,7 +98,9 @@ def plain_block(lesson_id: str, stage_id: str, mode: str = "simplify") -> dict |
         "misconfigured": None,
         "more": None,
     }
-    if mode in ("simplify", "answer"):
+    if mode == "brief":
+        block.update(what=e.what)
+    elif mode in ("simplify", "answer"):
         block.update(
             what=e.what,
             analogy=e.analogy,
@@ -199,6 +201,7 @@ def build_answer(
     info: dict,
     index: TutorIndex,
     open_stage: tuple[str, str] | None = None,
+    brief: bool = False,
 ) -> dict:
     if not hits:
         registry_lessons = sorted({(p.lesson_number, p.lesson_id, p.lesson_title) for p in index.passages})
@@ -221,7 +224,11 @@ def build_answer(
     seen_text: set[str] = set()
     for h in facts:
         for text in best_sentences(question, h.passage, 2 if not sentences else 1):
-            if text in seen_text or len(sentences) >= MAX_SENTENCES or _near_duplicate(text, list(seen_text)):
+            if (
+                text in seen_text
+                or len(sentences) >= (1 if brief else MAX_SENTENCES)
+                or _near_duplicate(text, list(seen_text))
+            ):
                 continue
             seen_text.add(text)
             cites = narrow_claims(text, h.passage.claim_ids)
@@ -244,7 +251,7 @@ def build_answer(
     # touches it, otherwise the best-matching stage.
     stages = [(h.passage.lesson_id, h.passage.stage_id) for h in facts[:3] if h.passage.stage_id]
     chosen = open_stage if open_stage in stages else (stages[0] if stages else None)
-    plain = plain_block(chosen[0], chosen[1], "answer") if chosen else None
+    plain = plain_block(chosen[0], chosen[1], "brief" if brief else "answer") if chosen else None
     top_stage = chosen[1] if chosen else None
     analogy = (
         None

@@ -25,16 +25,31 @@ class Context:
     focus: Turn | None  # the last earlier exchange that was about a stage
 
 
-def resolve(question: str, lesson_id: str | None, stage_id: str | None, history: list[Turn]) -> Context:
+FOLLOWUPS = ("simplify", "example", "more", "why")
+
+
+def resolve(
+    question: str,
+    lesson_id: str | None,
+    stage_id: str | None,
+    history: list[Turn],
+    cleaned: str | None = None,
+    vocabulary: set[str] | None = None,
+) -> Context:
+    """`question` is the message without greetings; `cleaned` also drops filler ("tell me in one line")."""
+    cleaned = cleaned or question
     focus = next((t for t in reversed(history) if t.stage_id and t.lesson_id), None)
     kind = intents.classify(question)
-    follow = kind in ("simplify", "example", "more", "why") or intents.is_followup(question)
-    search = question
+    # "Explain the causal mask simply" names a topic: it is a question, just asked simply, not a follow-up.
+    if kind in FOLLOWUPS and vocabulary is not None and intents.has_topic(cleaned, vocabulary):
+        kind = None
+    follow = kind in FOLLOWUPS or intents.is_followup(cleaned)
+    search = cleaned
     if follow and focus:
-        search = f"{focus.question} {question}" if kind is None else focus.question
+        search = f"{focus.question} {cleaned}" if kind is None else focus.question
     # A follow-up stays on the stage the conversation was about, not the stage that happens to be open.
     if follow and focus:
         return Context(kind, search, focus.lesson_id, focus.stage_id, focus)
-    if kind in ("simplify", "example", "more", "why") and not focus and lesson_id and stage_id:
+    if kind in FOLLOWUPS and not focus and lesson_id and stage_id:
         return Context(kind, search, lesson_id, stage_id, None)
     return Context(kind, search, lesson_id, stage_id, focus)

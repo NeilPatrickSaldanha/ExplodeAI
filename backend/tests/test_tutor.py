@@ -84,7 +84,8 @@ def test_the_open_stage_nudges_but_does_not_override_the_question(index):
 
 
 def test_input_is_validated(client):
-    assert ask(client, "ok").status_code == 422
+    assert ask(client, "ok").status_code == 200  # short chat ("ok", "hi", "yo") is fine
+    assert ask(client, "   ").status_code == 422
     assert ask(client, "x" * 301).status_code == 422
     assert ask(client, "   hello   ").status_code in (200,)
 
@@ -301,7 +302,7 @@ def test_phrasing_points_at_the_kind_of_passage_that_answers_it():
     from app.tutor import intent
 
     assert intent.kind_preference("what happens if the mask is removed?") == {"breaks"}
-    assert intent.kind_preference("why is the softmax needed") == {"why"}
+    assert intent.kind_preference("why is the softmax needed") == {"why", "claim"}
     assert "misconfigured" in intent.kind_preference("what can go wrong here")
     assert intent.kind_preference("what does vectors + position do?") == {"what", "claim"}
     assert (

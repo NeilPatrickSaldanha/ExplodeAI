@@ -116,7 +116,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
 
   const ask = async (q: string) => {
     const question = q.trim()
-    if (question.length < 3 || busy) return
+    if (!question || busy) return
     setInput('')
     const past = history()
     push({ role: 'user', text: question })
@@ -237,7 +237,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
               Your question
             </label>
             <input id="tutor-input" ref={field} className="input" value={input} maxLength={300} placeholder="Ask a question…" onChange={(e) => setInput(e.target.value)} autoComplete="off" />
-            <button type="submit" className="btn btn--primary" disabled={busy || input.trim().length < 3}>
+            <button type="submit" className="btn btn--primary" disabled={busy || !input.trim()}>
               Ask
             </button>
           </form>
@@ -305,6 +305,8 @@ function MessageView({
   if (m.role === 'llm') return <LlmView out={m.out} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} />
   const a = m.answer
   if (a.type === 'chat') return <p className="tmsg tmsg--tutor tmsg--chat">{a.message}</p>
+  const lead = a.lead ? <p className="tmsg tmsg--tutor tmsg--chat tmsg--lead">{a.lead}</p> : null
+  if (lead) return <>{lead}<MessageView m={{ ...m, answer: { ...a, lead: null } }} lessonId={lessonId} stageId={stageId} onGoToStage={onGoToStage} onReveal={onReveal} onNextQuiz={onNextQuiz} history={history} aiAvailable={aiAvailable} aiOn={aiOn} /></>
   if (a.type === 'overview') return <OverviewView lessons={a.lessons ?? []} focus={a.focus_number ?? null} currentLesson={lessonId} />
   if (!a.covered) {
     return (
@@ -459,6 +461,7 @@ function LlmView({ out, lessonId, stageId, onGoToStage }: { out: TutorLlmAnswer;
   parts.push(text.slice(last))
   return (
     <div className="tmsg tmsg--tutor tmsg--llm">
+      {out.lead && <p className="tmsg__lead">{out.lead}</p>}
       <span className="kind-badge kind-badge--real_execution">AI · paid · from the lessons only</span>
       <p className="tmsg__llmtext">
         {parts.map((p, i) =>

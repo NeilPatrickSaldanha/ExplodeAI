@@ -412,3 +412,7 @@
     min-height: 36px;
   }
 }
+
+/* Short conversational opener ("Hi!") shown before an answer. */
+.tmsg--lead { margin-bottom: 4px; }
+.tmsg__lead { margin: 0 0 6px; }

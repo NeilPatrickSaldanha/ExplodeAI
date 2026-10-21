@@ -46,6 +46,7 @@ def build_prompt(
         "example": "The learner wants a concrete example.",
         "more": "The learner wants more detail.",
         "why": "The learner wants to know why this matters.",
+        "brief": "Answer in a single short sentence.",
     }.get(intent or "", "")
     prompt = (
         f"{INSTRUCTIONS}\n\nPassages:\n"

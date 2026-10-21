@@ -17,7 +17,8 @@ LESSON_ABOUT = re.compile(r"\b(lesson|chapter)\s*(0?([1-4])|(one|two|three|four)
 HELP = re.compile(
     r"(how (do|can|should) i use|how does (this|the) (site|app|website|page) work|what are the (modes|tabs)|"
     r"what (is|does) (the )?(tour|explore|experiment|break (&|and) fix|rebuild)\b|help me (start|use)|"
-    r"how do i (start|begin|get started))",
+    r"how do i (start|begin|get started)|"
+    r"^\s*(help|i need help|can (you|u) help( me)?|need help)\s*[!?.]*\s*$)",
     re.I,
 )
 _WORDS = {"one": 1, "two": 2, "three": 3, "four": 4}
@@ -70,9 +71,11 @@ NEEDS_TOPIC = (
 
 def classify(question: str) -> str | None:
     q = question.strip()
+    if ABOUT_ME.search(q):
+        return "about_me"
     if GREETING.match(q):
         return "greeting"
-    if THANKS.match(q):
+    if THANKS.match(q) and not looks_like_question(q):
         return "thanks"
     if HELP.search(q):
         return "help"
@@ -109,7 +112,263 @@ def kind_preference(question: str) -> set[str]:
     if re.search(r"\b(go wrong|goes wrong|set up wrong|misconfigur|bad(ly)?|mistake)\b", q):
         return {"misconfigured"}
     if q.startswith("why") or "needed" in q or "purpose" in q:
-        return {"why"}
+        return {"why", "claim"}  # a stage's "why" text, or a claim that gives the reason
+    if re.match(r"^\s*(what\s+(is|are)\s+(an?\s+|the\s+)?\S+(\s+\S+)?\s*\??\s*$|define\b|meaning\s+of\b)", q):
+        return {"what", "claim:definition"}  # "what is rag?": the definition first
     if re.search(r"\b(what|how) (does|do|is|are|did)\b", q):
         return {"what", "claim"}
     return set()
+
+
+# ---------------------------------------------------------------- conversation-level understanding
+# People open with greetings, slang and filler ("yooo whats good", "tell me in one line what is rag").
+# These helpers peel that off so the real question (if any) is what gets searched.
+
+_GREETING_PART = re.compile(
+    r"^(?:(?:h+i+|h+e+y+(?:\s+there)?|hello+|hiya|howdy|greetings|yo+|o{2,}h*|sup|wa+s+u+p+|"
+    r"what'?s\s+(?:good|up|poppin|happening|new)|whats\s+(?:good|up|poppin|happening|new)|"
+    r"how\s+(?:are|r)\s+(?:you|u|ya)(?:\s+doing)?|how'?s\s+it\s+going|how\s+(?:you|u)\s+doing|"
+    r"good\s+(?:morning|afternoon|evening|day)|nice\s+to\s+meet\s+(?:you|u)|hope\s+(?:you'?re|ur)\s+well)"
+    r")(?![a-z'])(?:\s+(?:there|bro|man|dude|mate|friend|buddy|bot|tutor|explodeai)(?![a-z]))?[\s,.!?~]*",
+    re.I,
+)
+GREETING_LEAD = "Hi!"
+ABOUT_ME = re.compile(
+    r"^(who|what)\s+(are|r)\s+(you|u)\b|^are\s+(you|u)\s+(a\s+)?(bot|ai|human|real|chatgpt|claude)|"
+    r"^what'?s\s+your\s+name|^what\s+do\s+you\s+do\b",
+    re.I,
+)
+ABOUT_ME_REPLY = (
+    "I'm the ExplodeAI tutor. I answer questions about the four lessons (RAG, tokenization, embeddings and "
+    "attention) using only their verified content, with the sources behind every fact. I can explain a stage "
+    "simply, give an example, or quiz you."
+)
+SMALLTALK_FALLBACK = (
+    "I'm here for questions about the four lessons. Try something like “what is RAG?”, “why do we normalise "
+    "vectors?” or “explain the causal mask simply”, or ask “what are the lessons?”."
+)
+_QUESTION_WORD = re.compile(
+    r"\b(what|whats|why|how|when|where|which|who|explain|define|describe|difference|does|do|is|are|can)\b",
+    re.I,
+)
+
+
+def split_greeting(question: str) -> tuple[bool, str]:
+    """('hi there, what is rag?') -> (True, 'what is rag?'); ('yooo whats good') -> (True, '')."""
+    rest = question.strip()
+    greeted = False
+    for _ in range(4):
+        m = _GREETING_PART.match(rest)
+        if not m or not m.group(0).strip():
+            break
+        greeted = True
+        rest = rest[m.end() :].strip()
+    return greeted, rest
+
+
+_FILLERS: list[tuple[str, str]] = [
+    (r"\bwhat'?s\b", "what is"),
+    (r"\bwat\b", "what"),
+    (r"\bwhat\s+is\s+meant\s+by\b", "what is"),
+    (r"\b(?:can|could|would|will)\s+(?:you|u)\s+(?:please\s+)?", ""),
+    (r"\b(?:please|pls|plz)\b", ""),
+    (r"\b(?:tell|show|give)\s+me\b", ""),
+    (r"\b(?:explain|describe|summari[sz]e)\b(?:\s+to\s+me)?", ""),
+    (r"\b(?:in\s+)?(?:one|1|a\s+single|just\s+one)\s+(?:line|sentence|word)s?\b\s*[:,-]?", ""),
+    (r"\bin\s+a\s+(?:line|sentence|word)\b", ""),
+    (
+        r"\b(?:briefly|quickly|simply|real\s+quick|in\s+short|tl;?\s*dr|in\s+simple\s+(?:words|terms)|"
+        r"in\s+plain\s+(?:english|words))\b",
+        "",
+    ),
+    (r"\bi\s+(?:want|wanna|would\s+like|need)\s+to\s+(?:know|understand)\b", ""),
+    (r"\bdo\s+(?:you|u)\s+know\b", ""),
+    (r"\b(?:for|to)\s+me\b", ""),
+    (r"\bagain\b", ""),
+]
+
+
+_LEADING = re.compile(
+    r"^(?:ok(?:ay)?|so|wait|um+|uh+|hmm+|alright|right|well|and|but|also|then)\b[\s,.]*", re.I
+)
+
+
+def clean(question: str) -> str:
+    """The question without filler, for searching. Falls back to the original if nothing is left."""
+    q = question.strip()
+    for _ in range(4):
+        q = _LEADING.sub("", q, count=1)
+    for pattern, repl in _FILLERS:
+        q = re.sub(pattern, repl, q, flags=re.I)
+    q = re.sub(r"\s+", " ", q).strip(" ,.;:-")
+    return q if len(q) >= 2 else question
+
+
+BRIEF = re.compile(
+    r"\b((?:in\s+)?(?:one|1|a\s+single|just\s+one)\s+(?:line|sentence)|in\s+a\s+(?:line|sentence)|briefly|tl;?\s*dr|in\s+short|short\s+answer|"
+    r"quick(?:ly)?|one[-\s]liner|summar(?:y|ise|ize))\b",
+    re.I,
+)
+
+
+def is_brief(question: str) -> bool:
+    return bool(BRIEF.search(question))
+
+
+# Words that only say "say it again differently" and carry no topic of their own.
+_FOLLOWUP_WORDS = {
+    "frame",
+    "easier",
+    "easy",
+    "simpler",
+    "simple",
+    "simply",
+    "word",
+    "words",
+    "again",
+    "example",
+    "examples",
+    "more",
+    "explain",
+    "rephrase",
+    "reword",
+    "put",
+    "way",
+    "differently",
+    "better",
+    "term",
+    "terms",
+    "english",
+    "plain",
+    "dumb",
+    "down",
+    "break",
+    "detail",
+    "details",
+    "elaborate",
+    "expand",
+    "matter",
+    "matters",
+    "why",
+    "understand",
+    "get",
+    "confusing",
+    "confused",
+    "lost",
+    "hard",
+    "technical",
+    "complicated",
+    "eli5",
+    "five",
+    "kid",
+    "like",
+    "tell",
+    "show",
+    "give",
+    "say",
+    "said",
+    "mean",
+    "means",
+    "meaning",
+    "line",
+    "sentence",
+    "one",
+}
+
+
+# Everyday words that appear all over the lessons but do not say which topic is meant.
+_GENERIC_WORDS = {
+    "that",
+    "this",
+    "it",
+    "its",
+    "these",
+    "those",
+    "they",
+    "them",
+    "thi",
+    "in",
+    "of",
+    "on",
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "to",
+    "for",
+    "with",
+    "about",
+    "is",
+    "are",
+    "was",
+    "be",
+    "what",
+    "how",
+    "which",
+    "me",
+    "my",
+    "you",
+    "your",
+    "i",
+    "we",
+    "matter",
+    "matters",
+    "mean",
+    "means",
+    "meaning",
+    "really",
+    "actually",
+    "just",
+    "wrong",
+    "go",
+    "goe",
+    "goes",
+    "work",
+    "works",
+    "happen",
+    "happens",
+    "need",
+    "needed",
+    "use",
+    "used",
+    "make",
+    "set",
+    "step",
+    "stage",
+    "part",
+    "thing",
+    "things",
+    "good",
+    "bad",
+    "removed",
+    "remove",
+    "important",
+    "doe",
+    "do",
+    "does",
+    "can",
+    "could",
+    "would",
+    "should",
+    "point",
+    "purpose",
+    "role",
+    "job",
+    "here",
+    "there",
+    "now",
+}
+
+
+def has_topic(question: str, vocabulary: set[str]) -> bool:
+    """Does the message name something the lessons cover, beyond follow-up and everyday words?"""
+    from app.experiments.rag.text import terms
+
+    return any(
+        t in vocabulary and t not in _FOLLOWUP_WORDS and t not in _GENERIC_WORDS for t in terms(question)
+    )
+
+
+def looks_like_question(question: str) -> bool:
+    return "?" in question or bool(_QUESTION_WORD.search(question))

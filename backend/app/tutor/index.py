@@ -27,6 +27,7 @@ class Passage:
     claim_ids: tuple[str, ...] = ()
     source_ids: tuple[str, ...] = ()
     teaching_aid: bool = False
+    claim_kind: str | None = None  # for claim passages: definition, fact, ...
     # What retrieval matches on: the text plus its place in the lessons, so "softmax" finds the Softmax stage.
     search_text: str = field(default="", compare=False)
 
@@ -52,7 +53,7 @@ def _lesson_passages(lesson: Lesson) -> list[Passage]:
                     seen.setdefault(cit.source)
         return tuple(seen)
 
-    def add(pid, stage, kind, text, claim_ids=(), aid=False):
+    def add(pid, stage, kind, text, claim_ids=(), aid=False, claim_kind=None):
         text = _clean(text)
         if not text:
             return
@@ -70,12 +71,13 @@ def _lesson_passages(lesson: Lesson) -> list[Passage]:
                 claim_ids=tuple(claim_ids),
                 source_ids=sources(claim_ids),
                 teaching_aid=aid,
+                claim_kind=claim_kind,
                 search_text=f"{lesson.title} {label or ''}. {text}",
             )
         )
 
     for cid, claim in claims.items():
-        add(f"claim/{cid}", stage_of.get(cid), "claim", claim.text, (cid,))
+        add(f"claim/{cid}", stage_of.get(cid), "claim", claim.text, (cid,), claim_kind=claim.kind)
     for comp in lesson.components:
         if comp.breaks_if_removed:
             add(

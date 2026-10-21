@@ -515,6 +515,7 @@ export interface TutorLessonCard {
 }
 
 export interface TutorAnswer {
+  lead?: string | null  // a short conversational opener, e.g. "Hi!"
   type: 'answer' | 'plain' | 'chat' | 'none' | 'llm' | 'overview'
   lessons?: TutorLessonCard[]
   focus_number?: number | null

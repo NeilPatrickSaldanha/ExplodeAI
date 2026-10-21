@@ -146,3 +146,15 @@ test('questions about the course itself are answered with the lessons, not refus
   await ask(page, 'how do I use this?')
   await expect(panel(page).locator('.tmsg--chat').last()).toContainText('Break & fix')
 })
+
+test('casual chat works: slang greetings, short messages and greeting-plus-question', async ({ page }) => {
+  await page.goto('/lessons/embeddings')
+  await openTutor(page)
+  await ask(page, 'yooo. whats good')
+  await expect(panel(page).locator('.tmsg--chat').last()).toContainText("I'm the ExplodeAI tutor")
+  await ask(page, 'hi how are you what do you know')
+  await expect(panel(page).locator('.tmsg--lead').last()).toContainText('Doing well')
+  await ask(page, 'tell me in one line what is rag')
+  const answer = panel(page).locator('.tmsg--tutor').last()
+  await expect(answer).toContainText('RAG retrieves relevant information')
+})
