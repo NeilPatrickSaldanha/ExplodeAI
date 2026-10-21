@@ -284,6 +284,8 @@
 
 .spanel {
   display: grid;
+  /* Without minmax(0, …) a child's minimum width stretches the column past a narrow screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-md);
 }
 
@@ -878,7 +880,7 @@
   .flow-legend {
     gap: var(--space-2xs) var(--space-sm);
     padding: var(--space-3xs) var(--space-xs);
-    font-size: 9px;
+    font-size: 11px;
   }
 }
 
@@ -1100,4 +1102,27 @@
 .understand__connect {
   display: grid;
   gap: var(--space-2xs);
+}
+
+/* Phones: all five modes visible without sideways scrolling. */
+@media (max-width: 30rem) {
+  .cine__modes {
+    flex-wrap: wrap;
+    border-radius: var(--radius-md);
+    overflow-x: visible;
+  }
+
+  .cine__mode {
+    flex: 1 1 auto;
+    padding: 0 var(--space-sm);
+    justify-content: center;
+  }
+}
+
+.breaks__run {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  height: auto;
+  padding-block: var(--space-2xs);
 }

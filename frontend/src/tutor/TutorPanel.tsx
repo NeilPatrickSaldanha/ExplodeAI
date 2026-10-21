@@ -7,6 +7,8 @@ import './tutor.css'
 
 const usd = (n: number) => (n < 0.01 ? `$${n.toFixed(5)}` : `$${n.toFixed(2)}`)
 const OPEN_KEY = 'explodeai.tutor.open'
+/** On a phone the tutor is a big sheet over the lesson, so it never stays open between pages. */
+const isPhone = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 40rem)').matches
 const AI_KEY = 'explodeai.tutor.ai'
 
 const store = {
@@ -67,7 +69,7 @@ function turnOf(m: Message): TutorTurn | null {
  * and is off unless the server has AI enabled.
  */
 export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoToStage }: Props) {
-  const [open, setOpen] = useState(() => store.get(OPEN_KEY))
+  const [open, setOpen] = useState(() => store.get(OPEN_KEY) && !isPhone())
   const [aiMode, setAiMode] = useState(() => store.get(AI_KEY))
   const [status, setStatus] = useState<AIStatus | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -82,7 +84,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
 
   const setOpenPersist = (v: boolean) => {
     setOpen(v)
-    store.set(OPEN_KEY, v)
+    if (!isPhone()) store.set(OPEN_KEY, v)
   }
 
   useEffect(() => {
@@ -165,12 +167,12 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
   return (
     <>
       <button ref={fab} type="button" className="tutor-fab" aria-expanded={open} aria-controls="tutor-panel" onClick={() => (open ? close() : setOpenPersist(true))}>
-        <ChatCircleText weight="fill" aria-hidden /> Ask ExplodeAI
+        <ChatCircleText weight="fill" aria-hidden /> <span className="tutor-fab__text">Ask ExplodeAI</span>
       </button>
       {open && (
         <aside
           id="tutor-panel"
-          className="tutor"
+          className={`tutor${messages.length > 0 ? ' tutor--talking' : ''}`}
           aria-label="Ask ExplodeAI"
           onKeyDown={(e) => {
             if (e.key === 'Escape') close()
@@ -258,7 +260,7 @@ function AiSwitch({ status, aiAvailable, aiMode, model, onChange }: { status: AI
     <label className="tutor__ai">
       <input type="checkbox" checked={aiMode} onChange={(e) => onChange(e.target.checked)} />
       <span>
-        <Sparkle aria-hidden /> Explain with AI <span className="label">PAID · {model} · ABOUT $0.0002 PER ANSWER · {usd(status.limits.spent_total_usd)} OF {usd(status.limits.total_budget_usd)} USED</span>
+        <Sparkle aria-hidden /> Explain with AI <span className="label" title={`Model: ${model}`}>PAID · ABOUT $0.0002 PER ANSWER · {usd(status.limits.spent_total_usd)} OF {usd(status.limits.total_budget_usd)} USED</span>
       </span>
     </label>
   )

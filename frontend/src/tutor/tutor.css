@@ -29,39 +29,17 @@
   right: var(--space-md);
   bottom: calc(var(--space-md) + 60px);
   z-index: 900;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-xs);
   width: min(26rem, calc(100vw - 2 * var(--space-md)));
-  height: min(44rem, 86dvh);
+  height: min(44rem, calc(100dvh - 6rem));
   padding: var(--space-md);
   border: 1px solid var(--color-rule-2);
   border-radius: var(--radius-md);
   background: var(--color-paper-2);
   color: var(--color-ink);
   box-shadow: 0 18px 48px oklch(0% 0 0 / 0.4);
-}
-
-@media (max-width: 40rem) {
-  .tutor {
-    right: 8px;
-    left: 8px;
-    bottom: 76px;
-    width: auto;
-    height: 78dvh;
-  }
-
-  /* One scrolling row of chips, so the conversation keeps the room. */
-  .tutor__chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 4px;
-  }
-
-  .tutor__chips .chip {
-    flex: none;
-  }
 }
 
 .tutor__head {
@@ -292,9 +270,9 @@
 }
 
 .tutor__ai input {
-  margin-top: 3px;
-  width: 18px;
-  height: 18px;
+  flex: none;
+  width: 24px;
+  height: 24px;
   accent-color: var(--color-accent);
 }
 
@@ -322,4 +300,115 @@
 .tover__title a {
   color: var(--color-ink);
   font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+  .tutor {
+    right: 8px;
+    left: 8px;
+    bottom: 76px;
+    width: auto;
+    height: 82dvh;
+  }
+
+  /* One scrolling row of chips, so the conversation keeps the room. */
+  .tutor__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+  }
+
+  .tutor__chips .chip {
+    flex: none;
+  }
+}
+
+
+.tutor > * {
+  flex: none;
+}
+
+.tutor__log {
+  flex: 1 1 0;
+  min-height: 9rem;
+}
+
+.tutor-fab__text {
+  white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  /* Icon-only button on phones so it does not sit on top of the lesson. */
+  .tutor-fab {
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    padding: 0;
+    justify-content: center;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .tutor-fab__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tutor-fab svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tutor {
+    bottom: 76px;
+  }
+
+  .tutor--talking .tutor__promise {
+    display: none;
+  }
+
+  .tutor__ai .label {
+    font-size: 10px;
+  }
+}
+
+.tutor__ai {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* Short screens (phones in landscape, small windows): one row of chips, no intro text. */
+@media (max-height: 34rem) {
+  .tutor {
+    height: calc(100dvh - 5.5rem);
+    bottom: 4.5rem;
+    padding: var(--space-sm);
+    gap: var(--space-2xs);
+  }
+
+  .tutor__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .tutor__chips .chip {
+    flex: none;
+  }
+
+  .tutor__promise {
+    display: none;
+  }
+
+  .tutor__log {
+    min-height: 5rem;
+  }
+
+  .tutor__ai {
+    min-height: 36px;
+  }
 }

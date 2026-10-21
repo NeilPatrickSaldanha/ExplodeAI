@@ -728,6 +728,7 @@ main:focus {
 
 .segmented__item {
   min-height: 40px;
+  min-width: 40px;
   padding: 0 var(--space-sm);
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-sm);
@@ -1204,6 +1205,19 @@ main:focus {
   gap: var(--space-xs);
   font-size: var(--text-sm);
   padding-left: var(--space-lg);
+}
+
+/* Long unbroken titles (torch.nn.functional…) must wrap, not push the page wider. */
+.sources li,
+.claim__source,
+.claim__cites li {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.sources a {
+  display: inline-block;
+  padding-block: 4px;
 }
 
 /* ---- interactive states for compact controls (hover · active · disabled; focus is global) ---- */
