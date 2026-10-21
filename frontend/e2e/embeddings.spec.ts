@@ -85,3 +85,11 @@ test('tour walks all eight stages', async ({ page }) => {
     await expect(page.getByText(`TOUR · STEP ${i} OF 8`)).toBeVisible()
   }
 })
+
+test('mixing embedders says so in the header instead of showing one model\'s size for both', async ({ page }) => {
+  await page.goto(LESSON)
+  await openMode(page, 'Experiment')
+  await expect(page.getByText('384-D · NEURAL', { exact: true })).toBeVisible()
+  await page.getByRole('group', { name: 'Library embedder' }).getByRole('radio', { name: 'Lexical' }).click()
+  await expect(page.getByText('384-D · NEURAL · NOT COMPARABLE')).toBeVisible()
+})

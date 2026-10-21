@@ -24,7 +24,7 @@ export function EmbedExperimentPanel({ lesson, params, update, result, loading, 
       <div className="experiment__head">
         <KindBadge visual={visual('experiment')} />
         <span className="label" role="status">
-          {loading ? 'RUNNING…' : error ? 'ERROR' : result ? `${result.model.dim}-D · ${result.query.embedder.toUpperCase()}` : ''}
+          {loading ? 'RUNNING…' : error ? 'ERROR' : result ? `${result.query.dim}-D · ${result.query.embedder.toUpperCase()}${result.comparable ? '' : ' · NOT COMPARABLE'}` : ''}
         </span>
       </div>
       <p className="experiment__corpus">{lesson.experiment.corpus_note}</p>
