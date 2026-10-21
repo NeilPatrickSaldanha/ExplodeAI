@@ -64,6 +64,18 @@ HELP_REPLY = (
     "Break & fix (repair something that is broken) and Rebuild (put the stages in order). "
     "The “How to use” button at the top of a lesson replays the guided tutorial."
 )
+# Questions about the conversation itself: "what did I just ask you?"
+RECALL = re.compile(
+    r"\bwhat\s+(did|have|was)\s+i\s+(just\s+|last\s+)?(ask|asked|asking|say|said|saying)\b|"
+    r"\bwhat\s+(was|is|were)\s+(my|the)\s+(last\s+|previous\s+|earlier\s+|first\s+)?"
+    r"(question|topic|thing\s+i\s+asked|message)s?\b(?!\s+(?:of|in)\s+(?:the\s+)?lesson)|"
+    r"\bwhat\s+(are|were)\s+we\s+(just\s+)?(talking|discussing|chatting)\s+about\b|"
+    r"\bwhat\s+(did|have)\s+we\s+(just\s+)?(talk|talked|discuss|discussed|cover|covered)\b|"
+    r"\bremind\s+me\s+what\s+(i|we)\b|\bdo\s+(you|u)\s+remember\b|\bwhat\s+i\s+(just\s+)?asked\b",
+    re.I,
+)
+RECALL_EMPTY = "We haven't talked about anything yet in this chat. Ask me about any of the four lessons."
+
 NEEDS_TOPIC = (
     "Which part should I explain? Pick a stage or ask a question about it first, then ask me to simplify."
 )
@@ -71,6 +83,8 @@ NEEDS_TOPIC = (
 
 def classify(question: str) -> str | None:
     q = question.strip()
+    if RECALL.search(q):
+        return "recall"
     if ABOUT_ME.search(q):
         return "about_me"
     if GREETING.match(q):

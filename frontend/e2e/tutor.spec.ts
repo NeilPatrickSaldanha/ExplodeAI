@@ -157,4 +157,6 @@ test('casual chat works: slang greetings, short messages and greeting-plus-quest
   await ask(page, 'tell me in one line what is rag')
   const answer = panel(page).locator('.tmsg--tutor').last()
   await expect(answer).toContainText('RAG retrieves relevant information')
+  await ask(page, 'what did i just ask you about')
+  await expect(panel(page).locator('.tmsg--chat').last()).toContainText('You just asked: “tell me in one line what is rag”')
 })

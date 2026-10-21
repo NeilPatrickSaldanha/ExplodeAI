@@ -126,3 +126,38 @@ def test_follow_up_after_an_answer_uses_the_conversation(client):
         "/api/tutor/ask", json={"question": "can you explain it simpler", "history": history}, headers=H
     ).json()
     assert out["type"] in ("plain", "answer") and stage_of(out) == "Retriever"
+
+
+HISTORY = [
+    {"question": "what is rag", "lesson_id": "rag-pipeline", "stage_id": "corpus"},
+    {"question": "and why is it used", "lesson_id": "rag-pipeline", "stage_id": "corpus"},
+    {"question": "what is bm25?", "lesson_id": "rag-pipeline", "stage_id": "retriever"},
+]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "what did i just ask you about",
+        "what was the topic i asked you about just now",
+        "what were we talking about",
+        "do you remember what i asked",
+        "what was my last question?",
+        "remind me what we discussed",
+    ],
+)
+def test_questions_about_the_conversation_are_answered_from_it(client, message):
+    out = client.post("/api/tutor/ask", json={"question": message, "history": HISTORY}, headers=H).json()
+    assert out["type"] == "chat"
+    assert "“what is bm25”" in out["message"] and "Retriever, in Lesson 01" in out["message"]
+    assert "Knowledge source" in out["message"], "earlier topics are listed too"
+
+
+def test_recall_with_no_history_says_so(client):
+    out = client.post("/api/tutor/ask", json={"question": "what did i just ask"}, headers=H).json()
+    assert out["type"] == "chat" and "haven't talked" in out["message"]
+
+
+def test_lesson_questions_that_mention_a_question_are_not_recall(client):
+    out = client.post("/api/tutor/ask", json={"question": "what is the query in attention"}, headers=H).json()
+    assert out["type"] == "answer"

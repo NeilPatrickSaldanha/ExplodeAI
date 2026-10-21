@@ -19,7 +19,7 @@ from app.tutor.search import TutorIndex, get_index
 router = APIRouter(prefix="/api/tutor", tags=["tutor"])
 
 
-FREE_INTENTS = ("greeting", "thanks", "help", "overview", "lesson_about", "about_me")
+FREE_INTENTS = ("recall", "greeting", "thanks", "help", "overview", "lesson_about", "about_me")
 
 
 class AskRequest(BaseModel):
@@ -82,9 +82,43 @@ def _greeting(question: str) -> str:
     return intents.GREETING_REPLY
 
 
+def _where(lesson_id: str | None, stage_id: str | None) -> str | None:
+    """ "Knowledge source, in Lesson 01 (Retrieval-Augmented Generation, exploded)"."""
+    from app.content.loader import content
+
+    lesson = content()[1].get(lesson_id) if lesson_id else None
+    if not lesson:
+        return None
+    stage = next((c.label for c in lesson.components if c.id == stage_id), None)
+    place = f"Lesson {lesson.number:02d} ({lesson.title})"
+    return f"{stage}, in {place}" if stage else place
+
+
+def _recall(history: list[Turn]) -> str:
+    """Answer "what did I just ask?" from the turns the client sent back."""
+    turns = [t for t in history if not intents.RECALL.search(t.question)]
+    if not turns:
+        return intents.RECALL_EMPTY
+    last = turns[-1]
+    where = _where(last.lesson_id, last.stage_id)
+    reply = f"You just asked: “{last.question.rstrip('?.! ')}”." + (
+        f" That was about {where}." if where else ""
+    )
+    earlier = []
+    for t in reversed(turns[:-1]):
+        w = _where(t.lesson_id, t.stage_id)
+        if w and w != where and w not in earlier:
+            earlier.append(w)
+    if earlier:
+        reply += " Before that we covered " + "; ".join(earlier) + "."
+    return reply + " Want me to go on from there?"
+
+
 def _free_reply(req: AskRequest, u: Understood) -> dict | None:
     """Replies that need no search and no model: small talk, the course itself, re-explaining a stage."""
     ctx = u.ctx
+    if ctx.intent == "recall":
+        return chat_reply(_recall(req.history))
     if u.greeting_only or ctx.intent == "greeting":
         return chat_reply(_greeting(req.question))
     if ctx.intent == "thanks":

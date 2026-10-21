@@ -112,7 +112,7 @@ export function TutorPanel({ lessonId, lessonNumber, stageId, stageLabel, onGoTo
   const aiOn = aiMode && aiAvailable
 
   const push = useCallback((m: NewMessage) => setMessages((all) => [...all, { ...m, id: next.current++ } as Message]), [])
-  const history = (): TutorTurn[] => messages.map(turnOf).filter((t): t is TutorTurn => !!t).slice(-4)
+  const history = (): TutorTurn[] => messages.map(turnOf).filter((t): t is TutorTurn => !!t).slice(-6)
 
   const ask = async (q: string) => {
     const question = q.trim()

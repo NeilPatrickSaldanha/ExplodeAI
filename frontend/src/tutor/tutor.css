@@ -124,9 +124,12 @@
 }
 
 .tmsg__cites {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  /* Inline (not flex) so the spaces between tags survive copy and paste. */
+  display: inline;
+}
+.tmsg__cites .tmsg__cite {
+  display: inline-block;
+  margin: 2px 0;
 }
 
 .tmsg__cite,
