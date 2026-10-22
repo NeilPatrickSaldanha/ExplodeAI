@@ -21,7 +21,9 @@ export function spreadParts<T extends { explode: Vec3 }>(parts: T[], spread: Vec
 
 /** World position of a part at explosion factor t. */
 export function partPosition(part: Pick<PartSpec, 'position' | 'explode'>, t: number): Vec3 {
-  const e = easeInOutCubic(t)
+  // Linear on purpose: the slider is the control, so every 10% must move the parts by the same visible
+  // amount. (An ease-in-out curve made 80% to 100% look identical.)
+  const e = clamp01(t)
   const lift = Math.sin(Math.PI * clamp01(t)) * LIFT
   return [
     part.position[0] + part.explode[0] * e,

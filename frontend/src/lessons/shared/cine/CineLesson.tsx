@@ -87,7 +87,7 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
   // One orchestrated entrance: the machine explodes open, then stage 01 lights up.
   useEffect(() => {
     // Stage 01 is shown, not marked explored: progress only counts the learner's own clicks.
-    const id = setTimeout(() => setView((v) => ({ ...v, explode: 0.85, selectedId: v.selectedId ?? stageIds[0] })), reducedMotion ? 0 : 350)
+    const id = setTimeout(() => setView((v) => ({ ...v, explode: 1, selectedId: v.selectedId ?? stageIds[0] })), reducedMotion ? 0 : 350)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

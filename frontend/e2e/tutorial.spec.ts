@@ -47,7 +47,7 @@ test('walkthrough: spotlights controls, asks for real actions, and finishes', as
   // Explode slider, from the keyboard
   await expect(page.locator('.tut__title')).toHaveText(/pull it apart/i)
   await page.locator('#explode').focus()
-  await page.keyboard.press('End')
+  await page.keyboard.press('Home') // lessons now open fully exploded, so move it back together
   await expect(page.locator('.tut__task')).toContainText('that worked')
   await next(page).click()
   // Pick a stage

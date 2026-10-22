@@ -4,7 +4,7 @@ import type { AssemblySpec, Readouts } from '../../engine/types'
 import { linkKey } from '../../engine/types'
 
 /** How far this lesson's parts spread when fully exploded (x, y, z). */
-const SPREAD: [number, number, number] = [2.3, 1.2, 1.5]
+const SPREAD: [number, number, number] = [3, 1.4, 2.2]
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   return {

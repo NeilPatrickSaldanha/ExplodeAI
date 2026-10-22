@@ -33,6 +33,14 @@ describe('engine math', () => {
     expect(partPosition(spec.parts[0], 0.5)[1]).toBeGreaterThan(0)
   })
 
+  it('moves parts by an equal, visible amount for every 10% of the slider', () => {
+    const xs = Array.from({ length: 11 }, (_, i) => partPosition(spec.parts[0], i / 10)[0])
+    const steps = xs.slice(1).map((x, i) => Math.abs(x - xs[i]))
+    steps.forEach((d) => expect(d).toBeCloseTo(steps[0], 6))
+    expect(steps[0]).toBeGreaterThan(0.1)
+    expect(Math.abs(xs[10] - xs[8])).toBeGreaterThan(0.2 * Math.abs(xs[10] - xs[0]) * 0.9)
+  })
+
   it('bezier hits both endpoints', () => {
     expect(quadBezier([0, 0, 0], [1, 2, 0], [2, 0, 0], 0)).toEqual([0, 0, 0])
     expect(quadBezier([0, 0, 0], [1, 2, 0], [2, 0, 0], 1)).toEqual([2, 0, 0])
