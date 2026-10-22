@@ -63,6 +63,13 @@ export const api = {
   lessons: () => request<LessonSummary[]>('/api/lessons'),
   lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
   ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
+  runAgent: (params: Partial<import('./types').AgentParams>) =>
+    post<import('./types').AgentResult>('/api/experiments/agent/run', params),
+  ablateAgent: (params: Partial<import('./types').AgentParams>, stage: string) =>
+    post<{ baseline: import('./types').AgentAblationOutcome; ablated: import('./types').AgentAblationOutcome }>(
+      '/api/experiments/agent/ablate', { ...params, stage }),
+  checkAgentChallenge: (lessonId: string, challengeId: string, params: Partial<import('./types').AgentParams>) =>
+    post<import('./types').AgentCheck>(`/api/experiments/agent/challenges/${lessonId}/${challengeId}/check`, params),
   runAttend: (params: Partial<import('./types').AttendParams>) =>
     post<import('./types').AttendResult>('/api/experiments/attend/run', params),
   ablateAttend: (params: Partial<import('./types').AttendParams>, stage: string) =>

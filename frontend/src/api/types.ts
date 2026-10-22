@@ -451,6 +451,92 @@ export interface AttendCheck extends ChallengeOutcome {
   result: AttendResult
 }
 
+export interface AgentParams {
+  goal: string
+  descriptions: 'detailed' | 'vague'
+  validate_args: boolean
+  max_steps: number | null
+  require_approval: boolean
+  approve: boolean
+  refund_tool: boolean
+  poisoned_doc: boolean
+}
+
+export interface AgentToolDef {
+  name: string
+  description: string
+  input_schema: { type: 'object'; properties: Record<string, { type: string; pattern?: string }>; required: string[] }
+  side_effects: boolean
+}
+
+export interface AgentDecision {
+  kind: 'tool_call' | 'final'
+  reason: string
+  tool: string | null
+  arguments: Record<string, unknown>
+  scores: { tool: string; score: number }[]
+}
+
+export interface AgentStep {
+  index: number
+  tokens_in: number
+  visible_messages: number
+  decision: AgentDecision | null
+  validation?: { checked: boolean; errors: string[] }
+  execution?: { ran: boolean; reason?: string; ms?: number; is_error?: boolean; approved_by_person?: boolean }
+  observation?: { returned: boolean; is_error?: boolean; content: Record<string, unknown> | null }
+}
+
+export type AgentMessage =
+  | { role: 'user'; content: string }
+  | { role: 'assistant'; kind: 'final'; content: string }
+  | { role: 'assistant'; kind: 'tool_call'; id: string; tool: string; arguments: Record<string, unknown> }
+  | { role: 'tool'; tool_call_id: string; tool: string; content: Record<string, unknown>; is_error: boolean }
+
+export type AgentStatus = 'running' | 'answered' | 'needs_approval' | 'step_limit' | 'safety_cap' | 'no_decision' | 'no_goal'
+
+export interface AgentResult {
+  params: AgentParams
+  model: { kind: 'stand_in'; note: string; today: string; hard_cap: number; token_label: string }
+  system: string
+  tools: AgentToolDef[]
+  steps: AgentStep[]
+  messages: AgentMessage[]
+  status: AgentStatus
+  answer: string | null
+  held: { tool: string; arguments: Record<string, unknown> } | null
+  refunds: { refund_id: string; order_id: string; amount: number; currency: string }[]
+  stats: {
+    steps: number
+    tool_calls: number
+    tool_runs: number
+    invalid_calls: number
+    tokens_last: number
+    tokens_total: number
+    unapproved_side_effects: number
+    answered: boolean
+  }
+  timings_ms: Record<string, number>
+  stages: string[]
+}
+
+export interface AgentAblationOutcome {
+  removed: string | null
+  status: AgentStatus
+  answer: string | null
+  steps: number
+  tool_calls: number
+  tool_runs: number
+  invalid_calls: number
+  tokens_total: number
+  calls: string[]
+  notes: string[]
+}
+
+export interface AgentCheck extends ChallengeOutcome {
+  result: AgentResult
+}
+
 export interface TutorSentence {
   text: string
   passage_id: string

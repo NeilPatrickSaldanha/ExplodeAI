@@ -1,0 +1,1236 @@
+id: agents
+number: 5
+title: Tool-using agents, exploded
+summary: 'See a model in a loop: it decides, the application acts, and the result goes back in. Run a real agent
+  loop with real tools (the decisions come from a clearly labelled stand-in), break it on purpose, and rebuild it.'
+status: published
+version: 1.0.0
+updated: '2026-10-22'
+estimated_minutes: 30
+objectives:
+- 'Trace one pass round an agent loop: goal, tool list, decision, check, run, result, memory and stop.'
+- Explain why the model only asks for a tool and the application runs it, and why the application must check the
+  call first.
+- 'Read the cost of a loop: the whole conversation is re-read on every step.'
+- 'Diagnose broken setups: a loop that never stops, vague tool descriptions, and an instruction hidden in a tool
+  result.'
+prerequisites:
+- Lessons 01 to 04 help but are not required. Lesson 01 introduces the made-up shop.
+claims:
+- id: agent-workflow-vs-agent
+  kind: definition
+  text: Anthropic separates workflows, where code orchestrates the model and tools along predefined paths, from
+    agents, where the model directs its own process and tool use. It calls both agentic systems.
+  citations:
+  - source: anthropic_building_agents
+    excerpt: Workflows are systems where LLMs and tools are orchestrated through predefined code paths.
+    locator: What are agents?
+  - source: anthropic_building_agents
+    excerpt: Agents, on the other hand, are systems where LLMs dynamically direct their own processes and tool usage
+    locator: What are agents?
+  - source: anthropic_building_agents
+    excerpt: At Anthropic, we categorize all these variations as agentic systems
+    locator: What are agents?
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: The same loop code takes different paths for different goals (the stand-in's choices depend on the
+        goal and on earlier results).
+- id: agent-loop
+  kind: fact
+  text: 'In the typical case an agent is a model using tools in a loop: it asks for a tool, the application runs
+    it and reports back, and the model continues.'
+  citations:
+  - source: anthropic_building_agents
+    excerpt: They are typically just LLMs using tools based on environmental feedback in a loop.
+    locator: Agents
+  - source: anthropic_tool_how
+    excerpt: 'every tool call is a round trip: the model asks, you execute, you report back, the model continues.'
+    locator: The agentic loop (client tools)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: 'The loop runs for real: each tool result changes what the next decision is.'
+- id: react-origin
+  kind: fact
+  text: The ReAct paper (2022) has a language model generate reasoning traces and task-specific actions in an interleaved
+    manner, with actions that interface with external sources such as knowledge bases.
+  citations:
+  - source: yao2022react
+    excerpt: generate both reasoning traces and task-specific actions in an interleaved manner
+    locator: Abstract
+  - source: yao2022react
+    excerpt: interface with external sources, such as knowledge bases or environments
+    locator: Abstract
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Historical research result; the paper's benchmarks are not re-run.
+- id: toolformer-origin
+  kind: fact
+  text: Toolformer (2023) trains a language model to decide which APIs to call, when to call them and what arguments
+    to pass.
+  citations:
+  - source: schick2023toolformer
+    excerpt: a model trained to decide which APIs to call, when to call them, what arguments to pass
+    locator: Abstract
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Historical research result; the paper's training method is not re-run.
+- id: mrkl-origin
+  kind: fact
+  text: The MRKL paper (2022) proposes a flexible architecture that combines multiple neural models, including large
+    language models, with discrete knowledge and reasoning modules.
+  citations:
+  - source: karpas2022mrkl
+    excerpt: we define a flexible architecture with multiple neural models, complemented by discrete knowledge and
+      reasoning modules
+    locator: Abstract
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Historical research result; the paper's system is not re-run.
+- id: tool-definition
+  kind: provider_specific
+  text: Anthropic, OpenAI and Gemini all describe a tool to the model with a name, a description and a schema for
+    its parameters. Anthropic and OpenAI call it JSON Schema; Gemini uses a subset of the OpenAPI schema.
+  citations:
+  - source: anthropic_tool_define
+    excerpt: A JSON Schema object defining the expected parameters for the tool.
+    locator: Specifying client tools (input_schema)
+  - source: anthropic_tool_define
+    excerpt: The name of the tool. Must match the regex ^[a-zA-Z0-9_-]{1,128}$.
+    locator: Specifying client tools (name)
+  - source: openai_function_calling
+    excerpt: JSON schema defining the function's input arguments
+    locator: Defining functions (parameters)
+  - source: gemini_function_calling
+    excerpt: Unique function name (use underscores or camelCase).
+    locator: Function declarations (name)
+  - source: gemini_function_calling
+    excerpt: only a subset of the OpenAPI schema is supported
+    locator: Function declarations (notes)
+  - source: gemini_function_calling
+    excerpt: Clear explanation of the function's purpose.
+    locator: Function declarations (description)
+  - source: gemini_function_calling
+    excerpt: Input parameters the function expects.
+    locator: Function declarations (parameters)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: Every tool in the experiment has a name, a description and a JSON Schema for its arguments.
+  provider: Anthropic/OpenAI/Google
+- id: tool-descriptions-matter
+  kind: provider_specific
+  text: 'Anthropic''s guidance is that detailed tool descriptions are by far the most important factor in tool performance:
+    what the tool does, when to use it and when not to, what each parameter means, and any caveats, in at least
+    3–4 sentences.'
+  citations:
+  - source: anthropic_tool_define
+    excerpt: Provide extremely detailed descriptions. This is by far the most important factor in tool performance.
+    locator: Best practices for tool definitions
+  - source: anthropic_tool_define
+    excerpt: Aim for at least 3–4 sentences for each tool description, more if the tool is complex.
+    locator: Best practices for tool definitions
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Guidance about how real models perform. ExplodeAI's stand-in decider only shows the mechanism, so this
+        is not measured.
+  provider: Anthropic
+- id: tool-choice
+  kind: provider_specific
+  text: 'Anthropic, OpenAI and Gemini let the application set how free the model is: automatic (the model decides
+    whether to call a tool), a mode that requires some tool call (Anthropic any, OpenAI required, Gemini ANY), or
+    a named tool (Anthropic tool, OpenAI forced function). Not every model supports the required and forced modes.'
+  citations:
+  - source: anthropic_tool_define
+    excerpt: auto allows Claude to determine whether to call any provided tools. This is the default value when
+      tools are provided.
+    locator: Forcing tool use (tool_choice)
+  - source: anthropic_tool_define
+    excerpt: any tells Claude that it must use one of the provided tools, but doesn't force a particular tool.
+    locator: Forcing tool use (tool_choice)
+  - source: anthropic_tool_define
+    excerpt: Not every model and setting supports forced tool use.
+    locator: Forcing tool use
+  - source: openai_function_calling
+    excerpt: Call zero, one, or multiple functions.
+    locator: Tool choice (auto)
+  - source: openai_function_calling
+    excerpt: Call one or more functions.
+    locator: Tool choice (required)
+  - source: openai_function_calling
+    excerpt: Call exactly one specific function.
+    locator: Tool choice (forced)
+  - source: gemini_function_calling
+    excerpt: Model is constrained to always predict a function call.
+    locator: Function calling modes (ANY)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Provider API options; ExplodeAI's loop does not call a provider.
+  provider: Anthropic/OpenAI/Google
+- id: tools-run-in-application
+  kind: fact
+  text: For user-defined tools the model only asks for a call. The application runs the code and sends the result
+    back. Anthropic, for one, also offers server tools, which Anthropic runs for you.
+  citations:
+  - source: anthropic_tool_how
+    excerpt: The model never runs anything on its own.
+    locator: The tool-use contract
+  - source: gemini_function_calling
+    excerpt: The model doesn't execute the function itself.
+    locator: How function calling works
+  - source: openai_function_calling
+    excerpt: Execute code on the application side with input from the tool call
+    locator: The function calling flow
+  - source: anthropic_tool_how
+    excerpt: Anthropic runs the code. You enable the tool in your request and the server handles everything else.
+    locator: Server-executed tools
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: In the experiment the decision and the execution are separate steps; with the Run step removed the
+        calls are made but never run (test_agent_ablation).
+- id: tool-result-linked
+  kind: provider_specific
+  text: 'After running a tool, the application sends the result back in a tool-result message that refers to the
+    specific call it answers (OpenAI: a call_id; Anthropic: a tool_result block carrying the tool_use_id).'
+  citations:
+  - source: openai_function_calling
+    excerpt: should contain a reference to a specific model tool call (referenced by call_id in the examples to
+      come)
+    locator: Tool call outputs
+  - source: anthropic_tool_overview
+    excerpt: '{"type": "tool_result", "tool_use_id": tool_use.id, "content": weather}'
+    locator: How tool use works (Python example)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: In ExplodeAI's own loop every result carries the id of the call that asked for it, checked pair by
+        pair. The providers' APIs are not called.
+  provider: OpenAI/Anthropic
+- id: loop-stop-reason
+  kind: provider_specific
+  text: For client tools in Anthropic's API, a reply that asks for a tool has stop_reason "tool_use". The application
+    keeps looping while that is the stop reason, and the loop exits on any other, such as "end_turn" for a final
+    answer.
+  citations:
+  - source: anthropic_tool_how
+    excerpt: 'Claude responds with stop_reason: "tool_use" and one or more tool_use blocks.'
+    locator: The agentic loop (client tools)
+  - source: anthropic_tool_how
+    excerpt: Repeat from step 2 while stop_reason is "tool_use".
+    locator: The agentic loop (client tools)
+  - source: anthropic_tool_how
+    excerpt: The loop exits on any other stop reason ("end_turn", "max_tokens", "stop_sequence", or "refusal")
+    locator: The agentic loop (client tools)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Anthropic API field names; ExplodeAI's loop does not call the API.
+  provider: Anthropic
+- id: tool-errors-are-results
+  kind: provider_specific
+  text: 'In the Model Context Protocol a tool that fails while running, for example with an API failure or input
+    its own logic rejects, reports the error in its result, flagged isError: true. Unknown tools and malformed requests
+    are JSON-RPC protocol errors instead.'
+  citations:
+  - source: mcp_tools_20250618
+    excerpt: 'Tool Execution Errors: Reported in tool results with isError: true'
+    locator: Error Handling
+  - source: mcp_tools_20250618
+    excerpt: Invalid input data
+    locator: Error Handling
+  - source: mcp_tools_20250618
+    excerpt: 'Protocol Errors: Standard JSON-RPC errors for issues like:'
+    locator: Error Handling
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: 'ExplodeAI''s loop sends both kinds of failure back to the agent as results: a call its own Check step
+        rejects (the agent corrects it) and a tool that fails while running.'
+  provider: Model Context Protocol
+- id: validate-tool-inputs
+  kind: provider_specific
+  text: A model's tool call is a request, not a guarantee. The MCP specification says servers must validate all
+    tool inputs, and OpenAI's strict option makes calls reliably adhere to the schema.
+  citations:
+  - source: mcp_tools_20250618
+    excerpt: Validate all tool inputs
+    locator: Security Considerations (servers MUST)
+  - source: openai_function_calling
+    excerpt: will ensure function calls reliably adhere to the function schema
+    locator: Strict mode
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: The experiment checks every call against its schema; with checking off, a malformed order ID reaches
+        the tool.
+  provider: Model Context Protocol/OpenAI
+- id: stopping-conditions
+  kind: fact
+  text: Agent loops commonly include stopping conditions, such as a maximum number of iterations, to maintain control.
+  citations:
+  - source: anthropic_building_agents
+    excerpt: it's also common to include stopping conditions (such as a maximum number of iterations) to maintain
+      control.
+    locator: Agents
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: A step limit ends a loop that would otherwise never finish; without one only the experiment's hard
+        cap does.
+- id: agents-cost-errors
+  kind: fact
+  text: Anthropic warns that the autonomy of agents means higher costs and the potential for compounding errors,
+    and recommends extensive testing in sandboxed environments with appropriate guardrails.
+  citations:
+  - source: anthropic_building_agents
+    excerpt: The autonomous nature of agents means higher costs, and the potential for compounding errors.
+    locator: Agents
+  - source: anthropic_building_agents
+    excerpt: We recommend extensive testing in sandboxed environments, along with the appropriate guardrails.
+    locator: Agents
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: General guidance; the lesson's token chart shows ExplodeAI's own numbers but does not test this statement.
+- id: sdk-max-turns
+  kind: provider_specific
+  text: In the OpenAI Agents SDK the runner runs the model's tool calls and re-runs the loop until the model produces
+    a final output with no tool calls. Passing max_turns caps this and raises MaxTurnsExceeded when exceeded; max_turns=None
+    disables the limit.
+  citations:
+  - source: openai_agents_running
+    excerpt: If the LLM produces tool calls, we run those tool calls, append the results, and re-run the loop.
+    locator: The agent loop
+  - source: openai_agents_running
+    excerpt: If we exceed the max_turns passed, we raise a MaxTurnsExceeded exception.
+    locator: The agent loop
+  - source: openai_agents_running
+    excerpt: Pass max_turns=None to disable this turn limit.
+    locator: The agent loop
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: SDK behaviour; ExplodeAI's loop is its own code, not the SDK.
+  provider: OpenAI Agents SDK
+- id: context-resent
+  kind: provider_specific
+  text: In Anthropic's API each step of the loop is a new request that carries the original messages, the assistant's
+    reply and the tool results, so the model re-reads the whole history every step.
+  citations:
+  - source: anthropic_tool_how
+    excerpt: Send a new request containing the original messages, the assistant's response, and a user message with
+      the tool_result blocks.
+    locator: The agentic loop (client tools)
+  - source: anthropic_context_windows
+    excerpt: Contains all previous conversation history plus the current user message
+    locator: How the context window works
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: In the experiment the number of tokens the model reads grows on every step, and the total counts every
+        re-read.
+  provider: Anthropic
+- id: tool-tokens-billed
+  kind: provider_specific
+  text: Tool definitions (OpenAI, Anthropic) and tool results (Anthropic) are part of the input, so they count against
+    the context limit and are billed as input tokens.
+  citations:
+  - source: openai_function_calling
+    excerpt: callable function definitions count against the model's context limit and are billed as input tokens.
+    locator: Token usage
+  - source: anthropic_tool_overview
+    excerpt: The total number of input tokens sent to the model (including in the tools parameter)
+    locator: Pricing
+  - source: anthropic_tool_overview
+    excerpt: tool_result content blocks in API requests
+    locator: Pricing
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: In the experiment tool definitions and results add to the counted input (teaching tokenizer). Billing
+        is provider behaviour and is not tested.
+  provider: OpenAI/Anthropic
+- id: context-window-limit
+  kind: provider_specific
+  text: Everything in an Anthropic request, including tool results and tool definitions, counts toward the context
+    window. If the input alone exceeds the window, the API returns a 400 error.
+  citations:
+  - source: anthropic_context_windows
+    excerpt: 'Everything in the request counts toward the context window: the system prompt, every message in messages
+      (including tool results, images, and documents), and your tool definitions.'
+    locator: How the context window works
+  - source: anthropic_context_windows
+    excerpt: If the input alone already exceeds the model's context window, the API returns a 400 invalid_request_error
+    locator: Context window overflow behavior
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Provider limits; the experiment does not model a context window.
+  provider: Anthropic
+- id: indirect-injection
+  kind: fact
+  text: Greshake et al. (2023) argue that LLM-integrated applications blur the line between data and instructions,
+    and show how instructions planted in data likely to be retrieved can then act like arbitrary code execution
+    and control whether and how other APIs are called.
+  citations:
+  - source: greshake2023injection
+    excerpt: by strategically injecting prompts into data likely to be retrieved
+    locator: Abstract
+  - source: greshake2023injection
+    excerpt: We argue that LLM-Integrated Applications blur the line between data and instructions.
+    locator: Abstract
+  - source: greshake2023injection
+    excerpt: We show how processing retrieved prompts can act as arbitrary code execution
+    locator: Abstract
+  - source: greshake2023injection
+    excerpt: control how and if other APIs are called
+    locator: Abstract
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: The experiment's stand-in follows an instruction hidden in a retrieved page, on purpose. It shows the
+        mechanism and does not measure real models.
+- id: injection-no-foolproof
+  kind: fact
+  text: OWASP lists prompt injection as LLM01 in its 2025 Top 10 for LLM applications. It says it is unclear whether
+    fool-proof prevention exists, and that RAG and fine-tuning do not fully mitigate it.
+  citations:
+  - source: owasp_llm01
+    excerpt: it is unclear if there are fool-proof methods of prevention for prompt injection.
+    locator: Prevention and Mitigation Strategies
+  - source: owasp_llm01
+    excerpt: research shows that they do not fully mitigate prompt injection vulnerabilities
+    locator: Description
+  - source: owasp_llm01
+    excerpt: when an LLM accepts input from external sources, such as websites or files
+    locator: Description (indirect prompt injection)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: A statement about the state of the field, not a behaviour to test.
+- id: owasp-excessive-agency
+  kind: fact
+  text: OWASP's guidance for excessive agency (LLM06:2025) is to limit an agent's extensions and permissions to
+    the minimum necessary, and to require a human to approve high-impact actions before they are taken.
+  citations:
+  - source: owasp_llm06
+    excerpt: Limit the extensions that LLM agents are allowed to call to only the minimum necessary.
+    locator: Prevention and mitigation
+  - source: owasp_llm06
+    excerpt: Limit the permissions that LLM extensions are granted to other systems to the minimum necessary
+    locator: Prevention and mitigation
+  - source: owasp_llm06
+    excerpt: Utilise human-in-the-loop control to require a human to approve high-impact actions before they are
+      taken.
+    locator: Prevention and mitigation
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: In the experiment, removing the refund tool or requiring approval each stop the injected refund.
+- id: mcp-tools-primitive
+  kind: provider_specific
+  text: In the Model Context Protocol (specification 2025-06-18) servers expose tools to language models. Clients
+    discover them with tools/list and invoke them with tools/call, and a tool has a name, a description and an inputSchema.
+  citations:
+  - source: mcp_tools_20250618
+    excerpt: allows servers to expose tools that can be invoked by language models.
+    locator: Tools
+  - source: mcp_tools_20250618
+    excerpt: To discover available tools, clients send a tools/list request.
+    locator: Listing Tools
+  - source: mcp_tools_20250618
+    excerpt: 'To invoke a tool, clients send a tools/call request:'
+    locator: Calling Tools
+  - source: mcp_tools_20250618
+    excerpt: 'inputSchema: JSON Schema defining expected parameters'
+    locator: Data Types (Tool)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: not_applicable
+      notes: Protocol specification; ExplodeAI does not implement MCP.
+  provider: Model Context Protocol
+- id: mcp-human-in-loop
+  kind: provider_specific
+  text: The MCP specification says there SHOULD always be a human in the loop with the ability to deny tool invocations,
+    and that clients SHOULD prompt for user confirmation on sensitive operations.
+  citations:
+  - source: mcp_tools_20250618
+    excerpt: there SHOULD always be a human in the loop with the ability to deny tool invocations.
+    locator: User Interaction Model
+  - source: mcp_tools_20250618
+    excerpt: Prompt for user confirmation on sensitive operations
+    locator: Security Considerations (clients SHOULD)
+  verification:
+    primary:
+      status: passed
+      date: '2026-10-22'
+      by: pass1/deep-research
+    cross_check:
+      status: passed
+      date: '2026-10-22'
+      by: pass2/independent-agent
+      notes: See research_notes/Agents primary sources/pass2_cross_check.md. Wording, locators and notes fixed from
+        it; every excerpt re-checked word for word against the live page.
+    technical:
+      status: passed
+      date: '2026-10-22'
+      by: pass3/pytest
+      notes: ExplodeAI's approval gate holds a refund until a person approves it. It shows the pattern and does
+        not implement MCP.
+  provider: Model Context Protocol
+components:
+- id: goal
+  label: Goal
+  phase: input
+  short: What the customer asked for.
+  detail: The request arrives as plain text. It is the first message in the conversation and the thing every later
+    step works towards. Here the customer writes to a made-up bike shop.
+  claims:
+  - agent-workflow-vs-agent
+  - agent-loop
+  geometry:
+    shape: card
+    size:
+    - 0.9
+    - 0.5
+    - 0.7
+  position:
+  - -2.2
+  - 0
+  - -0.8
+  explode:
+  - -0.9
+  - 0
+  - -0.9
+  subtitle: The customer's request
+  icon: Target
+  inputs:
+  - Customer message
+  outputs:
+  - First message
+  breaks_if_removed: Nothing tells the agent what to do, so it does nothing.
+- id: tools
+  label: Tool registry
+  phase: input
+  short: The menu of things the agent may ask for.
+  detail: Each tool has a name, a plain-language description and a JSON Schema for its arguments. The model never
+    sees the code behind a tool, only this description of it.
+  claims:
+  - tool-definition
+  - tool-descriptions-matter
+  - mrkl-origin
+  - mcp-tools-primitive
+  geometry:
+    shape: grid
+    size:
+    - 1.0
+    - 0.35
+    - 0.8
+  position:
+  - -2.2
+  - 0
+  - 0.8
+  explode:
+  - -0.9
+  - 0
+  - 0.9
+  subtitle: Names, descriptions, schemas
+  icon: Wrench
+  inputs:
+  - Tool definitions
+  outputs:
+  - Tool list for the model
+  breaks_if_removed: The agent cannot look anything up, so it answers without checking the order or the policy.
+- id: decide
+  label: Decide
+  phase: decide
+  short: Pick a tool and its arguments, or give the final answer.
+  detail: The model reads the goal, the tool list and everything so far, then either asks for a tool call or writes
+    its final answer. In this lesson a short stand-in rule plays the model, and it is labelled as a simulation.
+  claims:
+  - tool-choice
+  - loop-stop-reason
+  - react-origin
+  - toolformer-origin
+  geometry:
+    shape: lens
+    size:
+    - 0.9
+    - 0.6
+    - 0.7
+  position:
+  - -0.9
+  - 0
+  - 0
+  explode:
+  - -0.2
+  - 0
+  - 0
+  subtitle: Call a tool or answer
+  icon: Brain
+  inputs:
+  - Goal
+  - Tool list
+  - Conversation so far
+  outputs:
+  - A tool call, or the final answer
+  breaks_if_removed: Nothing chooses an action, so no tool is ever called and no answer comes out.
+- id: validate
+  label: Check
+  phase: act
+  short: Is the call well formed?
+  detail: Before anything runs, the application checks the arguments against the tool's schema. A bad call is turned
+    into an error message instead of being run.
+  claims:
+  - validate-tool-inputs
+  geometry:
+    shape: ring
+    size:
+    - 0.8
+    - 0.5
+    - 0.8
+  position:
+  - 0.3
+  - 0
+  - -0.8
+  explode:
+  - 0.3
+  - 0
+  - -0.9
+  subtitle: Arguments against the schema
+  icon: ShieldCheck
+  inputs:
+  - Tool call
+  outputs:
+  - Checked call, or an error
+  breaks_if_removed: A malformed order ID goes straight to the tool, which finds no such order, so the agent tells
+    the customer their order doesn't exist.
+- id: execute
+  label: Run
+  phase: act
+  short: The application runs the tool.
+  detail: The model only asked. Ordinary code in the application does the work, and anything that changes something
+    real, like a refund, can wait here for a person to approve it.
+  claims:
+  - tools-run-in-application
+  - owasp-excessive-agency
+  - mcp-human-in-loop
+  geometry:
+    shape: prism
+    size:
+    - 0.9
+    - 0.6
+    - 0.7
+  position:
+  - 1.5
+  - 0
+  - -0.8
+  explode:
+  - 0.9
+  - 0
+  - -0.9
+  subtitle: Your code does the work
+  icon: Wrench
+  inputs:
+  - Checked call
+  outputs:
+  - Raw tool output
+  breaks_if_removed: Tool calls are made but nothing runs them, so no result ever comes back and the agent repeats
+    the same request until the step limit stops it.
+- id: observe
+  label: Result
+  phase: observe
+  short: What the tool sent back.
+  detail: The output, or the error, goes back to the model as a message that points at the call it answers. Whatever
+    a tool returns is data, but the model reads it like everything else.
+  claims:
+  - tool-result-linked
+  - tool-errors-are-results
+  - indirect-injection
+  - injection-no-foolproof
+  geometry:
+    shape: slab
+    size:
+    - 0.9
+    - 0.4
+    - 0.7
+  position:
+  - 1.5
+  - 0
+  - 0.8
+  explode:
+  - 0.9
+  - 0
+  - 0.9
+  subtitle: Output goes back in
+  icon: Eye
+  inputs:
+  - Raw tool output
+  outputs:
+  - A result message
+  breaks_if_removed: Tools run but their results never reach the agent, so it repeats the same call until the step
+    limit stops it.
+- id: context
+  label: Context
+  phase: remember
+  short: The conversation, re-read on every step.
+  detail: 'In a plain API loop, each step sends the whole conversation to the model again: the instructions, the
+    tool list, every call and every result. The pile grows with each step, and every token of it is read again (and,
+    unless the provider charges less for a repeated start, paid for again).'
+  claims:
+  - context-resent
+  - tool-tokens-billed
+  - context-window-limit
+  geometry:
+    shape: cylinder
+    size:
+    - 0.8
+    - 0.6
+    - 0.8
+  position:
+  - 0.3
+  - 0
+  - 0.8
+  explode:
+  - 0.3
+  - 0
+  - 0.9
+  subtitle: Re-read every step
+  icon: Notebook
+  inputs:
+  - Result message
+  outputs:
+  - A longer conversation
+  breaks_if_removed: The agent only remembers its goal and the latest result, so it forgets what it found and goes
+    round in circles.
+- id: stop
+  label: Stop
+  phase: finish
+  short: Answer, or run out of steps.
+  detail: The loop ends when the model gives a final answer. A step limit is a second way out, for the day the model
+    never does. A loop can also pause while it waits for a person to approve something.
+  claims:
+  - stopping-conditions
+  - sdk-max-turns
+  - agents-cost-errors
+  geometry:
+    shape: stack
+    size:
+    - 0.9
+    - 0.5
+    - 0.7
+  position:
+  - -0.9
+  - 0
+  - 1.7
+  explode:
+  - -0.2
+  - 0
+  - 0.9
+  subtitle: Done, or cut off
+  icon: FlagCheckered
+  inputs:
+  - Decision
+  outputs:
+  - Answer, or a stopped run
+  breaks_if_removed: Nothing ends the loop, not even the agent's own answer, so it keeps running until the experiment's
+    hard cap cuts it off.
+connections:
+- source: goal
+  target: decide
+  flow: query
+  payload: request
+- source: tools
+  target: decide
+  flow: vector
+  payload: tool list
+- source: decide
+  target: validate
+  flow: vector
+  payload: tool call
+- source: validate
+  target: execute
+  flow: vector
+  payload: checked call
+- source: execute
+  target: observe
+  flow: vector
+  payload: raw output
+- source: observe
+  target: context
+  flow: document
+  payload: result message
+- source: context
+  target: decide
+  flow: document
+  payload: whole conversation
+- source: decide
+  target: stop
+  flow: document
+  payload: final answer
+visuals:
+- id: ablation
+  kind: real_execution
+  label: Real execution, part removed
+  description: The agent loop really runs without the chosen part, side by side with the full loop.
+- id: exploded-view
+  kind: conceptual
+  label: Conceptual diagram
+  description: Positions and shapes are a visual metaphor. Arrows follow the real order of one pass round the loop.
+- id: data-flow
+  kind: conceptual
+  label: Conceptual animation
+  description: Moving packets show which step feeds which. Dotted lines carry the goal, dashed lines carry tool
+    calls, tool lists and tool output, solid lines carry messages. Speed carries no meaning.
+- id: experiment
+  kind: real_execution
+  label: Real execution · the loop and its tools
+  description: The loop, the argument checks, the tools and the token counts (made with a teaching tokenizer) really
+    run. The shop, its orders and its help-centre articles are made up.
+- id: decider
+  kind: simulation
+  label: Simulation · stand-in decider
+  description: 'A short rule plays the language model: it picks tools by comparing descriptions and follows instructions
+    it reads in results. It is not a language model, so it shows the loop, not how a real model behaves.'
+experiment:
+  engine: agent
+  endpoint: /api/experiments/agent/run
+  corpus_note: The shop is Ridgeline Bikes, the made-up shop from Lesson 01. The tools search its help centre, look
+    up four fake orders and count days (today is fixed at 2026-10-21). A refund only writes a line in this run's
+    own list; no money moves. A stand-in rule, not a language model, makes the decisions, so every run is free and
+    repeatable.
+  presets:
+  - label: Return
+    text: Hi! I'd like to return my E-Trail from order 1001. Can I get a refund?
+    note: The order ID is written as 1001, but the tool wants A1001. Watch the Check step reject it, then the agent
+      read the error and fix it. The refund waits for you to approve it.
+  - label: Too late
+    text: Can I return order A1002?
+    note: Delivered 50 days ago, past the 30-day window. The agent has to search the policy, look up the order and
+      count the days before it can answer.
+  - label: Custom
+    text: I want to return order A1003
+    note: A custom-built bike. The policy says these cannot be returned, and the order data says this one is custom-built.
+  - label: Status
+    text: Where is my order A1004?
+    note: One tool is enough here. Not every request needs the whole loop.
+  - label: Policy
+    text: How long do refunds take?
+    note: 'No order involved: one search of the help centre, then an answer.'
+challenges:
+- id: runaway-loop
+  title: The agent that never stops
+  brief: The tool descriptions are so vague that the agent keeps searching for the same thing, and nothing ends
+    the loop. Make it stop within 10 steps without touching the descriptions.
+  broken_params:
+    goal: Hi! I'd like to return my E-Trail from order 1001. Can I get a refund?
+    descriptions: vague
+    max_steps: null
+    validate_args: true
+    require_approval: true
+    refund_tool: true
+    poisoned_doc: false
+  locked_params:
+  - goal
+  - descriptions
+  - validate_args
+  - require_approval
+  - refund_tool
+  - poisoned_doc
+  checks:
+  - type: stops_within
+    limit: 10
+  hint: Which control caps how many times round the loop the agent may go?
+  explanation: A step limit does not make the agent right, it only stops the damage. Without one, a stuck loop keeps
+    calling tools and re-reading a longer and longer conversation. The cap is a safety net, not a fix.
+  claims:
+  - stopping-conditions
+  - sdk-max-turns
+  - agents-cost-errors
+- id: vague-tools
+  title: The tool that was never chosen
+  brief: Every tool is described in a few empty words, like 'gets information' or 'does an action'. The stand-in
+    keeps picking the wrong one and runs out of steps. Get it to answer, without changing the question or the step
+    limit.
+  broken_params:
+    goal: Can I return order A1002?
+    descriptions: vague
+    max_steps: 8
+    validate_args: true
+    require_approval: true
+    refund_tool: true
+    poisoned_doc: false
+  locked_params:
+  - goal
+  - max_steps
+  - validate_args
+  - require_approval
+  - refund_tool
+  - poisoned_doc
+  checks:
+  - type: answer_contains
+    gold:
+    - 50 days
+    - 30 days
+  hint: What does the agent compare when it chooses a tool?
+  explanation: The agent chooses a tool by comparing what it needs with the tool descriptions. When every description
+    says almost nothing, every tool scores the same and it just takes the first. Anthropic calls detailed descriptions
+    by far the most important factor in tool performance. (This lesson's stand-in rule shows the mechanism, it does
+    not measure a real model.)
+  claims:
+  - tool-descriptions-matter
+- id: injected-refund
+  title: The refund nobody approved
+  brief: Someone posted a forum answer into the help centre with instructions hidden in it. The agent reads it and
+    refunds an order the customer never mentioned. Stop money moving without a person approving it.
+  broken_params:
+    goal: What is your returns policy?
+    descriptions: detailed
+    max_steps: 8
+    validate_args: true
+    require_approval: false
+    refund_tool: true
+    poisoned_doc: true
+  locked_params:
+  - goal
+  - poisoned_doc
+  - descriptions
+  - max_steps
+  - validate_args
+  checks:
+  - type: no_unapproved_side_effects
+  hint: 'Two controls would each stop it: one limits what the agent can do, the other adds a person.'
+  explanation: 'A tool result is data, but a model reads it like any other text, so instructions planted in it can
+    be treated as commands. OWASP says it is unclear whether any foolproof prevention exists. What you can do is
+    limit the damage: give the agent only the tools it needs, and make a person approve actions that move money.'
+  claims:
+  - indirect-injection
+  - owasp-excessive-agency
+  - mcp-human-in-loop
+reconstruction:
+  prompt: Put the parts of one pass round the agent loop in an order that could actually run. Each part must come
+    after everything it needs.
+  dependencies:
+    goal: []
+    tools: []
+    decide:
+    - goal
+    - tools
+    validate:
+    - decide
+    execute:
+    - validate
+    observe:
+    - execute
+    context:
+    - observe
+    stop:
+    - decide
+tour:
+- component: goal
+  title: Start with the request
+  body: An agent starts with something a person wants. Everything after this is the agent working towards it, one
+    step at a time.
+  claims:
+  - agent-workflow-vs-agent
+- component: tools
+  title: Show it what it can use
+  body: The model is told what tools exist, but only as names, descriptions and argument rules. It never sees the
+    code.
+  claims:
+  - tool-definition
+- component: decide
+  title: Choose the next move
+  body: With the goal and the tool list in front of it, the model either asks for a tool call or writes its final
+    answer.
+  claims:
+  - tool-choice
+- component: validate
+  title: Check before running
+  body: A model can write a call that doesn't fit the rules. The application checks it first and sends an error
+    back instead of running it.
+  claims:
+  - validate-tool-inputs
+- component: execute
+  title: The application does the work
+  body: The model only asks. The application runs the tool, and can hold anything risky for a person to approve.
+  claims:
+  - tools-run-in-application
+- component: observe
+  title: Read what came back
+  body: The result goes back to the model as a message. It is data, but the model reads it like any other text.
+  claims:
+  - tool-result-linked
+- component: context
+  title: Everything is read again
+  body: In a plain API loop the model keeps nothing between steps. Each step sends the whole conversation again,
+    so the cost grows with every step.
+  claims:
+  - context-resent
+- component: stop
+  title: Know when to stop
+  body: The loop ends when the model answers. A step limit is the second way out, for when it never does.
+  claims:
+  - stopping-conditions
+verification_report: reports/Agents verification.md

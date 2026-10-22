@@ -45,7 +45,7 @@ Based on the Embeddings concept image. It builds directly on Lessons 01 and 02.
 ## Later candidates (ordered by how well they fit the exploded-machine metaphor)
 
 1. ~~**Attention, exploded:**~~ (built as Lesson 04, see content/lessons/attention) **Attention, exploded:** Q/K/V projection plates, a score grid, softmax, a weighted sum. A real tiny attention computation runs on the backend; the heat-grid is the 2D precision view.
-2. **Tool-using agent, exploded:** planner → tool router → tools → observation → memory loop. The loop is the hero animation; it runs offline with deterministic stub tools, clearly labelled as simulation.
+2. ~~**Tool-using agent, exploded:**~~ (built as Lesson 05, see content/lessons/agents) a goal → tools → decide → check → run → result → context → stop loop. The loop and its tools run for real offline over fictional data; a short stand-in rule plays the model and is labelled a simulation.
 3. **Evaluation harness, exploded:** dataset → runner → grader → metrics, reusing Lesson 01's challenges as test cases.
 
 ## "Ask ExplodeAI" tutor chatbot (built 2026-10-20; the original plan follows)

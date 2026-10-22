@@ -4,7 +4,7 @@ What is automated, and what needs a real phone.
 
 ## Automated (every run)
 
-- `frontend/e2e/responsive.spec.ts` checks all four lessons at 320, 375, 430 px, phone landscape (844×390) and
+- `frontend/e2e/responsive.spec.ts` checks all five lessons at 320, 375, 430 px, phone landscape (844×390) and
   tablet (768): no sideways scrolling, no control clipped off the right edge, all five modes reachable, and the
   tutor keeping room for its conversation, suggestion chips and input.
 - `frontend/e2e/mobile.spec.ts` (Pixel 7 emulation) checks touch target sizes, the tutorial as a bottom sheet,

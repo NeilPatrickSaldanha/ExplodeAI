@@ -68,6 +68,14 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
   an output projection. Every statement is checked against an independent plain-Python loop
   implementation. Ablation lives in `attend/ablation.py`; checks are `no_future_attention`,
   `not_saturated` and `order_matters`.
+- **Agent experiment** (`backend/app/experiments/agent/`) — a real tool-using agent loop
+  over FICTIONAL shop data: `tools.py` (four tools with JSON Schemas, a schema validator, the
+  executors, an in-memory refund ledger), `policy.py` (a short stand-in for the language model that
+  picks a tool by comparing descriptions and, on purpose, follows instructions found in tool results),
+  `pipeline.py` (decide → check → approve → run → observe → context, with a step limit, a 30-step hard
+  cap and token counts from Lesson 02's tokenizer) and `ablation.py` (the loop run for real without
+  each part). Checks are `stops_within`, `answer_contains` and `no_unapproved_side_effects`. The decider
+  is labelled a simulation everywhere it appears; nothing calls a provider.
 - **Tutor** (`backend/app/tutor/`, `routers/tutor.py`) — a RAG system over the lessons
   themselves. `index.py` splits every lesson into ~470 passages (claims, stage explanations,
   tours, challenges), each linked to its verified claims and sources; analogies are flagged as

@@ -161,3 +161,35 @@ def test_recall_with_no_history_says_so(client):
 def test_lesson_questions_that_mention_a_question_are_not_recall(client):
     out = client.post("/api/tutor/ask", json={"question": "what is the query in attention"}, headers=H).json()
     assert out["type"] == "answer"
+
+
+@pytest.mark.parametrize(
+    "message", ["'; DROP TABLE users; --", "<script>alert(1)</script>", "rm -rf / ; echo $HOME"]
+)
+def test_code_like_input_is_not_matched_against_the_lessons(client, message):
+    out = client.post("/api/tutor/ask", json={"question": message}, headers=H).json()
+    assert out["covered"] is False and out["sentences"] == [] and out["sources"] == []
+
+
+def test_the_tutor_knows_about_every_lesson(client):
+    from app.content.loader import content
+
+    lessons = content()[1]
+    about = (
+        client.post("/api/tutor/ask", json={"question": "who are you"}, headers=H).json()["message"].lower()
+    )
+    keywords = {
+        "rag-pipeline": "rag",
+        "tokenization": "tokeniz",
+        "embeddings": "embedding",
+        "attention": "attention",
+        "agents": "agents",
+    }
+    assert set(lessons) <= set(keywords), "a new lesson needs its name added to the tutor's about-me reply"
+    for lesson_id, word in keywords.items():
+        assert word in about, lesson_id
+    for number in range(1, len(lessons) + 1):
+        out = client.post(
+            "/api/tutor/ask", json={"question": f"what is in lesson {number}"}, headers=H
+        ).json()
+        assert out["type"] == "overview" and out["focus_number"] == number

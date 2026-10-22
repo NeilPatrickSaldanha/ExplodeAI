@@ -8,7 +8,7 @@ const SIZES = [
   { name: 'phone landscape', width: 844, height: 390 },
   { name: 'tablet 768', width: 768, height: 1024 },
 ]
-const LESSONS = ['rag-pipeline', 'tokenization', 'embeddings', 'attention']
+const LESSONS = ['rag-pipeline', 'tokenization', 'embeddings', 'attention', 'agents']
 
 /** Interactive elements that stick out past the right edge and are not inside a scroller. */
 async function clippedControls(page: Page) {
@@ -52,7 +52,7 @@ for (const size of SIZES) {
     test('the tutor keeps room for the conversation, its chips and its input', async ({ page }) => {
       await page.goto('/lessons/attention')
       await page.getByRole('button', { name: 'Ask ExplodeAI' }).click()
-      await page.getByLabel('Your question').fill('What are all four lessons?')
+      await page.getByLabel('Your question').fill('What are the lessons?')
       await page.getByRole('button', { name: 'Ask', exact: true }).click()
       await expect(page.locator('.tmsg--overview')).toBeVisible()
       const m = await page.evaluate(() => {

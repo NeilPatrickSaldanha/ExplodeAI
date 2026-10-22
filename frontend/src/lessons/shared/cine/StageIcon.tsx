@@ -2,6 +2,13 @@ import {
   ArrowCounterClockwise,
   ArrowsMerge,
   Books,
+  Brain,
+  Eye,
+  FlagCheckered,
+  Notebook,
+  ShieldCheck,
+  Target,
+  Wrench,
   ChatText,
   Cube,
   Database,
@@ -21,6 +28,7 @@ import {
 const ICONS: Record<string, Icon> = {
   Files, Scissors, Cube, Database, ChatText, MagnifyingGlass, Stack, Sparkle,
   Scroll, GridFour, ArrowsMerge, Books, TextAa, Hash, ArrowCounterClockwise,
+  Brain, Eye, FlagCheckered, Notebook, ShieldCheck, Target, Wrench,
 }
 
 /** Phosphor icon named in lesson content (decorative: the stage name is always shown as text). */

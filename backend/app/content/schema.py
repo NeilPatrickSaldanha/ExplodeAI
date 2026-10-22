@@ -148,6 +148,7 @@ ENGINE_CHECKS: dict[str, set[str]] = {
     "tokenize": {"round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens"},
     "embed": {"top1_category", "comparable"},
     "attend": {"no_future_attention", "not_saturated", "order_matters"},
+    "agent": {"stops_within", "answer_contains", "no_unapproved_side_effects"},
 }
 
 
@@ -157,16 +158,19 @@ class Check(BaseModel):
         "round_trip", "no_unknown", "max_tokens", "single_token", "no_cross_word_tokens",  # tokenize
         "top1_category", "comparable",  # embed
         "no_future_attention", "not_saturated", "order_matters",  # attend
+        "stops_within", "answer_contains", "no_unapproved_side_effects",  # agent
     ]
     gold: list[str] = []
     limit: int | None = None
 
     @model_validator(mode="after")
     def _needs_operands(self):
-        needs_gold = ("gold_in_retrieved", "gold_in_prompt", "single_token", "top1_category")
+        needs_gold = (
+            "gold_in_retrieved", "gold_in_prompt", "single_token", "top1_category", "answer_contains",
+        )
         if self.type in needs_gold and not self.gold:
             raise ValueError(f"{self.type} checks need at least one gold string")
-        if self.type in ("max_tokens", "not_saturated") and self.limit is None:
+        if self.type in ("max_tokens", "not_saturated", "stops_within") and self.limit is None:
             raise ValueError(f"{self.type} checks need a limit")
         return self
 

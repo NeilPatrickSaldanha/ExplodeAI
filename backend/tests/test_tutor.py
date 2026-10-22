@@ -379,7 +379,9 @@ def test_questions_about_the_course_are_answered_not_refused(client):
     ):
         r = ask(client, q).json()
         assert r["type"] == "overview", q
-        assert [x["number"] for x in r["lessons"]] == [1, 2, 3, 4]
+        assert [x["number"] for x in r["lessons"]] == sorted(
+            lesson.number for lesson in lessons.values()
+        )
         for card in r["lessons"]:
             lesson = lessons[card["lesson_id"]]
             assert card["summary"] == lesson.summary and card["title"] == lesson.title

@@ -109,6 +109,7 @@ class TutorIndex:
                 or (coverage >= 1.0 and best_dense >= MIN_DENSE_ALL_WORDS)
                 or (coverage >= MIN_TERM_COVERAGE and best_dense >= MIN_DENSE_MOST_WORDS)
             )
+        covered = covered and not looks_like_code(question)
         info = {
             "coverage": round(coverage, 3),
             "best_dense": None if best_dense is None else round(best_dense, 3),
@@ -124,6 +125,14 @@ class TutorIndex:
             )
             for i in order
         ], info
+
+
+_CODE_CHARS = set(";{}<>=\\|$`")
+
+
+def looks_like_code(text: str) -> bool:
+    """SQL, shell or markup is not a question about the lessons, however many of its words the lessons use."""
+    return sum(ch in _CODE_CHARS for ch in text) >= 2 or "--" in text or "/*" in text
 
 
 def _vectors(passages: list[Passage]) -> np.ndarray:

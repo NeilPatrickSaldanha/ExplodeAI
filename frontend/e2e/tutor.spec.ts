@@ -34,7 +34,7 @@ test('a question the lessons do not cover is refused, with no sources and a way 
   await ask(page, 'Who won the world cup?')
   const msg = panel(page).locator('.tmsg--none')
   await expect(msg).toContainText("don't cover that")
-  await expect(msg.getByRole('link')).toHaveCount(4)
+  await expect(msg.getByRole('link')).toHaveCount(5)
   await expect(panel(page).locator('.tmsg__evidence')).toHaveCount(0)
 })
 
@@ -77,7 +77,7 @@ test('the optional paid polish is clearly off when the server has no AI enabled'
 })
 
 test('every lesson has the tutor button, and the page never scrolls sideways with it open', async ({ page }) => {
-  for (const l of ['rag-pipeline', 'tokenization', 'embeddings', 'attention']) {
+  for (const l of ['rag-pipeline', 'tokenization', 'embeddings', 'attention', 'agents']) {
     await page.goto(`/lessons/${l}`)
     await openTutor(page)
     await expect(panel(page)).toContainText('Answers come only from')
@@ -132,9 +132,9 @@ test('the AI explain switch is clearly off when the server has AI disabled', asy
 test('questions about the course itself are answered with the lessons, not refused', async ({ page }) => {
   await page.goto('/lessons/embeddings')
   await openTutor(page)
-  await ask(page, 'What are all four lessons?')
+  await ask(page, 'What are the lessons?')
   const overview = panel(page).locator('.tmsg--overview')
-  await expect(overview.locator('.tover > li')).toHaveCount(4)
+  await expect(overview.locator('.tover > li')).toHaveCount(5)
   await expect(overview.getByRole('link', { name: /Lesson 04 · Attention, exploded/ })).toHaveAttribute('href', '/lessons/attention')
   await expect(overview).toContainText('YOU ARE HERE')
   await expect(panel(page)).not.toContainText("don't cover that")

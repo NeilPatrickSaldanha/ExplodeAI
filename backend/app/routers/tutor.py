@@ -14,7 +14,7 @@ from app.tutor import quiz
 from app.tutor.answer import NOT_COVERED, build_answer, chat_reply, overview_reply, plain_reply
 from app.tutor.chat import Context, Turn, resolve
 from app.tutor.prompt import build_prompt, check_citations
-from app.tutor.search import TutorIndex, get_index
+from app.tutor.search import TutorIndex, get_index, looks_like_code
 
 router = APIRouter(prefix="/api/tutor", tags=["tutor"])
 
@@ -70,6 +70,8 @@ def _understand(req: AskRequest, k: int = 5) -> Understood:
         # A message that names a topic ("what is rag") is not vague: the open lesson must not outrank it.
         vague=not intents.has_topic(ctx.search_text, index.vocab),
     )
+    if looks_like_code(req.question):  # checked on the original text: cleaning strips the telltale symbols
+        hits, info = [], {**info, "covered": False}
     lead = None
     if greeted and rest:
         lead = "Doing well, thanks for asking!" if HOW_ARE_YOU.search(req.question) else intents.GREETING_LEAD
@@ -141,7 +143,12 @@ def _free_reply(req: AskRequest, u: Understood) -> dict | None:
 
 
 def _answer(req: AskRequest, u: Understood) -> dict:
-    if not u.hits and not intents.looks_like_question(u.cleaned) and len(req.question.split()) <= 3:
+    if (
+        not u.hits
+        and not looks_like_code(req.question)
+        and not intents.looks_like_question(u.cleaned)
+        and len(req.question.split()) <= 3
+    ):
         # Chatter rather than a question: point the way instead of refusing.
         return chat_reply(intents.SMALLTALK_FALLBACK)
     ctx = u.ctx

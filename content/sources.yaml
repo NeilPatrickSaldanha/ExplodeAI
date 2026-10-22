@@ -626,3 +626,120 @@ sources:
     type: framework_docs
     version: PyTorch 2.14 documentation
     accessed: 2026-10-19
+
+  # ---------------------------------------------------------------- Lesson 05: tool-using agents
+  # Pass 1 notes: research_notes/Agents primary sources/ (two deep-research runs + direct page reads).
+  - id: anthropic_building_agents
+    title: Building effective agents
+    authors: [Erik Schluntz, Barry Zhang]
+    publisher: Anthropic
+    url: https://www.anthropic.com/research/building-effective-agents
+    type: official_blog
+    published: "2024-12-19"
+    accessed: 2026-10-22
+  - id: yao2022react
+    title: "ReAct: Synergizing Reasoning and Acting in Language Models"
+    authors: [Shunyu Yao, Jeffrey Zhao, Dian Yu, et al.]
+    publisher: arXiv / ICLR 2023
+    url: https://arxiv.org/abs/2210.03629
+    type: paper
+    version: arXiv v3 (10 Mar 2023, ICLR camera-ready)
+    published: "2022"
+    accessed: 2026-10-22
+  - id: schick2023toolformer
+    title: "Toolformer: Language Models Can Teach Themselves to Use Tools"
+    authors: [Timo Schick, Jane Dwivedi-Yu, Roberto Dessì, et al.]
+    publisher: arXiv / NeurIPS 2023
+    url: https://arxiv.org/abs/2302.04761
+    type: paper
+    version: arXiv v1 (9 Feb 2023), the only version listed
+    published: "2023"
+    accessed: 2026-10-22
+  - id: karpas2022mrkl
+    title: "MRKL Systems: A modular, neuro-symbolic architecture that combines large language models, external knowledge sources and discrete reasoning"
+    authors: [Ehud Karpas, Omri Abend, Yonatan Belinkov, et al.]
+    publisher: arXiv
+    url: https://arxiv.org/abs/2205.00445
+    type: paper
+    version: arXiv v1 (1 May 2022), the only version listed
+    published: "2022"
+    accessed: 2026-10-22
+  - id: greshake2023injection
+    title: "Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection"
+    authors: [Kai Greshake, Sahar Abdelnabi, Shailesh Mishra, et al.]
+    publisher: arXiv
+    url: https://arxiv.org/abs/2302.12173
+    type: paper
+    version: arXiv v2 (5 May 2023); first posted v1 on 23 Feb 2023
+    published: "2023"
+    accessed: 2026-10-22
+  - id: anthropic_tool_how
+    title: How tool use works
+    publisher: Anthropic (Claude API docs)
+    url: https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-22
+  - id: anthropic_tool_define
+    title: Define tools
+    publisher: Anthropic (Claude API docs)
+    url: https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-22
+  - id: anthropic_tool_overview
+    title: Tool use with Claude (overview, including pricing)
+    publisher: Anthropic (Claude API docs)
+    url: https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview
+    type: official_docs
+    version: live page at access date (no date shown); the old tool-use-pricing-and-tokens URL redirects here
+    accessed: 2026-10-22
+  - id: anthropic_context_windows
+    title: Context windows
+    publisher: Anthropic (Claude API docs)
+    url: https://platform.claude.com/docs/en/build-with-claude/context-windows
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-22
+  - id: openai_function_calling
+    title: Function calling
+    publisher: OpenAI (API docs)
+    url: https://developers.openai.com/api/docs/guides/function-calling
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-22
+  - id: gemini_function_calling
+    title: Function calling with the Gemini API
+    publisher: Google AI for Developers
+    url: https://ai.google.dev/gemini-api/docs/function-calling
+    type: official_docs
+    version: live page at access date (no date shown)
+    accessed: 2026-10-22
+  - id: openai_agents_running
+    title: Running agents (OpenAI Agents SDK for Python)
+    publisher: OpenAI
+    url: https://openai.github.io/openai-agents-python/running_agents/
+    type: framework_docs
+    version: live page at access date (no version or date shown)
+    accessed: 2026-10-22
+  - id: owasp_llm01
+    title: "LLM01:2025 Prompt Injection (OWASP Top 10 for LLM Applications)"
+    publisher: OWASP GenAI Security Project
+    url: https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+    type: reference
+    version: 2025 list; page shows only a 2025 copyright
+    accessed: 2026-10-22
+  - id: owasp_llm06
+    title: "LLM06:2025 Excessive Agency (OWASP Top 10 for LLM Applications)"
+    publisher: OWASP GenAI Security Project
+    url: https://genai.owasp.org/llmrisk/llm062025-excessive-agency/
+    type: reference
+    version: 2025 list; page shows only a 2025 copyright
+    accessed: 2026-10-22
+  - id: mcp_tools_20250618
+    title: Tools (Model Context Protocol specification)
+    publisher: Model Context Protocol
+    url: https://modelcontextprotocol.io/specification/2025-06-18/server/tools
+    type: official_docs
+    version: specification 2025-06-18 (read as this dated version; a newer version may exist)
+    accessed: 2026-10-22

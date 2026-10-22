@@ -6,6 +6,7 @@ import type { Lesson, LessonSummary } from './api/types'
 import { RagLessonPage } from './lessons/rag/RagLessonPage'
 import { TokenizationLessonPage } from './lessons/tokenization/TokenizationLessonPage'
 import { EmbeddingsLessonPage } from './lessons/embeddings/EmbeddingsLessonPage'
+import { AgentLessonPage } from './lessons/agents/AgentLessonPage'
 import { AttentionLessonPage } from './lessons/attention/AttentionLessonPage'
 
 type Theme = 'light' | 'dark' | null
@@ -129,6 +130,7 @@ function LessonRoute() {
   if (lesson.id === 'tokenization') return <TokenizationLessonPage lesson={lesson} />
   if (lesson.id === 'embeddings') return <EmbeddingsLessonPage lesson={lesson} />
   if (lesson.id === 'attention') return <AttentionLessonPage lesson={lesson} />
+  if (lesson.id === 'agents') return <AgentLessonPage lesson={lesson} />
   return <p className="notice page-pad">This lesson has no interactive module yet.</p>
 }
 

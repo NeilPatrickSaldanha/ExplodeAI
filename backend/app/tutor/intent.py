@@ -13,7 +13,9 @@ OVERVIEW = re.compile(
     r"\b(syllabus|curriculum|table of contents|where (do|should) i (start|begin))\b)",
     re.I,
 )
-LESSON_ABOUT = re.compile(r"\b(lesson|chapter)\s*(0?([1-4])|(one|two|three|four))\b", re.I)
+LESSON_ABOUT = re.compile(
+    r"\b(lesson|chapter)\s*(0?([1-9])|(one|two|three|four|five|six|seven|eight|nine))\b", re.I
+)
 HELP = re.compile(
     r"(how (do|can|should) i use|how does (this|the) (site|app|website|page) work|what are the (modes|tabs)|"
     r"what (is|does) (the )?(tour|explore|experiment|break (&|and) fix|rebuild)\b|help me (start|use)|"
@@ -21,7 +23,7 @@ HELP = re.compile(
     r"^\s*(help|i need help|can (you|u) help( me)?|need help)\s*[!?.]*\s*$)",
     re.I,
 )
-_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4}
+_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
 
 
 def lesson_number(question: str) -> int | None:
@@ -53,7 +55,7 @@ WHY_MATTERS = re.compile(
 ANAPHORA = re.compile(r"\b(it|that|this|they|them|those|these|the same|there)\b", re.I)
 
 GREETING_REPLY = (
-    "Hi! I'm the ExplodeAI tutor. Ask me about anything in the four lessons, in your own words. "
+    "Hi! I'm the ExplodeAI tutor. Ask me about anything in the lessons, in your own words. "
     "I can explain a stage simply, give an example, or quiz you on the stage you have open."
 )
 THANKS_REPLY = "Glad it helped. Ask another question, or press “Quiz me” to test yourself on this stage."
@@ -74,7 +76,7 @@ RECALL = re.compile(
     r"\bremind\s+me\s+what\s+(i|we)\b|\bdo\s+(you|u)\s+remember\b|\bwhat\s+i\s+(just\s+)?asked\b",
     re.I,
 )
-RECALL_EMPTY = "We haven't talked about anything yet in this chat. Ask me about any of the four lessons."
+RECALL_EMPTY = "We haven't talked about anything yet in this chat. Ask me about any of the lessons."
 
 NEEDS_TOPIC = (
     "Which part should I explain? Pick a stage or ask a question about it first, then ask me to simplify."
@@ -153,12 +155,12 @@ ABOUT_ME = re.compile(
     re.I,
 )
 ABOUT_ME_REPLY = (
-    "I'm the ExplodeAI tutor. I answer questions about the four lessons (RAG, tokenization, embeddings and "
-    "attention) using only their verified content, with the sources behind every fact. I can explain a stage "
-    "simply, give an example, or quiz you."
+    "I'm the ExplodeAI tutor. I answer questions about the lessons (RAG, tokenization, embeddings, attention "
+    "and tool-using agents) using only their verified content, with the sources behind every fact. I can "
+    "explain a stage simply, give an example, or quiz you."
 )
 SMALLTALK_FALLBACK = (
-    "I'm here for questions about the four lessons. Try something like “what is RAG?”, “why do we normalise "
+    "I'm here for questions about the lessons. Try something like “what is RAG?”, “why do we normalise "
     "vectors?” or “explain the causal mask simply”, or ask “what are the lessons?”."
 )
 _QUESTION_WORD = re.compile(

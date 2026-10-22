@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 /** The 2D diagram must read cleanly in every lesson at every size: nothing overlaps, nothing is clipped. */
-const LESSONS = ['rag-pipeline', 'tokenization', 'embeddings', 'attention']
+const LESSONS = ['rag-pipeline', 'tokenization', 'embeddings', 'attention', 'agents']
 const SIZES = [
   { name: 'desktop', width: 1440, height: 900, mobile: false },
   { name: 'tablet', width: 768, height: 1024, mobile: true },

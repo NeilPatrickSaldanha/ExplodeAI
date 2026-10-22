@@ -153,7 +153,7 @@ def overview_reply(number: int | None = None) -> dict:
     ]
     if not items:
         return chat_reply(
-            "There are four lessons, numbered 1 to 4. Ask “what are all four lessons?” to see them."
+            "I don't have a lesson with that number. Ask “what are the lessons?” to see them all."
         )
     info = {"method": "course", "covered": True, "coverage": 1.0, "best_dense": None}
     return _empty("overview", None, info, lessons=items, focus_number=number)

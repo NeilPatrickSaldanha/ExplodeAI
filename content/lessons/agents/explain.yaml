@@ -1,0 +1,205 @@
+goal:
+  what: The customer's request, as plain text. It becomes the first message in the conversation.
+  why: An agent needs something to work towards. Without a goal there is nothing to decide and nothing to stop for.
+  analogy: A ticket handed to a support worker at the start of a shift.
+  happens:
+  - The customer's message arrives as text.
+  - It becomes the first message in the conversation.
+  - Every later step reads it again.
+  goes_to: Decide, which reads it together with the tool list.
+  example:
+    input: Hi! I'd like to return my E-Trail from order 1001.
+    steps:
+    - Keep the text as written
+    - Add it as the first message
+    output: 1 user message (illustrative)
+  misconfigured: In a real product the request can be vague, rude or missing details. The agent has to cope, and
+    this lesson's stand-in rule only recognises a few kinds of request.
+  learn_more: Anthropic separates workflows, where code follows a fixed path, from agents, where the model directs
+    its own steps. Both are called agentic systems.
+  claims:
+  - agent-workflow-vs-agent
+  - agent-loop
+tools:
+  what: The list of tools the agent may ask for. Each has a name, a description, and rules for its arguments.
+  why: The model can only use what it is told about. It never sees the code behind a tool, so the description is
+    the only thing it has to choose with.
+  analogy: A menu in a restaurant. You order from the descriptions, not from seeing the kitchen.
+  happens:
+  - Each tool is written down as a name, a description and an argument schema.
+  - The list is added to every request.
+  - Tools that change things, like a refund, are marked.
+  goes_to: Decide, which picks one.
+  example:
+    input: search_help_centre, get_order, days_between, issue_refund
+    steps:
+    - Four definitions
+    - Each with a JSON Schema for its arguments
+    output: 4 tools in the list (illustrative)
+  misconfigured: Vague descriptions leave the agent guessing. Try setting the descriptions to Vague in the experiment
+    and watch which tool it picks. Too many tools, or too much detail, also makes every request longer.
+  learn_more: 'Tools are described in a similar way across providers: a name, a description and a schema for the
+    parameters (JSON Schema for Anthropic and OpenAI, a subset of the OpenAPI schema for Gemini). Anthropic calls
+    detailed descriptions by far the most important factor in tool performance. The Model Context Protocol is a
+    standard way for servers to expose tools to models.'
+  claims:
+  - tool-definition
+  - tool-descriptions-matter
+  - mrkl-origin
+  - mcp-tools-primitive
+decide:
+  what: 'The model reads everything so far and chooses: ask for one tool, or write the final answer.'
+  why: In this loop, this is the only step that needs a model. Everything else is ordinary code.
+  analogy: A support worker reading the ticket and the notes so far, then deciding what to do next.
+  happens:
+  - The model reads the goal, the tool list and the conversation.
+  - It either names a tool and its arguments, or answers.
+  - In this lesson a short rule stands in for the model.
+  goes_to: Check, if it asked for a tool. Stop, if it answered.
+  example:
+    input: Return order 1001
+    steps:
+    - Need the policy → search_help_centre
+    - Need the order → get_order
+    - Have everything → answer
+    output: A tool call or an answer (illustrative)
+  misconfigured: A real model can pick the wrong tool, write bad arguments or answer too early. Here the stand-in
+    is simple and repeatable on purpose, so it is the loop around it that you learn from, not how a language model
+    behaves.
+  learn_more: 'ReAct (2022) had a model interleave reasoning with actions that reach outside it. Toolformer (2023)
+    trained a model to decide which APIs to call. In Anthropic''s API a reply that asks for a tool has stop_reason
+    tool_use, and the application loops while that holds. You can also set how free the model is: automatic, required,
+    or one named tool (not every model supports the last two).'
+  claims:
+  - tool-choice
+  - loop-stop-reason
+  - react-origin
+  - toolformer-origin
+validate:
+  what: The application checks the tool call against the tool's rules before running it.
+  why: A model's tool call is a request, not a guarantee. It can have the wrong shape, and a wrong call that runs
+    can do real harm.
+  analogy: A bouncer checking a ticket before letting someone in.
+  happens:
+  - Compare each argument with the schema (a simple version of a JSON Schema check).
+  - If something is wrong, turn it into an error message.
+  - Send valid calls on.
+  goes_to: Run, if the call is valid. Back to the agent as an error, if not.
+  example:
+    input: get_order with order_id 1001
+    steps:
+    - 'Rule: letter A and four digits'
+    - 1001 does not match
+    - Return the error instead of running
+    output: 'Rejected: must match A1001 (illustrative)'
+  misconfigured: Turn checking off in the experiment and 1001 goes straight to the tool. It finds no such order,
+    and the agent tells the customer their order does not exist, which is wrong.
+  learn_more: The MCP specification says servers must validate all tool inputs. OpenAI's strict option makes calls
+    reliably follow the schema.
+  claims:
+  - validate-tool-inputs
+execute:
+  what: The application runs the tool. The model only asked.
+  why: Models write text. Only code can look up an order or move money, so something outside the model has to do
+    the work.
+  analogy: A manager who carries out what the worker asks for, and can say no.
+  happens:
+  - The application finds the tool by name.
+  - It runs ordinary code with the checked arguments.
+  - A tool that changes something can wait for a person to approve it.
+  goes_to: Result, with whatever the tool returned.
+  example:
+    input: get_order(order_id=A1001)
+    steps:
+    - Look the order up
+    - Return the record
+    output: '{item, price, status, delivered} (illustrative)'
+  misconfigured: An agent with a refund tool and no approval can move money by itself. Anything that changes the
+    real world is a place for a person to say yes first, and an agent should have only the tools it needs.
+  learn_more: For tools you define, Anthropic, OpenAI and Gemini all leave the running to your application. Anthropic,
+    for one, also offers server tools that it runs for you. OWASP advises limiting an agent's tools and permissions
+    to the minimum necessary and requiring a human to approve high-impact actions, and MCP says there should always
+    be a human able to deny tool invocations.
+  claims:
+  - tools-run-in-application
+  - owasp-excessive-agency
+  - mcp-human-in-loop
+observe:
+  what: The tool's output goes back to the model as a message that points at the call it answers.
+  why: The model cannot see what happened outside it. This message is the only way it learns the result.
+  analogy: A note slipped back across the desk saying what the lookup found.
+  happens:
+  - The output is wrapped in a result message.
+  - The message names the call it answers.
+  - An error goes back the same way, so the model can try again.
+  goes_to: Context, which keeps it.
+  example:
+    input: get_order → A1001 found
+    steps:
+    - Wrap the record in a result
+    - Link it to call 3
+    output: tool result (illustrative)
+  misconfigured: 'Whatever a tool returns is data, but the model reads it like any other text. Turn on the forum
+    post in the experiment: it hides an instruction, and this stand-in follows it. OWASP says it is unclear whether
+    any foolproof prevention exists.'
+  learn_more: OpenAI links a result to its call by call_id, and Anthropic by the tool_use id. In MCP a failing tool
+    reports the error in its result, flagged isError. Greshake et al. showed that instructions planted in retrieved
+    data can steer an application. OWASP lists prompt injection as LLM01 and says it is unclear whether fool-proof
+    prevention exists.
+  claims:
+  - tool-result-linked
+  - tool-errors-are-results
+  - indirect-injection
+  - injection-no-foolproof
+context:
+  what: 'The whole conversation so far: instructions, tool list, every call and every result.'
+  why: In a plain API loop the model keeps nothing between steps. Each step it is sent everything again, and that
+    is how it remembers.
+  analogy: Handing the next shift the entire case file every time, instead of a summary.
+  happens:
+  - The new result is added to the conversation.
+  - The next request carries all of it.
+  - The count of tokens read grows with every step.
+  goes_to: Decide, for the next pass round the loop.
+  example:
+    input: After step 3
+    steps:
+    - Goal + tools + 3 calls + 3 results
+    - Counted in tokens
+    output: a few thousand tokens read again (illustrative)
+  misconfigured: Take the memory away in the experiment and the agent repeats itself. Keep too much and every step
+    gets slower and costlier, until a request no longer fits.
+  learn_more: With Anthropic's API each step is a new request carrying the earlier messages and tool results. Tool
+    definitions and results count against the context window and are billed as input tokens (some providers can
+    also hold the history for you, and caching can lower the price of a repeated start). If the input alone is too
+    long, the API returns a 400 error. The token counts in this lesson use Lesson 02's teaching tokenizer, so real
+    counts differ.
+  claims:
+  - context-resent
+  - tool-tokens-billed
+  - context-window-limit
+stop:
+  what: The loop ends when the model answers. A step limit is a second way out.
+  why: A loop with no way out can run forever, and in this loop every extra step costs more than the one before.
+  analogy: A timer on a task, so a stuck worker gets stopped and asked what's wrong.
+  happens:
+  - If the model answered, return its answer.
+  - If the step limit is reached, stop without one.
+  - If something needs a person's approval, pause until they decide.
+  - Otherwise go round again.
+  goes_to: 'The customer: an answer, or a stopped run.'
+  example:
+    input: After 8 steps with no answer
+    steps:
+    - Count the steps
+    - Limit reached → stop
+    output: Stopped by the step limit (illustrative)
+  misconfigured: A step limit does not make the agent right, it only stops the damage. With no limit, only this
+    experiment's own hard cap of 30 steps cuts a stuck loop off.
+  learn_more: Anthropic notes that agent loops commonly include stopping conditions such as a maximum number of
+    iterations, and warns of higher costs and compounding errors. In the OpenAI Agents SDK, max_turns caps the loop
+    and raises MaxTurnsExceeded.
+  claims:
+  - stopping-conditions
+  - sdk-max-turns
+  - agents-cost-errors
