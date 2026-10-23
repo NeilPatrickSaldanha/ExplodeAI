@@ -71,7 +71,7 @@ For each lesson: open it, click **Experiment**, and follow the steps. "Tab" mean
 *Idea: a model can't know your documents, so you search them first and put the best pieces in the prompt.*
 
 **Experiment 1: see the pipeline at its defaults.** Leave everything as it is (question "How long do I have to return a bike?", sentence chunks of 40 words, overlap 0, TF-IDF hashing, Dense, top-k 3, budget 200 words).
-- **Chunks tab:** the six made-up help articles became **11 chunks**. The retrieved ones are highlighted: `returns#0`, `battery#1`, `returns#1`.
+- **Chunks tab:** the six made-up help articles became **11 chunks**. The retrieved ones are marked: `returns#0`, `battery#1`, `returns#1`.
 - **Notice:** `battery#1` is there even though the question is about returns. The default embedder is deliberately simple, so it sometimes picks the wrong thing. That is the setup for Experiment 4.
 - **Answer tab:** a labelled **extractive baseline, not an LLM**: it quotes "Ridgeline Bikes accepts returns of unused bikes within 30 days of delivery." and "Returned bikes must include the original packaging."
 
@@ -189,7 +189,7 @@ For each lesson: open it, click **Experiment**, and follow the steps. "Tab" mean
 
 | Lesson | Challenge | What the failure message says | The fix (unlocked control) | What it teaches |
 |---|---|---|---|---|
-| 01 | **The fact that got cut in half** | “within 30 days of delivery” and “original packaging” are not in a retrieved chunk | **Chunk size 20** (it starts at 8) | Boundaries split facts; size and overlap matter |
+| 01 | **The fact that got cut in half** | “within 30 days of delivery” and “original packaging” are not in a retrieved chunk | **Chunk size 12 or 20** (it starts at 8). **16 fails** (“original packaging” goes missing) | Boundaries split facts, and a bigger chunk isn't automatically better: where the cut falls matters |
 | 01 | **Half an answer** | “lifetime warranty” and “covered for 2 years” are not retrieved | **Top-k 3** (starts at 1) | The answer lives in several chunks |
 | 01 | **The ranker that missed** | “lifetime warranty” not retrieved, “covered for 2 years” is | **Retrieval: Hybrid** (starts Dense) | Different rankers miss different things |
 | 01 | **Retrieved, then dropped** | “between 40 and 60 percent” is not in the assembled prompt | **Context budget 60 words** (starts at 15) | Retrieved isn't the same as read by the model |
@@ -207,7 +207,7 @@ For each lesson: open it, click **Experiment**, and follow the steps. "Tab" mean
 | 05 | **The tool that was never chosen** | The agent never answered | **Tool descriptions: Detailed** | The agent picks tools from their descriptions |
 | 05 | **The refund nobody approved** | A refund went out with nobody approving it | **Person approves refunds: On**, or **Refund tool: Off** | Approval and least privilege limit damage |
 
-**Try wrong fixes on purpose.** For example, in "The fact that got cut in half" set chunk size 12 or 16 and read the message: you'll see which phrase is still missing. The failure messages are the best teachers.
+**Try wrong fixes on purpose.** For example, in “The fact that got cut in half” try chunk sizes 8, 12, 16 and 20 and read each message: 12 and 20 pass, but 16 fails with “original packaging” still missing. The failure messages are the best teachers.
 
 ---
 
@@ -226,7 +226,7 @@ For each lesson: open it, click **Experiment**, and follow the steps. "Tab" mean
 |---|---|
 | 01 RAG | Knowledge source → Chunker → Chunk embedder → Vector index → Retriever. Query embedder → Retriever. Retriever → Prompt assembler → Generator. (So the query embedder can sit anywhere before the retriever: that's why several orders work.) |
 | 02 Tokenization | Corpus → Pre-tokenizer → Base alphabet → Merge learner → Vocabulary → Encoder (which also needs Input text) → Decoder |
-| 03 Embeddings | Library and Your text come first; Tokenizer → Encoder → Pooling → Normalizer → Similarity (needs the library) → Semantic space |
+| 03 Embeddings | Sample library and Your text come first (neither needs anything). Tokenizer needs both. Then Encoder → Pooling → Normalizer, and **both** Similarity and Semantic space depend on the Normalizer. |
 | 04 Attention | Words → Vectors + position → Q·K·V → Score grid → Mask → Softmax → Weighted sum (needs softmax *and* V) → Heads + output |
 | 05 Agents | Goal and Tool registry → Decide → Check → Run → Result → Context. Stop depends on Decide. *(One pass round the loop; the loop-back from Context to Decide is shown as a link, not an order.)* |
 
