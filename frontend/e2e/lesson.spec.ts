@@ -174,3 +174,9 @@ test('isolate needs a selected stage, says so when there is none, and works once
   await iso.click()
   await expect(iso).toHaveAttribute('aria-pressed', 'true')
 })
+
+
+test('the footer credits the creator quietly', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('footer.foot')).toContainText('Made by Neil')
+})

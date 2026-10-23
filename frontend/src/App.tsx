@@ -62,6 +62,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       {/* Ft2 inline single line */}
       <footer className="foot">
         <span>explodeai · every claim cited, every experiment real, every simulation labelled.</span>
+        <span className="foot__by">Made by Neil</span>
       </footer>
     </>
   )
