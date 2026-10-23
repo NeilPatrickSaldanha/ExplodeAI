@@ -12,8 +12,16 @@ browser ──► Vite/React app ──/api──► FastAPI ──► content/ 
 - **Engine (`frontend/src/engine/`)** — lesson-agnostic. A lesson describes its
   system as an `AssemblySpec`: parts (shape, size, assembled position, explode
   offset, group) and links (source → target, payload label). The engine provides:
-  - `ExplodedCanvas`: react-three-fiber scene with an explode factor (eased, with
-    a mid-flight lift), per-shape *sub-explosions* (slices separate, disks stack,
+  - `ExplodedCanvas`: react-three-fiber scene with an explode factor `t` in 0–1 (the
+    "Explode" slider, 0–100%, step 0.01; lessons open at 100%). `partPosition` in
+    `engine/math.ts` is **linear** in `t`: each part sits at `position + explode × t`,
+    so every 10% of the slider moves the parts by the same distance. The only
+    non-linear term is a vertical lift (`sin(π·t) × LIFT`, zero at 0% and 100%) so parts arc as they
+    separate. Between slider changes the canvas smooths the displayed value toward the target
+    (about 14% of the remaining gap per animation frame; skipped under reduced motion), which affects
+    transition timing only, not the slider-to-position mapping. Each lesson adapter can stretch
+    the spread per axis (`spreadParts`; Lesson 05 spreads wider). `easeInOutCubic` still exists in
+    `math.ts` and is unit-tested but no longer drives part positions. Also: per-shape *sub-explosions* (slices separate, disks stack,
     lens elements part), isolation (non-neighbours fade), animated packets along
     links, and a camera rig that binary-searches the distance at which every part
     fits the viewport. Portrait screens orbit 90° so long pipelines run vertically.
