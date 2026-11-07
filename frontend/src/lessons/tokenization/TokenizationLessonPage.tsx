@@ -4,7 +4,6 @@ import type { Challenge, Lesson, TokenizeConfig, TokenizeParams } from '../../ap
 // Lesson-agnostic pieces shared with Lesson 01.
 import { Challenges } from '../rag/Challenges'
 import { Rebuild } from '../rag/Rebuild'
-import { TimingStrip } from '../rag/ResultViews'
 import { BreaksCard } from '../shared/cine/BreaksCard'
 import { CineLesson } from '../shared/cine/CineLesson'
 import type { FlowLabels } from '../shared/cine/FlowLegend'
@@ -69,7 +68,6 @@ export function TokenizationLessonPage({ lesson }: { lesson: Lesson }) {
       onModeChange={(m) => {
         if (m !== 'challenges' && challenge) exitChallenge()
       }}
-      timings={<TimingStrip result={exp.result} />}
       tabs={(progress) => ({
         experiment: <TokenizeExperimentPanel lesson={lesson} {...exp} maxMerges={maxMerges} reducedMotion={progress.reducedMotion} />,
         challenges: (

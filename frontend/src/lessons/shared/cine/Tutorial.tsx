@@ -114,8 +114,8 @@ const STEPS: Step[] = [
     id: 'keys',
     title: 'Keyboard and touch',
     body: 'Tab reaches every control. With the model focused, arrow keys move between stages, Enter isolates one and Escape clears it. On phones, two fingers pinch to zoom and slide; one finger rotates, or slides when Move is on.',
-    target: '.cine__hints',
-    place: 'above',
+    target: '.cine__frame',
+    place: 'below',
   },
   {
     id: 'finish',

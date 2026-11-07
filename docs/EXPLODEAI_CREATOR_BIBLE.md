@@ -6,7 +6,7 @@
 
 ## How to use this document
 - Treat sections 1–5 as ground truth about the product. Section 1A holds the creator's own statements about himself, his goals and his boundaries. Do not add features, numbers or claims that are not here.
-- Section 1B explains how everything works in plain English. Section 3 is the teaching content (stages, flows, concepts, misconceptions, sources). Section 4 is the screen-recording guide. Section 5 is the engineering story. Section 6 is a menu of material available for content. Section 7 is a short context prompt for Claude Chat.
+- Section 1B explains how everything works in plain English. Section 3 is the teaching content (stages, flows, concepts, misconceptions, sources). Section 4 is the screen-recording guide. Section 5 is the engineering story. Section 6 is a proposed LinkedIn video series (opening with an introduction and a short RAG demo) plus a menu of raw material. Section 7 is the Claude Chat handoff prompt. Appendix A lists inconsistencies found and resolved, and open items marked **[OWNER]** that need Neil's confirmation.
 - Observed demo numbers (for example "35 tokens → 8") are **deterministic outputs from the app on 2026-10-22** with the settings stated. They are safe to show on screen and to quote, with those settings.
 
 ---
@@ -134,7 +134,6 @@ Confirmed by reading the code, running the app in a browser, and the test suites
 - **Stage panel (right side) — "Understand this stage":** a plain-words explanation, an analogy (explicitly labelled *Analogy · teaching aid*), connected-stage chips, a playable mini example (input → steps → output, with Play and Step), and collapsible sections: *Why it is needed*, *What happens to the data*, *Where it goes next*, *If it is set up wrong*, *Learn more (technical)*. Below it, **goes in / comes out** cards show real values from your last experiment run, and a **What breaks if removed?** card.
 - **Verified claims with sources:** each stage lists the claims behind it; each claim card shows its three pass states and links to its sources. A "All N sources for this lesson" drawer lists every source with publisher, version and access date.
 - **Status badge** at the top: "Verified: N/N claims through all three passes", plus a progress line: "EXPLORED x/8 · FIXED y/z · REBUILT yes/no". Progress is saved in the backend under an anonymous id stored in the browser.
-- **Stage timings strip:** a bar chart of how long each stage took in the last real run.
 - **Light and dark theme** toggle in the header; skip-to-content link; layout works on phones with no horizontal scroll (checked by automated tests; real-device testing is listed as a manual step in `docs/mobile-checklist.md`).
 
 ## 2.2 The five modes
@@ -761,9 +760,55 @@ Shared structure: each lesson is a machine of 8 stages. The same five modes and 
 
 ---
 
-# 6. Material available for content
+# 6. LinkedIn educational video series
 
-*A neutral menu of what exists, organised by topic, so the creator and Claude Chat can plan the series and each video themselves. Nothing here prescribes an order, length, structure or style. Section 4 gives the exact screen sequences, and section 3 the concepts and demo numbers.*
+*A proposal, not a commitment. Lengths respect Neil's limit (max 15 minutes, shorter where possible, introduction considerably shorter). Every demo uses the screen sequences in section 4 and numbers from section 3. Tone: natural and conversational. Call to action: the ExplodeAI website, **only once it is public** (it is not yet; see 2.7) **[OWNER: confirm the URL and the date it goes live]**. No hashtag lists, no engagement bait.*
+
+## 6.1 Series overview
+| # | Video | Target length | Demo (section 4) |
+|---|---|---|---|
+| 0 | Introduction + a short RAG demo | 3–4 min | 4.1 (shortened) |
+| 1 | RAG, taken apart | 10–12 min | 4.1 (full) |
+| 2 | Tokenization, taken apart | 8–10 min | 4.2 |
+| 3 | Embeddings, taken apart | 10–12 min | 4.3 |
+| 4 | Attention, taken apart (a toy) | 10–12 min | 4.4 |
+| 5 | Tool-using agents, taken apart (a stand-in, not a real model) | 10–12 min | 4.5 |
+| 6 (optional) | How the content is verified, and building it with Claude Code | 5–6 min | none needed |
+
+Suggested order follows the dependencies in the product: Lesson 05 reuses Lesson 01's shop and Lesson 02's tokenizer; Lesson 01's neural option is Lesson 03's model; Lesson 04 connects to the 12-head encoder inside it (section 6.9). The order is a suggestion; videos stand alone.
+
+## 6.2 Video 0 · Introduction + short RAG demo (3–4 min)
+**Goal:** say what ExplodeAI is, why Neil built it, and show one concrete moment that makes the idea obvious. Keep the personal part brief (Neil's request).
+**Outline**
+1. *0:00–0:30, hook on screen:* the RAG machine opening (slider 0 → 100%). Line: ExplodeAI takes AI systems apart so you can see how they work.
+2. *0:30–1:15, who/why (from 1A, in Neil's words):* he learns better from visuals and hands-on demos than long text; the project is both his own learning and a public resource. Mention honestly that he built it with Claude Code and directed the vision, requirements and quality bar. No claim that visual learning is faster.
+3. *1:15–3:00, RAG demo:* Synonym test. With the default **TF-IDF hashing** embedder the battery chunk ranks first (wrong); switch **Embedder → Local neural** and the returns-policy chunk ranks first (right). One sentence on why: the simple embedder matches shared words, the neural one matches meaning. Show **Vector space** briefly (label: approximate projection).
+4. *3:00–3:30, honesty + close:* every visual is badged Real execution / Simulation / Conceptual. The knowledge base is six made-up bike-shop articles. Next videos go lesson by lesson. Website mention only if public.
+**Do not say:** "guaranteed correct", "learn 2–3× faster", user counts, or anything about the paid AI features.
+**Real vs simulated in this video:** chunking, retrieval and the neural embedder really run; the knowledge base is fictional; the default embedder is intentionally weak.
+**Official sources to cite in the description or on screen (from Lesson 01):** see the Lesson 01 source list in section 3 (for example Anthropic's contextual-retrieval post and Google's RAG documentation, as cited there).
+
+## 6.3 Video 1 · RAG, taken apart (10–12 min)
+Cover the eight stages in order using Tour; the Synonym test; a fact cut in half by chunk size and a right chunk dropped by the context budget (Experiment tab, Lesson 01 presets); keyword vs meaning vs hybrid; why RAG reduces but does not remove hallucination. Close with one Break & fix challenge. Sources: Lesson 01 list.
+
+## 6.4 Video 2 · Tokenization (8–10 min)
+Hook: 35 tokens collapsing to 8 as **Merges learned** goes 0 → 25 → 100 (vocabulary 257 → 282 → 357). Then Replay, Unseen words, `[UNK]` vs 256 bytes. Say on camera: educational BPE, not GPT's or Claude's tokenizer. Sources: Lesson 02 list.
+
+## 6.5 Video 3 · Embeddings (10–12 min)
+Hook: a sentence landing among 24 in the 3D map. Show Bookshelf (0.695 / 0.566 / 0.554), Lexical failure (animals at 0.0), the mixed-model notice, then the honest miss ("a vehicle that runs on rails": train ranks 14th of 24). Say scores are relative and the map is an approximate PCA view. Sources: Lesson 03 list.
+
+## 6.6 Video 4 · Attention (10–12 min)
+Hook: the Causal mask hatching out the upper triangle (15 cells for six words). Then the Order-blind challenge (Check my fix: Still broken → Position vectors On → Fixed.), and 8 heads with scaling off piling onto single words (about 63% vs about 35%). Say repeatedly: toy layer, random weights, nothing trained; attention weights are not a guaranteed explanation. Sources: Lesson 04 list.
+
+## 6.7 Video 5 · Tool-using agents (10–12 min)
+Hook: the Return preset loop (bad ID rejected, retried, refund waits for approval, press Approve). Then token cost growing per step, Vague descriptions plus No step limit hitting the 30-step cap, and the forum-post injection (end with approval on). Say clearly: decisions come from a stand-in rule, not a language model. Sources: Lesson 05 list.
+
+## 6.8 Video 6 (optional) · Verification and building with Claude Code (5–6 min)
+Show a claim card with its three passes and a source drawer. State what was done (section 5.4) and what was not (no human subject-matter review is recorded). Be open that Claude Code wrote much of the code and that research and cross-check passes also used AI agents.
+
+## 6.9 Menu of raw material
+
+*A neutral menu of what exists, organised by topic, so the creator and Claude Chat can plan each video. Section 4 gives the exact screen sequences, and section 3 the concepts and demo numbers.*
 
 ## Per-lesson material
 - **01 RAG** — Concept: giving a model information it wasn't trained on by retrieving it first. Moments: the machine opening; the same question retrieving the wrong chunk with the simple embedder and the right one with the neural one; a fact cut in half by chunking; a right chunk dropped by the context budget; the vector-space map. Teaches: chunking, embeddings in retrieval, keyword vs meaning search, rank fusion, prompt assembly, why RAG reduces but doesn't remove hallucination.
@@ -794,14 +839,126 @@ Maximum 15 minutes per video and shorter where possible, with a considerably sho
 
 # 7. Claude Chat handoff prompt
 
-*Paste this into Claude Chat together with this whole document.*
+*Paste the block below into Claude Chat together with this whole document.*
 
 ```text
-I'm Neil. I'm attaching the ExplodeAI Creator Bible, which describes my project ExplodeAI, how it works, what it can demonstrate, who I am, and what I want my LinkedIn content to achieve and avoid.
+I'm Neil. I'm attaching the ExplodeAI Creator Bible. It describes my project ExplodeAI (an interactive web app that teaches AI engineering by "exploding" systems into 3D parts you can inspect, run, break and rebuild), how it works, what it can demonstrate, who I am, and what I want and don't want from my LinkedIn content.
 
-I want your help planning and creating my LinkedIn content about ExplodeAI: an introduction, then videos and posts about the project and what viewers can learn from it. Please plan the series and write the scripts and posts yourself, using the Bible's material (section 6), the screen sequences (section 4), and my goals and boundaries (section 1A).
+YOUR JOB
+Help me plan and write a LinkedIn video series about ExplodeAI: scripts, on-screen shot lists, and post copy. Start from the proposed series in section 6 and change it if you have good reasons. Use section 4 for what to do on screen, section 3 for the teaching content and sources, section 1A for my voice, goals and limits.
 
-Treat the Bible as the only source of truth about ExplodeAI. Don't invent features, numbers, quotes, sources, results, users or stories. If something you need isn't in the Bible, ask me. I want to be able to explain and demonstrate everything I present, so tell me when you are relying on something you're unsure about, and keep what is real, what is a toy or a simulation, and what has been verified clearly separated.
+SOURCE OF TRUTH RULES
+1. The Bible is the only source of truth about ExplodeAI. Do not invent features, numbers, quotes, users, results, dates, stories or motivations. If you need something that isn't in it, ask me.
+2. Anything marked [OWNER] or [UNVERIFIED], and everything in Appendix A, is an open question. Don't present those as fact; ask me or leave them out.
+3. For general AI concepts, rely on the official sources listed per lesson in section 3. If you add any outside fact, say it is outside the Bible and name the source so I can check it.
+4. Always keep three things separate and say which applies: REAL (code that actually runs, e.g. the local embedding model), SIMULATION/TOY (the attention layer has random weights; the agent's decisions come from a stand-in rule, not an LLM; the tokenizer is an educational BPE), and VERIFIED (claims have cited excerpts and three recorded passes - this is evidence, not a guarantee of correctness).
 
-Before you start, tell me in a few lines what you understood about the project and about me, and ask any questions you need answered.
+MY BOUNDARIES
+- Maximum 15 minutes per video, shorter when possible; the introduction much shorter than the deep dives.
+- Natural, conversational, not corporate or promotional. Short personal intro only.
+- Call to action: the ExplodeAI website, only once it's public (it isn't yet; ask me for the status). No extra links, no hashtag piles, no engagement bait.
+- Do not claim visual learning is proven faster, or that the content is guaranteed correct.
+- Be open that I built it with Claude Code and directed the vision, requirements and quality; don't imply I hand-wrote every line.
+- Do not feature the paid AI features on screen. Do not state any paid-API cost as exact; see Appendix A.
+- Never include something I couldn't confidently explain or demonstrate. For each script, add a short "be ready to explain" list.
+
+HOW TO WORK
+First, reply with (a) 5-8 lines on what you understood about the project and me, (b) a list of questions or [OWNER] items you need answered, and (c) your recommended order for the series. Then wait for my go-ahead. After that, produce one video at a time: title, hook, timed outline, spoken script in my voice, exact on-screen actions (from section 4), the numbers to show, what to say is real vs simulated, a pre-recording checklist, and a short post caption. Finish each with a "claims check": every factual statement in the script mapped to a Bible section or a listed official source.
 ```
+
+---
+
+# Appendix A. Inconsistencies, resolutions and open items
+
+*Added 2026-10-23 by an automated continuation run.*
+
+## A.1 Paid-API usage: README vs the October 19 cost report (resolved in part)
+- **What the evidence shows.** The local ledger table `aiusage` (backend/data/explodeai.sqlite3, queried read-only on 2026-10-23) holds 8 rows between 2026-10-19 21:55 and 2026-10-21 05:17: OpenAI gpt-4.1-nano 6 ok (total estimated $0.000479); Gemini gemini-3.1-flash-lite 1 ok ($0.000111); Gemini gemini-2.5-flash-lite 1 error ($0.000107). Sum of the column: **$0.000697**. The README (line 71) cites "live tests on 2026-10-19: $0.00003–$0.00011" per answer, and its limitations section (line 131) now describes the live calls. The README no longer says the clients were never called live.
+- **Stale statement still in the repo:** `reports/RAG pipeline verification.md` (Residual risks) still says "The paid-provider HTTP clients have never been called live". That report predates the live tests, so it contradicts the ledger. I did not edit the report (it is a dated record); correct or annotate it if you want the repo consistent. **[OWNER]**
+- **Estimated vs billed.** The column is named `estimated_cost_usd`. The README says the ledger records cost from the provider's reported token counts and the price table, so these are computed estimates, not invoice amounts. I did not see provider dashboards or invoices, so **actual billed amounts are unconfirmed**. The error row carries a cost, so it is unconfirmed whether the failed Gemini call was billed.
+- **What I cannot establish:** who ran those calls and whether through the app UI or a script; whether any key was used outside the app (which the ledger would not show); whether the ledger also contains test or manual rows. The tests blank keys and mock HTTP, so the test suite is not the source. **[OWNER: confirm you ran these on 2026-10-19 to 21, and check the OpenAI and Google dashboards if you want exact figures.]** Until then, say only "a few live test calls, roughly $0.0007 by the app's own estimate".
+
+## A.2 architecture.md and the linear explode (resolved, no edit needed)
+`docs/architecture.md` (updated in commit 07aba0e) was checked against the code today: `partPosition` in `frontend/src/engine/math.ts` is linear in `t` (position + explode x t) plus a vertical lift of `sin(pi x t) x LIFT`; `ExplodedCanvas.tsx` smooths the displayed value toward the slider target by 14% of the remaining gap per frame (skipped under reduced motion per the doc; I confirmed the 0.14 factor and, in a second pass on 2026-10-24, the reduced-motion branch: `useAnimated` in `frontend/src/engine/ExplodedCanvas.tsx` snaps to the target when `reduced` is true); `easeInOutCubic` remains in `math.ts` with a unit test. The document matches. I made no change to it.
+
+## A.3 Other findings
+- **`docs/STUDY_GUIDE.md` is damaged in the working tree (uncommitted).** `git diff` shows its Markdown formatting stripped and wrapped in a `"""` block, with the path `~/explodeai` rendered as `/explodeai`. I did not touch it. If unintended, restore with `git checkout docs/STUDY_GUIDE.md` **[OWNER: decide]**.
+- **Section 7 had been removed from the working copy** of this Bible (the committed version had a short one); this run replaced it with the full prompt above.
+- `docs/testing.md` test counts are stale (see 2.7). Lesson 04 Order preset note refers to a stats readout that does not exist (see 2.7).
+- No `[OWNER]` markers existed in the draft before this run; the ones in this document are new.
+
+## A.4 Research status
+- All 91 registry sources were read and checked between 2026-10-18 and 2026-10-22 by the project's verification passes (reports/). **This run did not re-fetch any source URL**, so the links were not re-validated today.
+- The `deep-research` skill was **not** run in this session and no new research was claimed. Outstanding if desired: (1) a human subject-matter review of the five lessons, which the reports list as a residual risk; (2) re-checking sources dated "live page at access date", which can change; (3) a fresh check of the MCP specification (read as the 2025-06-18 version; a newer one may exist).
+- Real vs simulated is as in 2.5. No experiment in this document was re-run today; the demo numbers are those observed on 2026-10-22.
+
+## A.5 Final verification (2026-10-26, automated run)
+- Checked structurally: sections 1-7 and Appendix A are present; each of the five lessons in section 3 carries its own official source URLs (15-26 links each); no TODO/TBD/placeholder text; 8 `[OWNER]` markers preserved; the section 7 handoff prompt is present in full.
+- Re-checked `partPosition` in `frontend/src/engine/math.ts`: still linear in `t` (plus a `sin(pi x t)` vertical lift), so `docs/architecture.md` remains accurate and was not edited.
+- The paid-API question remains as in A.1: ledger estimates of about $0.0007 are established; actual billing and who ran the calls are **unconfirmed [OWNER]**.
+- `docs/STUDY_GUIDE.md` is still in the damaged uncommitted state described in A.3. No source URL was re-fetched and no application code, commit or push was made.
+
+## A.6 Final verification (2026-10-27, automated run)
+- Read the whole draft again: sections 1-7 and Appendix A are complete; sections 3 and 4 cover all five lessons with source URLs; section 6 opens with the introduction and short RAG demo; the section 7 handoff prompt is intact; `[OWNER]` markers are preserved.
+- Re-queried the ledger read-only: 8 rows in `aiusage`, summed `estimated_cost_usd` = $0.000697, matching A.1. The README (lines 71 and 131) already describes the live calls and says the ledger stores estimates. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (not edited). Actual billed amounts and who ran the calls remain **unconfirmed [OWNER]**.
+- Re-read `partPosition` in `frontend/src/engine/math.ts` and the engine paragraph of `docs/architecture.md`: the document correctly describes the linear slider (with the `sin(pi x t)` lift and the 14% smoothing), so no edit was needed.
+- `docs/STUDY_GUIDE.md` is still in the damaged uncommitted state (A.3); untouched. No source URL was re-fetched, `deep-research` was not run, and no application code was changed, committed or pushed.
+
+## A.7 Final verification (2026-10-28, automated run)
+- No section needed new content: sections 1-7 and Appendix A are complete, with 96 `https://` source links and the 12 `[OWNER]` mentions preserved.
+- Re-checked `partPosition` (`frontend/src/engine/math.ts`): linear in `t`, with a `sin(pi x t)` lift. `docs/architecture.md` states this, so it was not edited.
+- Re-queried the ledger read-only: 8 rows, summed `estimated_cost_usd` = $0.000697. These are estimates; actual billing and who ran the calls remain **unconfirmed [OWNER]**.
+- `docs/STUDY_GUIDE.md` is still in the damaged uncommitted state (A.3) and was not touched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.8 Final verification (2026-10-29, automated run)
+- Sections 1-7 and Appendix A are complete; 97 `https://` links and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift, matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (not edited).
+- `docs/STUDY_GUIDE.md` is still in the damaged uncommitted state (A.3); untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.9 Final verification (2026-10-30, automated run)
+- Sections 1-7 and Appendix A are complete; 98 `https://` links and 16 `[OWNER` mentions are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` is still in the damaged uncommitted state (A.3); untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.10 Final verification (2026-10-31, automated run)
+- Sections 1-7 and Appendix A are complete; 99 `https://` links and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` is still in the uncommitted state described in A.3; untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.11 Final verification (2026-11-01, automated run)
+- Sections 1-7 and Appendix A are complete; 100 `https://` links and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` is still in the uncommitted state described in A.3 (it begins with a `"""` line); untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.12 Final verification (2026-11-02, automated run)
+- Sections 1-7 and Appendix A are complete; 101 `https://` lines and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` is still in the uncommitted state described in A.3 (it begins with a `"""` line); untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.13 Final verification (2026-11-03, automated run)
+- Sections 1-7 and Appendix A are complete; 102 `https://` lines and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) is still linear in `t` plus a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` is still in the uncommitted state described in A.3 (it begins with a `"""` line); untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.14 Final verification (2026-11-04, automated run)
+- Sections 1-7 and Appendix A are complete; 103 `https://` lines and 22 `[OWNER]` mentions preserved. No new content was needed.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/architecture.md` already describes the linear explode (lines 15-17); not edited. `docs/STUDY_GUIDE.md` untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.15 Final verification (2026-11-05, automated run)
+- Sections 1-7 and Appendix A are complete; source links and `[OWNER]` markers preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) re-checked: still linear in `t` with a `sin(pi x t)` lift, matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only (see A.1 for the figures; estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (not edited).
+- `docs/STUDY_GUIDE.md` untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.16 Final verification (2026-11-07, automated run)
+- Sections 1-7 and Appendix A are complete; source links and `[OWNER]` markers preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) re-checked: linear in `t` with a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
+- `docs/STUDY_GUIDE.md` untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.

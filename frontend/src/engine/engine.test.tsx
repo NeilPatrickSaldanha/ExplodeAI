@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ExplodedView } from './ExplodedView'
+import { PerspectiveCamera, Vector3 } from 'three'
+import { FOV, fitView, viewDirFor } from './camera'
+import type { Vec3 } from './types'
 import { bounds, easeInOutCubic, neighbours, partPosition, quadBezier, spreadParts, stepIndex, topDown } from './math'
 import type { AssemblySpec, ViewState } from './types'
 
@@ -39,6 +42,28 @@ describe('engine math', () => {
     steps.forEach((d) => expect(d).toBeCloseTo(steps[0], 6))
     expect(steps[0]).toBeGreaterThan(0.1)
     expect(Math.abs(xs[10] - xs[8])).toBeGreaterThan(0.2 * Math.abs(xs[10] - xs[0]) * 0.9)
+  })
+
+  it('frames a lopsided layout inside the usable area and in its middle', () => {
+    const pts: Vec3[] = [[-5, 0, -2], [4, 0, 1], [6, 1, 4], [-1, 0, 3]]
+    const labels = pts.map((at) => ({ at: [at[0], at[1] + 1, at[2]] as Vec3, padX: 0.12, padTop: 0.1 }))
+    const opts = { marginX: 0.9, marginY: 0.7, centerY: 0.05 }
+    const { distance, target } = fitView([...pts, ...labels], [0, 0, 0], 1.6, opts)
+    const cam = new PerspectiveCamera(FOV, 1.6, 0.1, 500)
+    cam.position.set(...target).addScaledVector(viewDirFor(1.6), distance)
+    cam.lookAt(new Vector3(...target))
+    cam.updateMatrixWorld()
+    const xs: number[] = []
+    const ys: number[] = []
+    for (const l of labels) {
+      const v = new Vector3(...l.at).project(cam)
+      xs.push(v.x - l.padX, v.x + l.padX)
+      ys.push(v.y, v.y + l.padTop)
+    }
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(-0.9 - 1e-6)
+    expect(Math.max(...xs)).toBeLessThanOrEqual(0.9 + 1e-6)
+    expect(Math.max(...ys)).toBeLessThanOrEqual(0.75 + 1e-6)
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(0, 1) // centred left to right
   })
 
   it('bezier hits both endpoints', () => {

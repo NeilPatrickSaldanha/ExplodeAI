@@ -1,9 +1,9 @@
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { MOUSE, TOUCH, Vector3, type PerspectiveCamera } from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { FOV, fitDistance, viewDirFor } from './camera'
+import { FOV, fitView, viewDirFor, type FitPoint } from './camera'
 import { scenePalette } from './colors'
 import { useThemeVersion } from './hooks'
 import { LabelProjector, type LabelAnchor } from './LabelLayer'
@@ -51,6 +51,8 @@ function CameraRig({
   reduced,
   resetSignal,
   framePoints,
+  labelAnchors,
+  elements,
   center,
   focusKey,
 }: {
@@ -58,17 +60,25 @@ function CameraRig({
   reduced: boolean
   resetSignal?: number
   framePoints: Vec3[]
+  /** Where each part's label hangs at full explosion, so the frame can leave room for the label cards. */
+  labelAnchors: { id: string; at: Vec3 }[]
+  elements: RefObject<Map<string, HTMLElement>>
   center: Vec3
   /** Changes when the selected stage changes: the only time the camera drifts towards a goal. */
   focusKey: string | null
 }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
   const camera = useThree((s) => s.camera) as PerspectiveCamera
+  const gl = useThree((s) => s.gl)
   const size = useThree((s) => s.size)
   const invalidate = useThree((s) => s.invalidate)
-  const goalVec = useMemo(() => new Vector3(...goal), [goal])
+  // The selection can nudge the aim by `goal - center`; the framing's own centre is the baseline.
+  const lean = useMemo(() => new Vector3(...goal).sub(new Vector3(...center)), [goal, center])
+  const goalVec = useMemo(() => new Vector3(), [])
   // The camera eases towards the selected stage once, then leaves the view alone, so a pan sticks.
   const settling = useRef(true)
+  // Where the framed model sits, so the camera can lean from here and come back to it.
+  const home = useRef<Vector3>(new Vector3(...center))
   useEffect(() => {
     settling.current = true
   }, [focusKey, resetSignal])
@@ -83,14 +93,33 @@ function CameraRig({
 
   useEffect(() => {
     // Leave ~100px either side for the HTML labels that sit on the outermost parts.
-    const margin = Math.min(0.86, 1 - 200 / Math.max(size.width, 200))
+    const halfW = Math.max(size.width, 200) / 2
+    const marginX = Math.max(0.6, 1 - 14 / halfW)
     const aspect = size.width / Math.max(size.height, 1)
-    // The view toolbar covers the bottom ~80px and the badges the top, so keep the model clear of both.
-    const marginY = Math.min(0.86, 1 - 170 / Math.max(size.height, 200))
-    const d = fitDistance(framePoints, center, aspect, margin, undefined, marginY)
-    camera.position.set(...center).addScaledVector(viewDirFor(aspect), d)
+    // The top badges and the bottom view toolbar cover part of the canvas: frame inside what is left,
+    // and centre the model in that space rather than in the whole canvas.
+    const padTop = 75
+    // The toolbar wraps onto a second row on narrower screens, so measure how far up it reaches.
+    const frame = gl.domElement.closest('.cine__frame') ?? gl.domElement.parentElement?.parentElement
+    const bar = frame?.querySelector('[role="toolbar"]')
+    const canvasBox = gl.domElement.getBoundingClientRect()
+    const padBottom = bar ? Math.max(70, canvasBox.bottom - bar.getBoundingClientRect().top + 18) : 100
+    const h = Math.max(size.height, 200)
+    const marginY = Math.min(0.9, 1 - (padTop + padBottom) / h)
+    const centerY = (padBottom - padTop) / h
+    // Each label card is centred on its anchor and hangs above it. Use its real size, so the cards at
+    // the edges stay inside the canvas and the visible extent, not just the parts, is what gets centred.
+    const labelPoints: FitPoint[] = labelAnchors.map((a) => {
+      const el = elements.current?.get(a.id)
+      const w = el?.offsetWidth || 190
+      const lh = el?.offsetHeight || 62
+      return { at: a.at, padX: (w / 2 + 6) / halfW, padTop: lh / (h / 2) }
+    })
+    const fit = fitView([...framePoints, ...labelPoints], center, aspect, { marginX, marginY, centerY })
+    home.current.set(...fit.target)
+    camera.position.copy(home.current).addScaledVector(viewDirFor(aspect), fit.distance)
     if (controls) {
-      controls.target.set(...center)
+      controls.target.copy(home.current)
       controls.update()
     }
     invalidate()
@@ -100,6 +129,7 @@ function CameraRig({
 
   useFrame(() => {
     if (!controls || !settling.current) return
+    goalVec.copy(home.current).add(lean)
     if (controls.target.distanceTo(goalVec) < 0.005) return
     if (reduced) controls.target.copy(goalVec)
     else controls.target.lerp(goalVec, 0.09)
@@ -131,6 +161,14 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
       }),
     [spec],
   )
+  // Label anchors at full explosion (the same offsets the live labels use), for framing the camera.
+  const labelAnchorsFull = useMemo(
+    () => spec.parts.map((p) => {
+      const at = partPosition(p, 1)
+      return { id: p.id, at: [at[0], at[1] + p.size[1] + 0.8, at[2]] as Vec3 }
+    }),
+    [spec],
+  )
   const [sceneWidth, setSceneWidth] = useState(1000)
   const compact = sceneWidth < 640
   // Phones: numbered markers (matching the numbered part list); full label when selected.
@@ -140,8 +178,8 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
     return new Set([view.selectedId, ...neighbours(spec, view.selectedId)])
   }, [spec, view.isolate, view.selectedId])
 
-  // Lean the camera a little toward the selected part, but keep the whole system in frame.
-  const FOCUS_PULL = 0.1
+  // No lean toward the selected part: any shift moves the tight framing's edge parts out of view.
+  const FOCUS_PULL = 0
   const sel = view.selectedId ? positions[view.selectedId] : undefined
   const goal: Vec3 = sel
     ? [0, 1, 2].map((i) => frame.center[i] + (sel[i] - frame.center[i]) * FOCUS_PULL) as Vec3
@@ -214,7 +252,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
           mouseButtons={{ LEFT: view.pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: view.pan ? MOUSE.ROTATE : MOUSE.PAN }}
           touches={{ ONE: view.pan ? TOUCH.PAN : TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN }}
         />
-        <CameraRig goal={goal} reduced={reducedMotion} resetSignal={resetSignal} framePoints={framePoints} center={frame.center} focusKey={view.selectedId} />
+        <CameraRig goal={goal} reduced={reducedMotion} resetSignal={resetSignal} framePoints={framePoints} labelAnchors={labelAnchorsFull} elements={elements} center={frame.center} focusKey={view.selectedId} />
         <SizeReporter onWidth={setSceneWidth} />
         <LabelProjector anchors={anchors} elements={elements} />
       </Canvas>

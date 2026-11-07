@@ -837,23 +837,6 @@
   font-size: 14px;
 }
 
-.cine__hints span {
-  white-space: nowrap;
-}
-
-.cine__hints {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs) var(--space-lg);
-  margin: var(--space-sm) var(--page-gutter) var(--space-lg);
-}
-
-.cine .meter {
-  margin: 0 var(--page-gutter);
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-md);
-}
-
 .cine .sources {
   margin-top: var(--space-lg);
 }

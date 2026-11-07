@@ -3,7 +3,6 @@ import { api } from '../../api/client'
 import type { Challenge, EmbedParams, Lesson } from '../../api/types'
 import { Challenges } from '../rag/Challenges'
 import { Rebuild } from '../rag/Rebuild'
-import { TimingStrip } from '../rag/ResultViews'
 import { BreaksCard } from '../shared/cine/BreaksCard'
 import { CineLesson } from '../shared/cine/CineLesson'
 import type { FlowLabels } from '../shared/cine/FlowLegend'
@@ -62,7 +61,6 @@ export function EmbeddingsLessonPage({ lesson }: { lesson: Lesson }) {
       onModeChange={(m) => {
         if (m !== 'challenges' && challenge) exitChallenge()
       }}
-      timings={<TimingStrip result={exp.result} />}
       tabs={(progress) => ({
         experiment: <EmbedExperimentPanel lesson={lesson} {...exp} />,
         challenges: (

@@ -50,7 +50,6 @@ interface Props {
   /** Called on every mode change (e.g. to leave an active challenge). */
   onModeChange?: (mode: Mode) => void
   /** Real per-stage timings strip, below the stage bar. */
-  timings: ReactNode
 }
 
 function verifiedCount(lesson: Lesson) {
@@ -64,7 +63,7 @@ function verifiedCount(lesson: Lesson) {
  * the stage bar, timings and sources. Owns stage navigation, tour sync, auto-play
  * and progress, so every lesson behaves the same.
  */
-export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summary, sceneTitle, flowLabels, renderIO, renderBreaks, tabs, onModeChange, timings }: Props) {
+export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summary, sceneTitle, flowLabels, renderIO, renderBreaks, tabs, onModeChange }: Props) {
   const sources = useMemo(() => new Map<string, Source>(lesson.sources.map((s) => [s.id, s])), [lesson])
   const stageIds = useMemo(() => lesson.components.map((c) => c.id), [lesson])
   // Tour step for each stage, so a click anywhere keeps the tour in sync.
@@ -337,14 +336,6 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
         </div>
 
         <StageBar stages={lesson.components} activeId={view.selectedId} explored={explored} onSelect={goToStage} />
-        <p className="cine__hints label">
-          <span>CLICK ANY PART OR STAGE TO JUMP</span>
-          <span>← → MOVE BETWEEN STAGES</span>
-          <span>ENTER ISOLATES · ESC CLEARS</span>
-        </p>
-
-        {timings}
-
         <details className="sources">
           <summary>
             <CornersOut aria-hidden /> All {lesson.sources.length} sources for this lesson

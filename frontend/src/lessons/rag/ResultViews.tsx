@@ -146,27 +146,3 @@ export function AnswerView({ result, params }: { result: RagResult; params?: Rag
   )
 }
 
-export function TimingStrip({ result }: { result: Pick<RagResult, 'stages' | 'timings_ms'> | null }) {
-  const stages = result?.stages ?? []
-  const max = Math.max(0.001, ...stages.map((s) => result?.timings_ms[s] ?? 0))
-  const total = stages.reduce((s, k) => s + (result?.timings_ms[k] ?? 0), 0)
-  return (
-    <aside className="meter" aria-label="Stage timings from the last real run">
-      <p className="label meter__label">STAGE TIMINGS · REAL RUN</p>
-      <ol className="meter__bars">
-        {stages.map((s) => {
-          const ms = result!.timings_ms[s]
-          return (
-            <li key={s} title={`${s}: ${ms.toFixed(2)} ms`}>
-              <span className="meter__bar" style={{ transform: `scaleY(${Math.max(0.06, Math.sqrt(ms / max))})` }} />
-              <span className="visually-hidden">
-                {s}: {ms.toFixed(2)} milliseconds
-              </span>
-            </li>
-          )
-        })}
-      </ol>
-      <p className="label meter__label">{result ? `TOTAL · ${total.toFixed(1)} MS` : 'NO RUN YET'}</p>
-    </aside>
-  )
-}

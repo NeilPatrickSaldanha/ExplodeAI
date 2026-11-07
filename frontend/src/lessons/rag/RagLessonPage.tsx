@@ -9,7 +9,6 @@ import { Challenges } from './Challenges'
 import { ExperimentPanel } from './ExperimentPanel'
 import { ragOutcome } from './ragOutcome'
 import { Rebuild } from './Rebuild'
-import { TimingStrip } from './ResultViews'
 import { StageIO } from './StageIO'
 import { DEFAULT_PARAMS, useExperiment } from './useExperiment'
 
@@ -62,7 +61,6 @@ export function RagLessonPage({ lesson }: { lesson: Lesson }) {
       onModeChange={(m) => {
         if (m !== 'challenges' && challenge) exitChallenge()
       }}
-      timings={<TimingStrip result={exp.result} />}
       tabs={(progress) => ({
         experiment: <ExperimentPanel lesson={lesson} {...exp} neuralAvailable={!!config?.embedders.find((e) => e.id === 'neural-local')?.available} />,
         challenges: (

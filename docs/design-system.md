@@ -24,8 +24,6 @@ which starts with the Hallmark stamp. The run is recorded in `.hallmark/log.json
 - **Mono labels appear in many places.** Lumen's mono register *is* its label
   system: eyebrows, callouts, meter labels. Here it also marks live readouts,
   which are real values from the last run, never invented.
-- **The meter strip is real.** Its bars are per-stage timings from the last real
-  execution, not decoration.
 
 ## Lesson 02 additions (tokenization)
 
