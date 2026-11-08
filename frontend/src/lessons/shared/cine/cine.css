@@ -1109,3 +1109,14 @@
   height: auto;
   padding-block: var(--space-2xs);
 }
+
+/* Bigger, rounder type needs a little more give on the narrowest phones. */
+.breaks {
+  min-width: 0;
+}
+
+.breaks__run {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}

@@ -38,12 +38,11 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   font-style: normal;
   color: var(--color-ink);
-  text-transform: lowercase;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  letter-spacing: -0.005em;
+  line-height: 1.12;
   margin: 0;
   overflow-wrap: anywhere;
   min-width: 0;
@@ -95,10 +94,15 @@ a {
   }
 }
 
+h1::first-letter,
+h2::first-letter {
+  text-transform: uppercase;
+}
+
 code,
 pre,
 kbd {
-  font-family: var(--font-label);
+  font-family: var(--font-mono);
   font-size: 0.875em;
 }
 
@@ -117,7 +121,7 @@ kbd {
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   color: var(--color-muted);
-  font-weight: 400;
+  font-weight: 800;
 }
 
 .visually-hidden {
