@@ -1245,6 +1245,8 @@
   display: grid;
   gap: var(--space-lg);
   padding: 0 var(--space-lg) var(--space-lg);
+  max-height: min(55vh, 28rem);
+  overflow-y: auto;
 }
 
 @media (min-width: 64rem) {

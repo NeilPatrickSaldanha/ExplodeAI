@@ -5,16 +5,16 @@ import type { Lesson } from '../../../api/types'
 const key = (lessonId: string) => `explodeai.bigpicture.${lessonId}`
 const read = (lessonId: string) => {
   try {
-    return localStorage.getItem(key(lessonId)) !== 'closed'
+    return localStorage.getItem(key(lessonId)) === 'open'
   } catch {
-    return true
+    return false
   }
 }
 
 /**
  * The whole lesson in plain words, before any part is opened: a short story, one analogy with every
  * stage mapped to its stand-in (and where the analogy stops being true), and the one example the
- * stages follow. Open on a first visit, remembered once the learner closes it.
+ * stages follow. Closed by default so the diagram stays in view; remembered once the learner opens it.
  */
 export function BigPicture({ lesson, onGoTo }: { lesson: Lesson; onGoTo: (id: string) => void }) {
   const bp = lesson.big_picture
@@ -39,7 +39,7 @@ export function BigPicture({ lesson, onGoTo }: { lesson: Lesson; onGoTo: (id: st
       <summary className="bigpic__summary">
         <Compass weight="duotone" aria-hidden />
         <span>The big picture</span>
-        <span className="label bigpic__hint">{open ? 'HIDE' : 'SHOW THE STORY, THE ANALOGY AND THE EXAMPLE'}</span>
+        <span className="label bigpic__hint">{open ? 'HIDE' : 'OPEN THE STORY, THE ANALOGY AND THE EXAMPLE'}</span>
       </summary>
       <div className="bigpic__body">
         <div className="bigpic__col">

@@ -71,17 +71,21 @@ test('every hand-off is explained in a full sentence', async ({ page }) => {
   for (const p of await hand.locator('p').allTextContents()) expect(p.length).toBeGreaterThan(40)
 })
 
-test('the big picture opens every lesson, maps stages to an analogy, and remembers being closed', async ({ page }) => {
+test('the big picture is a closed bar above the diagram, opens on request, maps stages to an analogy, and is remembered', async ({ page }) => {
   await page.goto('/lessons/attention')
   const card = page.locator('.bigpic')
+  await expect(card).not.toHaveAttribute('open', '')
+  const frameTop = (await page.locator('.cine__frame').boundingBox())!.y
+  expect(frameTop).toBeLessThan(500)
+  await card.locator('summary').click()
   await expect(card).toHaveAttribute('open', '')
   await expect(card.locator('.bigpic__map li')).toHaveCount(8)
   await expect(card.locator('.bigpic__breaks')).toContainText('toy')
   await card.getByRole('button', { name: 'Softmax' }).click()
   await expect(page.locator('.cine__panel .spanel__title')).toHaveText(/softmax/i)
-  await card.locator('summary').click()
-  await expect(card).not.toHaveAttribute('open', '')
-  await page.waitForFunction(() => localStorage.getItem('explodeai.bigpicture.attention') === 'closed')
+  await page.waitForFunction(() => localStorage.getItem('explodeai.bigpicture.attention') === 'open')
   await page.reload()
+  await expect(page.locator('.bigpic')).toHaveAttribute('open', '')
+  await page.locator('.bigpic summary').click()
   await expect(page.locator('.bigpic')).not.toHaveAttribute('open', '')
 })
