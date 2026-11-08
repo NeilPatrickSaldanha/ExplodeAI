@@ -1361,3 +1361,29 @@
     padding: var(--space-md);
   }
 }
+
+
+/* Mode tabs: a little icon makes each one easier to tell apart at a glance. */
+.cine__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-weight: var(--weight-strong);
+}
+
+.cine__mode svg {
+  font-size: 1.2em;
+}
+
+/* The mode tabs get the room they need; the title takes whatever is left. */
+@media (min-width: 64rem) {
+  .cine__head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.cine__modes {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  overflow-x: visible;
+}

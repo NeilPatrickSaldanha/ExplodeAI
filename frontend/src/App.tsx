@@ -6,6 +6,7 @@ import type { Lesson, LessonSummary } from './api/types'
 import { RagLessonPage } from './lessons/rag/RagLessonPage'
 import { TokenizationLessonPage } from './lessons/tokenization/TokenizationLessonPage'
 import { EmbeddingsLessonPage } from './lessons/embeddings/EmbeddingsLessonPage'
+import { LessonSidebar } from './components/LessonSidebar'
 import { AgentLessonPage } from './lessons/agents/AgentLessonPage'
 import { AttentionLessonPage } from './lessons/attention/AttentionLessonPage'
 
@@ -38,7 +39,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useTheme()
   const isLight = theme === 'light' || (theme === null && window.matchMedia?.('(prefers-color-scheme: light)').matches)
   return (
-    <>
+    <div className="shell">
+      <LessonSidebar />
+      <div className="shell__main">
       <a href="#main" className="skip-link">
         Skip to content
       </a>
@@ -64,7 +67,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         <span>explodeai · every claim cited, every experiment real, every simulation labelled.</span>
         <span className="foot__by">Made by Neil</span>
       </footer>
-    </>
+      </div>
+    </div>
   )
 }
 
@@ -78,7 +82,7 @@ function Home() {
     <section className="home">
       <p className="label">AI ENGINEERING, TAKEN APART</p>
       <h1>
-        learn systems by&nbsp;<em>exploding</em>&nbsp;them.
+        learn systems by <em>exploding</em> them.
       </h1>
       <p className="home__lede">
         Rotate a system in 3D, pull it apart, isolate a part, run it for real, break it on purpose, then rebuild it.

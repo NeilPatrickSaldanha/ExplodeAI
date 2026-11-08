@@ -1,5 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
-import { ArrowsClockwise, CornersOut, Crosshair, Cube, Hand, Info, Pause, Play, Question, SealCheck, Square, Wind } from '@phosphor-icons/react'
+import { ArrowsClockwise, Blueprint, Compass, CornersOut, Crosshair, Cube, Flask, Hand, Info, Path, Pause, Play, Question, SealCheck, Square, Wind, Wrench } from '@phosphor-icons/react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api } from '../../../api/client'
 import type { Component, Lesson, Source } from '../../../api/types'
@@ -248,11 +248,21 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
               <Question aria-hidden /> How to use
             </button>
             <Tabs.List className="cine__modes" aria-label="Mode">
-              <Tabs.Trigger className="cine__mode" value="explore">Explore</Tabs.Trigger>
-              <Tabs.Trigger className="cine__mode" value="tour">Tour</Tabs.Trigger>
-              <Tabs.Trigger className="cine__mode" value="experiment">Experiment</Tabs.Trigger>
-              <Tabs.Trigger className="cine__mode" value="challenges">Break &amp; fix</Tabs.Trigger>
-              <Tabs.Trigger className="cine__mode" value="rebuild">Rebuild</Tabs.Trigger>
+              <Tabs.Trigger className="cine__mode" value="explore">
+                <Compass aria-hidden /> Explore
+              </Tabs.Trigger>
+              <Tabs.Trigger className="cine__mode" value="tour">
+                <Path aria-hidden /> Tour
+              </Tabs.Trigger>
+              <Tabs.Trigger className="cine__mode" value="experiment">
+                <Flask aria-hidden /> Experiment
+              </Tabs.Trigger>
+              <Tabs.Trigger className="cine__mode" value="challenges">
+                <Wrench aria-hidden /> Break &amp; fix
+              </Tabs.Trigger>
+              <Tabs.Trigger className="cine__mode" value="rebuild">
+                <Blueprint aria-hidden /> Rebuild
+              </Tabs.Trigger>
             </Tabs.List>
           </div>
         </header>
