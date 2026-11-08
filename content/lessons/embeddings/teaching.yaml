@@ -1,10 +1,10 @@
 # Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
 # and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
-# Numbers are asserted by backend/tests/test_teaching.py.
+# Numbers are asserted by backend/tests/test_teaching.py. Reviewed against the code on 2026-11-08 (research_notes/Teaching review).
 big_picture:
   story: Embeddings turn text into lists of numbers so that a computer can tell which texts mean similar things. Texts with
     related meaning get numbers that are close together. This lesson takes a real, small embedding model apart and follows
-    one sentence from words, to pieces, to one list of 384 numbers, to a point on a map where its nearest neighbours are the
+    one sentence from words, to pieces, to one list of 384 numbers, to a point on a map whose nearest neighbours are usually
     sentences that mean something similar.
   analogy:
     title: A map of meaning with pins
@@ -16,7 +16,7 @@ big_picture:
     - part: Tokenizer
       becomes: reading the sentence piece by piece
     - part: Encoder
-      becomes: a reader who understands each piece in the context of the whole sentence
+      becomes: a reader whose vector for each piece is computed from the whole sentence around it
     - part: Pooling
       becomes: writing one summary for the whole sentence
     - part: Normalizer
@@ -36,7 +36,7 @@ connections:
   library->tokenizer: The library sentences go through the same reading steps as your text, so that all of them end up on
     the same map.
   your_text->tokenizer: Your sentence is cut into word pieces first, because the model reads pieces, not raw letters.
-  tokenizer->encoder: The encoder reads all the pieces together, so each one can be understood in the context of the others.
+  tokenizer->encoder: The encoder reads all the pieces together, so each piece's vector can take the others into account.
   encoder->pooling: The encoder gives one list of numbers per piece. Pooling is needed to turn them into one list for the
     whole sentence.
   pooling->normalizer: The sentence summary is scaled to length 1 so that only its direction matters when it is compared.
@@ -59,8 +59,8 @@ stages:
       we hope it finds.
     check:
       question: Why is “a place to put my books” a good test of an embedding model?
-      answer: It shares no words with the bookshelf sentence yet means something related, so only a method that understands
-        meaning can connect them.
+      answer: It shares no words with the bookshelf sentence yet is related, so a method that only matches shared words (the
+        Lexical option) cannot connect them, while a neural embedding trained on text pairs often can.
   tokenizer:
     story: 'The model can''t read raw text. First the text is cut into word pieces called tokens, and two special markers
       are added: [CLS] at the start and [SEP] at the end. Rare words are split into smaller pieces. This model can read at
@@ -80,6 +80,7 @@ stages:
   pooling:
     story: Now we have one vector per token, but we want one vector for the whole sentence. Pooling squashes them into one.
       This model uses the vector of the [CLS] token, a special marker it was trained to use as a summary of the whole sentence.
+      The model was trained with [CLS] pooling, so it works best that way.
     thread: 'The 8 × 384 table becomes 1 × 384: just the [CLS] token''s vector.'
     check:
       question: What does pooling do?
@@ -102,7 +103,7 @@ stages:
       answer: Not by itself. The scores aren't calibrated, and even unrelated texts can score above zero, so compare scores
         with each other rather than with a fixed threshold.
   semantic_space:
-    story: 'This stage is a picture, not a calculation. The 384 numbers can''t be drawn, so a technique called PCA squashes
+    story: 'This stage is a view, not part of the search. The 384 numbers can''t be drawn, so a technique called PCA squashes
       them into 3 so you can see the map. Squashing loses information: the picture keeps only part of the real spread, and
       its label says how much. The Neighbours list uses the real numbers.'
     thread: Your sentence appears as a ring among the 24 library points. Its three nearest neighbours, by the real numbers,
@@ -111,18 +112,20 @@ stages:
       question: Why trust the Neighbours list more than the 3D map?
       answer: The map squashes 384 dimensions into 3 and loses information. The list is computed from the full vectors.
 experiment:
-  intro: 'Every run here uses a real small model on your computer. Change one thing at a time and watch the Neighbours tab:
-    compare the order of the scores, not the numbers.'
+  intro: 'Every run here uses a small neural model on your computer (a reduced-precision build), unless both embedders are
+    set to Lexical. Change one thing at a time and watch the Neighbours tab: compare the order of the scores, not the numbers.'
   presets:
     Puppy:
       try: Click it and open the Neighbours tab.
       notice: 'The nearest sentences are all about animals: the puppy fetching sticks (0.717), the dog chasing a ball (0.637)
-        and the horse grazing (0.564). Notice that the match is by meaning, not just words.'
+        and the horse grazing (0.564). The top one shares the words “puppy” and “fetch” with your text; the dog and the horse
+        share nothing, so they are matched on meaning, not words.'
     Bookshelf:
       try: Click it, then switch both embedders to Lexical.
       notice: 'With the neural model the nearest are the bookshelf (0.695), the desk (0.566) and the armchair (0.554), all
-        furniture, even though “a place to put my books” shares no words with them. With Lexical the neighbours are animal
-        sentences at score 0.0: no shared words, nothing to match.'
+        furniture, even though “a place to put my books” shares no content words with them. With Lexical every score is 0.0,
+        so the list just shows the first sentences in the library (the animal ones). That is a tie, not a match: no shared
+        words, nothing to match.'
     Commute:
       try: Click it, then turn BGE query instruction on.
       notice: 'At first the top match is the desk (0.588), then the bus (0.561): not what you meant. With the instruction
@@ -131,26 +134,29 @@ experiment:
     Where it goes wrong:
       try: Click it and look at the top three.
       notice: '“A vehicle that runs on rails” finds a truck (0.619), a horse (0.613) and a small plane (0.597). The train
-        sentence is not there: it ranks 14th of 24. Embeddings are approximate, and this is a real miss.'
+        sentence is not there: it ranks 14th of 24. Embeddings are approximate, and this is a real miss for this small model.'
     Long text:
       try: Click it and open the Tokens tab.
       notice: A warning says the text was cut off. The model reads at most 512 tokens, so the end of the passage (including
         its last sentence) never reaches it.
   ideas:
-  - do: Set only one of the two embedders to Lexical.
+  - do: Set only one of the two embedders to Lexical, then open the Neighbours tab.
     see: A red notice says the two sets of vectors can't be compared, because they come from different models.
   - do: Switch Similarity between Cosine and Dot product with Normalize on.
     see: The order of the neighbours is the same. With vectors scaled to length 1, the two measures agree.
   - do: Turn Normalize off and look at the Dot product scores.
     see: They are no longer limited to between −1 and 1, because the vectors keep their raw length. Cosine itself isn't affected.
   - do: Switch Pooling between [CLS] token and Mean of tokens.
-    see: Both turn the token vectors into one sentence vector, in different ways, so the scores change. Compare the order
-      of the neighbours to see whether it matters for your text.
+    see: 'Both turn the token vectors into one sentence vector, in different ways, so the scores change. This model was trained
+      to use [CLS], so Mean of tokens is off its training (for the bookshelf sentence the top score drops from 0.695 to 0.645).
+      Try “a vehicle that runs on rails”: the order of the top two changes.'
   tabs:
     space: Your text is a ring among the 24 library sentences, coloured and shaped by topic. Hover a point to read it. The
       label says how much of the real spread the picture keeps. “Show as table” lists everything.
     neighbours: 'The exact scores, highest first. Compare the order of the scores rather than the numbers: they aren''t percentages.'
     tokens: 'The pieces the model actually reads, including [CLS] at the start and [SEP] at the end. Rare words split into
       ## pieces. A warning appears if the text was cut at 512 tokens.'
-    vector: 'The real numbers for your text: a small slice of each vector, where a bar''s height is the size of the number
-      and its fill shows whether it is positive or negative. These are the numbers being compared.'
+    vector: The first 48 of the 384 numbers in your sentence's vector, as pooled from the [CLS] token before it is scaled
+      to length 1 (the line under it shows the length going from about 9.25 to 1.00). A bar's height is its relative size
+      and its fill shows whether it is positive or negative. Scaling divides every number by that length, so the compared
+      vector has the same shape. Per-token vectors are on the Tokens tab.

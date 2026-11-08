@@ -82,9 +82,8 @@ def test_tokenization_running_example():
         " keeper",
     ]
     assert r["decoding"]["text"] == text and r["decoding"]["round_trip"] and r["decoding"]["unk_count"] == 0
-    first = r["training"]["merges"][:3] if "merges" in r["training"] else None
-    if first:
-        assert [(m["left"], m["right"]) for m in first] == [("h", "e"), (" ", "t"), (" t", "he")]
+    first = r["training"]["steps"][:3]
+    assert [(m["left"], m["right"]) for m in first] == [("h", "e"), (" ", "t"), (" t", "he")]
 
 
 def test_embeddings_running_example():
@@ -94,7 +93,6 @@ def test_embeddings_running_example():
 
     r = run_embed(EmbedParams(text="a place to put my books", top_k=3))
     q = r["query"]
-    assert [t["text"] for t in q["tokens"]] if isinstance(q["tokens"], list) else True
     assert q["tokens"] == 8 or len(q["tokens"]) == 8
     assert round(q["norm_before"], 2) == 9.25 and q["norm_after"] == 1.0 and q["dim"] == 384
     assert len(r["library"]["items"]) == 24
@@ -259,8 +257,17 @@ def test_attention_guidance_numbers():
     assert round(cat["stats"]["mean_max_weight"] * 100) == 35
     wide = attend.run(attend.AttendParams(text="the cat sat on the mat", heads=8, scale=False))
     assert round(wide["stats"]["mean_max_weight"] * 100) == 63
+    one = "the cat sat on the mat"
+
+    def strongest(heads, scale):
+        stats = attend.run(attend.AttendParams(text=one, heads=heads, scale=scale))["stats"]
+        return round(stats["mean_max_weight"] * 100)
+
+    assert (strongest(1, False), strongest(1, True), strongest(8, True)) == (94, 42, 37)
     order = attend.run(attend.AttendParams(text="dog bites man", position=False))
     assert order["stats"]["order_gap"] == 0.0
+    ordered = attend.run(attend.AttendParams(text="dog bites man", position=True))
+    assert round(ordered["stats"]["order_gap"], 2) == 0.45
 
 
 def test_agent_guidance_numbers():

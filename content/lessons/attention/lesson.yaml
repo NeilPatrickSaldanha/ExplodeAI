@@ -1187,7 +1187,7 @@ experiment:
   - label: Order
     text: dog bites man
     note: 'Turn Position vectors off and the Causal mask off: the layer can no longer tell this sentence from "man
-      bites dog". The Order matters check in the stats shows it.'
+      bites dog". The "Order matters" result shows it.'
 challenges:
 - id: peeking
   title: The model that cheats

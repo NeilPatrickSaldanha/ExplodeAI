@@ -1,6 +1,6 @@
 # Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
 # and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
-# Numbers are asserted by backend/tests/test_teaching.py.
+# Numbers are asserted by backend/tests/test_teaching.py. Reviewed against the code on 2026-11-08 (research_notes/Teaching review).
 big_picture:
   story: 'A language model can''t read letters. It reads numbers. A tokenizer is the translator: it cuts text into pieces
     called tokens and gives every piece a number. This lesson builds a tokenizer from scratch in two halves. Learning happens
@@ -23,9 +23,9 @@ big_picture:
     - part: Encoder
       becomes: building the sentence by replaying the gluing in the order we learned it
     - part: Decoder
-      becomes: taking the bricks apart again to read the sentence back
-    breaks: Real tokenizers (the ones inside GPT, Claude or Gemini) have their own much bigger vocabularies. This one is tiny
-      and learns from a made-up lighthouse log, so its token counts are not theirs.
+      becomes: looking up what each brick stands for and reading the sentence back
+    breaks: Real tokenizers, such as GPT-2's with 50,257 tokens, have much bigger vocabularies. This one is tiny and learns
+      from a made-up lighthouse log, so its token counts are not theirs.
   example:
     title: The sentence we will follow
     input: The keeper lit the lantern at dusk.
@@ -39,8 +39,9 @@ connections:
     the encoder will need it.
   vocabulary->encoder: The encoder needs the vocabulary's numbers and the saved merge order to rebuild any new text in exactly
     the same way.
-  input_text->encoder: The sentence you want to tokenize enters here. It is the one input that changes from run to run.
-  encoder->decoder: The token numbers go to the decoder, which turns them back into text to prove nothing was lost.
+  input_text->encoder: The sentence you want to tokenize enters here. It is the new text the encoder works on.
+  encoder->decoder: The token numbers go to the decoder, which turns them back into text. Here we also compare that text with
+    the original to check nothing was lost.
 stages:
   corpus:
     story: 'Before it can split anything, the tokenizer studies a pile of example text to learn which letter combinations
@@ -66,7 +67,7 @@ stages:
       a symbol it doesn't know.
     thread: '“ keeper” starts as 7 separate symbols: space, k, e, e, p, e, r. Our whole sentence starts as 35 symbols.'
     check:
-      question: Why can a byte alphabet spell any text when a character alphabet can't?
+      question: Why can a byte alphabet spell any text when an alphabet of only the characters seen in training can't?
       answer: Every possible byte is already in the alphabet. A character alphabet only holds characters seen in training,
         so anything else becomes an unknown token and can't be recovered.
   merge_learner:
@@ -89,11 +90,12 @@ stages:
         a bigger vocabulary.
   input_text:
     story: This is the new sentence you want to tokenize. It can contain words the tokenizer has never seen. That is fine,
-      because it can always fall back on single bytes.
+      because, with the 256-byte alphabet, it can always fall back on single bytes.
     thread: Our sentence is “The keeper lit the lantern at dusk.” It is 35 bytes long.
     check:
       question: What happens to a word the tokenizer never saw during learning?
-      answer: It is split into smaller known pieces, down to single bytes if necessary, so nothing is lost.
+      answer: With the 256-byte alphabet it is split into smaller known pieces, down to single bytes if necessary, so nothing
+        is lost. (An alphabet of only the training characters would turn unknown characters into [UNK].)
   encoder:
     story: The encoder turns your sentence into numbers. It cuts the sentence into pieces, spells each piece in bytes, and
       then replays the learned recipes in the order they were learned. The order matters, because later recipes use symbols
@@ -106,8 +108,8 @@ stages:
         words stay in fragments.
   decoder:
     story: 'The decoder does the reverse: it looks up each number, turns it back into bytes, and joins the bytes into text.
-      If decoding gives back exactly what you started with, the tokenizer lost nothing. That round trip is a good test that
-      the whole pipeline is working.'
+      If decoding gives back exactly what you started with, the tokenizer lost nothing. A passing round trip shows the tokenizer
+      is lossless. It does not show the tokens are good ones: the 35-token version at 0 merges round-trips too.'
     thread: Our 8 numbers decode to exactly “The keeper lit the lantern at dusk.” with no unknown tokens.
     check:
       question: Why is a successful decode a useful test?
@@ -118,23 +120,28 @@ experiment:
     Familiar sentence:
       try: Drag Merges learned from 0 up to 100, then to 300.
       notice: The sentence is 35 tokens at 0 merges, 15 at 25, 8 at 100 and still 8 at 300. At 100 every word is one token.
-        After that, more merges don't help this sentence, but the vocabulary keeps growing (257, 282, 357, 473).
+        After that, more merges don't help this sentence, but the vocabulary keeps growing (257, 282, 357, 473). (At 300 only
+        216 merges are learned, because training runs out of pairs; the page says so, and the vocabulary is 257 + 216 = 473.)
     Unseen words:
       try: Click it and set Merges learned to 100.
-      notice: 18 tokens. Words the tokenizer learned stay whole (“ lantern”, “ clock”) while words it never saw fall into
-        pieces (“ke”, “ep”, “er”, “s” for “keepers”). At 0 merges it is 37 tokens, at 25 it is 23 and at 300 it is 16.
+      notice: '18 tokens. Parts the tokenizer learned come out as single tokens (“ lantern”, “ clock”), and the rest of each
+        unseen word is spelled out in small pieces: “ke”, “ep”, “er”, “s” finish “lanternkeepers”, “w”, “or”, “k” finish “clockwork”,
+        and “rewound” breaks into 7 tokens (a space, r, e, w, o, un, d). At 0 merges it is 37 tokens, at 25 it is 23 and at
+        300 it is 16.'
     Accents and emoji:
       try: Click it, set Base alphabet to Training characters, then to 256 bytes.
-      notice: With Training characters, 4 tokens become [UNK] (unknown) and decoding no longer gives the text back. With 256
-        bytes, there are no unknown tokens (17 tokens) and the text round-trips exactly. A byte alphabet can spell anything.
+      notice: 'With Training characters, 4 tokens become [UNK] (unknown): the capital C (the training text has none), é, è
+        and ☕, and decoding no longer gives the text back. With 256 bytes there are no unknown tokens (17 tokens) and the
+        text round-trips exactly; é, è and ☕ appear as PARTIAL tokens because each is spelled out as 2 or 3 bytes. A byte
+        alphabet can spell anything.'
     Numbers (none in the corpus):
       try: Click it, then set Base alphabet to Training characters.
       notice: 'The training text has no digits, so every digit stays a separate symbol: 28 tokens. With Training characters,
         six of them become [UNK]. The tokenizer can only be as good as the text it learned from.'
   ideas:
-  - do: Open the Replay tab and pick “ keeper”.
-    see: Seven starting symbols become one token in six merges (er, ep, ke, “ ke”, “ keep”, “ keeper”). You are watching the
-      learned recipes being replayed in order.
+  - do: Open the Merges tab and find “ keeper” under “How the most frequent words were built”.
+    see: Seven starting symbols become one token in six merges (er, ep, ke, “ ke”, “ keep”, “ keeper”). In the Replay tab
+      you can watch the same six steps, mixed in with the other words' merges.
   - do: Set Merge order when encoding to Reversed (try 200 merges on “The keeper trimmed the lantern wick.”).
     see: '“ keeper” and “ lantern” are no longer single tokens: later recipes need pieces made by earlier ones, so out of
       order they can''t fire.'
@@ -147,7 +154,8 @@ experiment:
   tabs:
     tokens: Your text split into tokens, as this tokenizer sees it. The count at the top is how many tokens this small tokenizer
       needs (real models count with their own tokenizers, so their numbers differ).
-    replay: Pick a word and step through the merges that built it, from single symbols to the final token.
+    replay: Step through the merges applied to your text, one at a time, with the Previous and Next buttons or the “Merges
+      applied” slider. The piece that just changed is highlighted.
     merges: The merge table in the order it was learned. The earliest merges are the most frequent pairs in the training text.
     tradeoff: Vocabulary size against tokens for your text, with your current setting marked. This is the trade-off tokenizer
       designers weigh.

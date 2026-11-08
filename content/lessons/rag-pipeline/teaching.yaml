@@ -1,12 +1,13 @@
 # Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
 # and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
-# Numbers are asserted by backend/tests/test_teaching.py.
+# Numbers are asserted by backend/tests/test_teaching.py. Reviewed against the code on 2026-11-08 (research_notes/Teaching review).
 big_picture:
   story: A language model writes fluently, but it only knows what it saw during training. It has never read your private documents.
     RAG, short for retrieval-augmented generation, fixes that by looking things up first. It searches your documents for the
     pieces that match the question, puts those pieces in front of the model together with the question, and asks the model
-    to answer from them. This lesson has two halves. Getting the documents ready happens once, ahead of time (the first four
-    stages). Answering happens every time someone asks (the last four).
+    to answer from them. This lesson has two halves. Getting the documents ready happens once, ahead of time in a real system
+    (the first four stages, which this demo recomputes on every run). Answering happens every time someone asks (the last
+    four).
   analogy:
     title: A help desk with a binder and index cards
     mapping:
@@ -32,12 +33,13 @@ big_picture:
   example:
     title: The question we will follow
     input: How long do I have to return a bike?
-    note: One question travels through all eight stages. Look for it in the box called “In our example” on each stage.
+    note: The question joins at the fifth stage, the Query embedder. The first four stages prepare the documents it will be
+      matched against. Look for it in the box called “In our example” from stage 5 on.
 connections:
-  corpus->chunker: The chunker needs the whole documents so it can cut them into small pieces. A big document can't be searched
-    precisely or fitted into a prompt.
-  chunker->embedder: Each chunk is fingerprinted on its own, because the search will later hand back whole chunks, not whole
-    documents.
+  corpus->chunker: The chunker needs the whole documents so it can cut them into small pieces. A whole article mixes several
+    topics, and a prompt has limited room, so you want to send only the most relevant pieces.
+  chunker->embedder: Each chunk gets its own fingerprint (fitted alongside the others, since rare-word weights come from all
+    the chunks), because the search will later hand back whole chunks, not whole documents.
   embedder->vector_index: The fingerprints are filed in the index together with which chunk each belongs to, so a match can
     be turned back into text.
   vector_index->retriever: The retriever searches the index. It needs every stored fingerprint to compare the question against.
@@ -45,36 +47,41 @@ connections:
     is nothing to search for.
   retriever->prompt_builder: The best chunks go to the prompt builder because they are the evidence the model is allowed to
     use.
-  prompt_builder->generator: The assembled prompt is the only thing the generator sees. A fact that isn't in the prompt can't
-    appear in the answer.
+  prompt_builder->generator: The assembled prompt is the only place your documents reach the generator. If a fact is not in
+    the prompt, the generator has nothing from your documents to use. A real language model may still add things from its
+    training, right or wrong. This lesson's baseline can only quote the prompt.
 stages:
   corpus:
     story: This is the pile of documents the system is allowed to answer from. A language model only knows what it was trained
       on, so it has never seen your private articles. Keeping the documents outside the model means you can change what the
-      system knows just by changing the documents. Every later stage works on these documents and nothing else.
+      system knows just by changing the documents and rebuilding the index (re-cutting and re-embedding them). Nothing needs
+      retraining. Every later stage works on these documents and nothing else.
     thread: 'Our pile is six made-up help articles from a bike shop, 271 words in all: returns, warranty, battery care, shipping,
       sizing and service.'
     check:
       question: Why keep the documents outside the model instead of teaching them to the model?
-      answer: Because you can replace or update the documents at any time without retraining anything, and the model never
-        needed to see them in training.
+      answer: Because you can replace or update the documents and rebuild the index (re-cut and re-embed them) without retraining
+        anything, and the model never needed to see them in training.
   chunker:
-    story: 'Whole articles are too big to search precisely and too big to fit in a prompt, so the chunker cuts each one into
-      small pieces called chunks. Think of cutting a page into index cards, one idea per card. Where you cut matters: if the
-      cut falls in the middle of a fact, no single card holds the whole fact. You choose how big the chunks are and whether
+    story: 'A whole article mixes several topics, so it matches a question only vaguely, and a prompt has limited room, so
+      the chunker cuts each article into small pieces called chunks. Think of cutting a page into index cards. This lesson
+      cuts by sentence or by a set number of words, not by idea, so a card can hold half a topic. Where you cut matters: if
+      the cut falls in the middle of a fact, no single card holds the whole fact. You choose how big the chunks are and whether
       neighbouring chunks overlap.'
     thread: 'With sentence chunks of up to 40 words, our six articles become 11 chunks. The returns article becomes two: returns#0
       and returns#1.'
     check:
       question: A fact is split across two chunks, so neither holds the whole sentence. What are two ways to fix that?
-      answer: Make the chunks bigger, or let neighbouring chunks overlap, so a whole fact sits inside at least one chunk.
+      answer: Let neighbouring chunks overlap, make the chunks bigger, or cut at sentence boundaries. Each makes it more likely
+        that a whole fact sits inside one chunk, though bigger chunks cost precision.
   embedder:
     story: 'A computer can''t compare the meaning of two paragraphs directly, so the embedder turns each chunk into a list
       of numbers, called a vector, that stands for it. Think of writing a fingerprint on every index card. Chunks about similar
       things should get similar fingerprints. In this lesson the default embedder is deliberately simple: it builds the fingerprint
-      from the words used, 1024 numbers per chunk, so it matches words better than it matches meaning.'
-    thread: Each of our 11 chunks becomes a vector of 1024 numbers. The returns chunk and a question about returning share
-      words like “return”, so their fingerprints look alike.
+      from the words used (and pairs of neighbouring words), weighted by how rare they are and folded into 1024 numbers per
+      chunk, so it matches words better than it matches meaning. Unrelated words can occasionally land in the same slot.'
+    thread: Each of our 11 chunks becomes a vector of 1024 numbers. Chunks that share words with the question, like the returns
+      chunk and the word “return”, score highest.
     check:
       question: What does an embedding give the computer that plain text doesn't?
       answer: A list of numbers it can compare quickly, where chunks about similar things end up with similar numbers.
@@ -100,7 +107,9 @@ stages:
   retriever:
     story: The retriever is the search step. It compares the question's fingerprint with the stored ones, ranks every chunk
       from most to least similar, and keeps the top few (here k = 3). Keeping only a few matters because the prompt has limited
-      room. This lesson can rank by meaning (dense), by keywords (BM25), or by both combined (hybrid).
+      room. This lesson can rank by vector similarity (dense), by keywords (BM25), or by both combined (hybrid). With the
+      default embedder, dense ranking is itself word-based. Switch to the local neural embedder to get meaning-based dense
+      ranking.
     thread: For our question the top three are returns#0, battery#1 and returns#1. The two returns chunks are what we want.
       The battery chunk sneaks in because the simple embedder is only matching words.
     check:
@@ -109,17 +118,20 @@ stages:
         the useful chunks.
   prompt_builder:
     story: 'Now the system builds one message for the model: the retrieved chunks first, then the question, with an instruction
-      to answer from the chunks. There is a size limit, called the budget. If the chunks don''t all fit, the last ones are
-      dropped, and a chunk that was found but dropped never reaches the model.'
-    thread: Our three chunks use 66 of the 200 words allowed, so all three fit.
+      to answer from the chunks. There is a size limit, called the budget. Chunks are added in rank order. A chunk that would
+      push the total over the budget is skipped, and a smaller, lower-ranked chunk can still squeeze in after it. A skipped
+      chunk never reaches the model.'
+    thread: Our three chunks use 66 of the 200 words of context allowed (the budget counts chunk words, not tokens), so all
+      three fit.
     check:
       question: A chunk was retrieved, yet the answer is missing from the model's reply. What could explain it?
       answer: The context budget may have dropped that chunk, so it never made it into the prompt.
   generator:
     story: The generator writes the answer from the prompt. In a real system this is a language model that reads the chunks
       and writes a reply, ideally pointing to the chunks it used. In this lesson, to stay free and repeatable, it is a simple
-      baseline that picks the best sentences from the chunks and quotes them, and it is labelled “not an LLM”. Retrieval makes
-      wrong answers less likely, but it doesn't make them impossible.
+      baseline that picks the best sentences from the chunks and quotes them, and it is labelled “not an LLM”. Below its answer,
+      an optional real-model panel appears; it is off unless the site owner has switched it on. Retrieval makes wrong answers
+      less likely, but it doesn't make them impossible.
     thread: 'It quotes two sentences from returns#0: “Ridgeline Bikes accepts returns of unused bikes within 30 days of delivery.”
       and “Returned bikes must include the original packaging.”'
     check:
@@ -128,7 +140,7 @@ stages:
         it, so the sources should be checked.
 experiment:
   intro: Every run here is the real pipeline. Change one setting at a time, then look at the Chunks, Ranking and Prompt tabs
-    to see what that setting did.
+    to see what that setting did. The default embedder is word-based, so dense ranking here is not yet meaning-based.
   presets:
     Return policy:
       try: Click it and leave every setting alone.
@@ -141,14 +153,17 @@ experiment:
         question asks about (the lifetime frame warranty and the 2 years on components). The Answer tab quotes both.'
     Battery storage:
       try: Click it, then set Context budget to 15 words.
-      notice: At first the retrieved chunks are battery#1, returns#0 and service#0, and only battery#1 matters. With a 15-word
-        budget the Prompt tab shows the useful chunk can be dropped for not fitting, which is exactly the “Retrieved, then
-        dropped” challenge.
+      notice: 'At first the retrieved chunks are battery#1, returns#0 and service#0, and only battery#1 matters. With a 15-word
+        budget all three are dropped, because battery#1 alone is 25 words: the Prompt tab shows 0 chunks included. That is
+        exactly the “Retrieved, then dropped” challenge.'
     Synonym test (lexical embedder fails it):
       try: Click it, look at the Chunks tab, then set Embedder to Local neural.
-      notice: With the simple embedder the first result is battery#0, a battery chunk, and the Answer tab finds nothing to
-        quote, because “money back” shares no words with “refund”. With the Local neural embedder (if installed) the first
-        result is returns#0, the returns policy. Keyword-style matching needs shared words; embeddings match meaning.
+      notice: With the simple embedder no chunk shares a word with the question, so every score is about zero. battery#0 comes
+        first by a hash collision, and returns#0 and returns#1 follow only because ties are listed in chunk order. The Answer
+        tab finds nothing to quote. With the Local neural embedder (if installed) returns#0 comes first, though only just
+        ahead of a warranty chunk (0.643 against 0.641). Embeddings can match paraphrases that keyword matching cannot. The
+        Answer tab still finds nothing to quote, because the baseline picks sentences by shared words. A real language model
+        would read returns#0 and answer.
   ideas:
   - do: Set Chunking to Fixed words and Chunk size to 8 (leave the question as it is).
     see: The six articles become 37 tiny chunks instead of 11. Set Overlap to 4 and it becomes 65, with neighbouring chunks
@@ -157,18 +172,24 @@ experiment:
     see: Top-k 1 retrieves only returns#0. Top-k 6 retrieves six chunks and the prompt holds about 145 words. More chunks
       means more room used and more noise.
   - do: Set Context budget to 15 words.
-    see: The Prompt tab shows 1 chunk included and 2 dropped. A chunk can be found by the retriever and still never reach
-      the model.
+    see: The Prompt tab shows 1 chunk included and 2 dropped. Chunks are added in rank order and a chunk that doesn't fit
+      is skipped, so the short returns#1 fits but returns#0, the chunk that holds the answer, is dropped. A chunk can be found
+      by the retriever and still never reach the model.
   - do: Switch Retrieval between Dense, BM25 and Hybrid.
-    see: For the default question all three pick the same three chunks. The Ranking tab shows where the three methods disagree
-      about the remaining chunks.
+    see: 'For the default question all three pick the same three chunks. Switch to BM25 or Hybrid and a BM25 column appears
+      next to the Dense one. Compare the two columns for the chunks that were not kept: service#1 is 4th by dense rank but
+      11th by BM25.'
   tabs:
-    chunks: Each box is one chunk, named after its article (returns#0 is the first chunk of “Returns and refunds”). The ones
-      the retriever picked are marked. Look at where each chunk starts and ends.
+    chunks: 'Each box is one article, headed by its id and its number of chunks. Inside it the text is shaded: a ▏ marks where
+      a chunk starts, overlapping words get their own shade, and chunks the retriever picked are highlighted. Hover a ▏ to
+      see the chunk''s name, such as returns#0.'
     space: Your question is the diamond; the retrieved chunks are filled dots and the rest are hollow. The label says how
       much of the real spread this 3D picture keeps, so treat distances as hints.
-    ranking: 'Every chunk is ranked three ways: by meaning (dense), by keywords (BM25) and combined (hybrid). If a chunk you
-      expected is low in one column, that is why it was missed.'
-    prompt: The exact text the generator will read, and which chunks fit into the budget and which were dropped.
+    ranking: Every chunk with its dense rank and cosine score. When Retrieval is BM25 or Hybrid, a BM25 rank and score column
+      is added. The Kept column shows the final order for the method you chose. With the default embedder, dense ranking is
+      word-matching, so it often agrees with BM25.
+    prompt: The prompt a real language model would read, and which chunks fit into the budget and which were dropped. The
+      baseline answer below does not read this text; it quotes from the chunks that were included.
     answer: A labelled baseline that quotes sentences from the chunks. It is not a language model. If it quotes nothing, the
-      retrieved chunks held no matching sentence.
+      retrieved chunks held no matching sentence. Below it, an optional real-model answer panel appears; it is off unless
+      the site owner has switched it on.

@@ -1,12 +1,12 @@
 # Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
 # and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
-# Numbers are asserted by backend/tests/test_teaching.py.
+# Numbers are asserted by backend/tests/test_teaching.py. Reviewed against the code on 2026-11-08 (research_notes/Teaching review).
 big_picture:
-  story: 'An agent is a language model that can take actions. Instead of answering straight away, it works in a loop: it decides
-    what to do next, asks for a tool, your program runs that tool, the result goes back to the model, and the model decides
-    again, until it has an answer. The important part is who does what. The model only asks. Your code runs the tools, checks
-    the requests and decides what is allowed. In this lesson a short rule plays the model, so every run is free and repeatable,
-    but the loop around it is real.'
+  story: 'An agent is a language model that can ask for actions to be taken. Instead of answering straight away, it works
+    in a loop: it decides what to do next, asks for a tool, your program runs that tool, the result goes back to the model,
+    and the model decides again, until it has an answer. The important part is who does what. For tools you define yourself,
+    the model only asks. Your code runs the tools, checks the requests and decides what is allowed. In this lesson a short
+    rule plays the model, so every run is free and repeatable, but the loop around it is real.'
   analogy:
     title: A new assistant at a shop's help desk
     mapping:
@@ -17,7 +17,8 @@ big_picture:
     - part: Decide
       becomes: the assistant thinking about what to do next
     - part: Check
-      becomes: a supervisor glancing over a form before it goes anywhere
+      becomes: a clerk who checks that every box on the form is filled in the right format, without judging whether the request
+        is a good idea
     - part: Run
       becomes: the back office actually doing the task
     - part: Result
@@ -35,7 +36,8 @@ big_picture:
       moving money.
 connections:
   goal->decide: The goal is the first thing the model reads at every step. It is what all the steps are working towards.
-  tools->decide: The tool list tells the model what it may ask for. It can only choose from what it has been shown.
+  tools->decide: The tool list tells the model what it may ask for. It is meant to choose only from what it has been shown,
+    and the application should reject any other name.
   decide->validate: Every tool call the model writes is checked before it can run, because a model's request can be malformed.
   validate->execute: Only calls that pass the check are run, by the application.
   execute->observe: The tool's raw output is sent back so the model can see what happened.
@@ -53,21 +55,25 @@ stages:
       answer: It can take several steps, choosing tools and using their results, in a loop until the job is done.
   tools:
     story: The agent can only do what its tools allow. Each tool has a name, a plain-language description and rules for its
-      inputs. The model never sees the code behind a tool, only this description, so the description is what it uses to choose.
-      Vague descriptions lead to poor choices.
+      inputs. The model never sees the code behind a tool, only its name, description and input rules, and the description
+      is the most important part for choosing the right tool. The stand-in here compares descriptions only. Vague descriptions
+      lead to poor choices.
     thread: 'Our agent has four tools: search the help centre, look up an order, count the days between two dates, and issue
-      a refund. The refund tool changes something real, so it needs a person''s approval.'
+      a refund. The refund tool changes something in the world (here it only adds a line to a pretend ledger), so by default
+      it needs a person''s approval.'
     check:
       question: Why do tool descriptions matter so much?
-      answer: The model only sees each tool's name and description, so that is all it has to pick the right tool with.
+      answer: The model sees each tool's name, description and input rules, and the description is the most important part
+        for choosing the right tool.
   decide:
-    story: At every step the model looks at the goal, the tool list and everything so far, then either asks for one tool (with
-      its inputs) or gives the final answer. In this lesson a short rule plays the model, and the bars show how well each
-      tool's description matched what it needed.
+    story: 'At every step the model looks at the goal, the tool list and everything so far, then, in this lesson, either asks
+      for one tool (with its inputs) or gives the final answer (real systems may allow several calls at once). A short rule
+      plays the model, and the bars count the words each tool''s description shares with what it needs: a simple match, not
+      understanding.'
     thread: 'Step 1: it needs the returns policy, so it picks the help-centre search. Later steps look up the order, count
       the days and ask for the refund.'
     check:
-      question: What are the two things the model can do at each step?
+      question: In this lesson, what are the two things the model can do at each step?
       answer: Ask for one tool call with its inputs, or give the final answer.
   validate:
     story: 'Before anything runs, the application checks the call against the tool''s rules: the right kind of input, in the
@@ -79,27 +85,30 @@ stages:
       question: What happens when a tool call fails the check?
       answer: It isn't run. An error message goes back to the agent so it can correct the call.
   execute:
-    story: 'The model only asks. Your application runs the tool, with ordinary code. This is also the place to put a human
-      in the loop for anything risky: the refund waits until a person approves it.'
+    story: 'For tools you define yourself, the model only asks. Your application runs the tool, with ordinary code. This is
+      also the place to put a human in the loop for anything risky: the refund waits until a person approves it.'
     thread: The help search, the order lookup and the date count run straight away. The refund is held with the message “waiting
       for a person to approve”.
     check:
       question: Who actually runs a tool, the model or the application?
-      answer: The application. The model only asks for it.
+      answer: For tools you define yourself, the application. The model only asks for it. (Some providers also offer tools
+        they run for you.)
   observe:
     story: 'Whatever the tool returns goes back to the model as a message that points at the call it answers. The model reads
       that result like any other text. That is powerful but risky: if a result contains hidden instructions, the model may
       treat them as commands.'
-    thread: 'The order lookup returns: E-Trail electric bike, 2,899 CAD, delivered on 2026-10-05.'
+    thread: 'The order lookup returns: E-Trail electric bike, price 2899 (shown as 2,899 CAD in the Loop tab), delivered on
+      2026-10-05.'
     check:
       question: Why is it risky that the model reads tool results like ordinary text?
       answer: A web page or document can hide instructions in its text and steer the agent. This is called prompt injection.
   context:
     story: 'The model remembers nothing between steps by itself. At every step the whole conversation so far is sent again:
-      the instructions, the tool list, every call and every result. That is how it “remembers”, and it is also why each step
-      costs more than the one before.'
-    thread: Step 1 reads about 1,475 tokens. By step 5 it reads 2,799. Across the first five steps the model reads about 11,000
-      tokens in total.
+      the instructions, the tool list, every call and every result. That is how it “remembers”, and it is also why, in a plain
+      loop like this one, each step reads more than the one before.'
+    thread: Step 1 reads about 1,475 tokens and by step 5 it reads 2,799, about 11,000 across the five steps. These are counted
+      with this site's small teaching tokenizer, so a real model's counts would be lower, but each step still reads more than
+      the one before.
     check:
       question: Why does each step cost more than the one before?
       answer: The conversation keeps growing, and the whole thing is read again at every step.
@@ -118,17 +127,19 @@ experiment:
   presets:
     Return:
       try: Click it and read The loop tab, then press Approve this refund.
-      notice: 'Five steps: the agent writes the order as “1001”, the Check step rejects it, the agent retries with “A1001”,
-        counts 16 days, and asks for the refund, which waits for you. After you approve, it is 6 steps and the agent answers.
-        Notice the tool-match bars under each decision.'
+      notice: 'Five steps are shown: the agent first searches the help centre for the policy, then writes the order as “1001”
+        and the Check step rejects it, retries with “A1001”, counts 16 days, and asks for the refund, which waits for you.
+        After you approve, it is 6 steps and the agent answers. Notice the tool-match bars under each decision: they count
+        shared words, a simple match.'
     Too late:
       try: Click it and read the last step's answer.
       notice: 'Four steps: policy, order, days, answer. The order was delivered 50 days ago, past the 30-day window, so the
         agent says it can no longer be returned, and no refund is asked for.'
     Custom:
       try: Click it and read the answer.
-      notice: Four steps. The order data says the bike is custom-built, and the policy says custom-built bikes can't be returned,
-        so the agent refuses.
+      notice: Four steps. The order data says the bike is custom-built, so the stand-in's rule refuses. (The help-centre article
+        says the same, but this simple rule reads only the order's custom-built flag. A language model would be reading the
+        policy text.)
     Status:
       try: Click it and count the steps.
       notice: 'Only two steps: one order lookup, then the answer. Not every request needs the whole loop.'
@@ -141,18 +152,22 @@ experiment:
     see: 'The stand-in keeps searching the help centre until the experiment''s own safety cap of 30 steps, and the token cost
       balloons. Set the limit back to 8: it stops at 8 with no answer.'
   - do: Set Check arguments before running to Off.
-    see: “1001” goes straight to the tool, which finds no such order, so the agent confidently tells the customer there is
-      none.
+    see: “1001” goes straight to the tool, which finds no such order, so the agent tells the customer there is none (“I couldn't
+      find an order called 1001.”).
   - do: Type the goal “What is your returns policy?”, set Forum post to On and Person approves refunds to Off.
-    see: The stand-in obeys an instruction hidden in the retrieved page and issues a refund nobody approved. Turn approval
-      on, or switch the refund tool off, and it can't.
+    see: The stand-in obeys an instruction hidden in the retrieved page and issues a refund nobody approved. With approval
+      on, the refund waits for you. With the refund tool off, no refund can be issued, but the stand-in gets stuck calling
+      the order lookup until the step limit.
   - do: Open the Token cost tab.
     see: 'Each bar is one step. They grow because the whole conversation is re-read every step: about 1,475 tokens at step
-      1 and 2,799 by step 5.'
+      1 and 2,799 by step 5, counted with this site''s small teaching tokenizer (a real model''s counts would be lower, but
+      each step still reads more than the one before).'
   tabs:
     loop: 'Every step the agent took: what it decided, whether the call passed the check, whether it ran, and what came back.
-      The bars show how well each tool''s description matched.'
-    conversation: Everything the model reads on its last step. All of it is sent again at every step, which is how it “remembers”.
-    tools: 'The four tools exactly as the model sees them: a name, a description and the rules for its inputs.'
+      The bars count the words each tool''s description shares with what it needs.'
+    conversation: The conversation the model reads on its last step. Tool definitions are shown here by name only (full text
+      on the Tools tab) but they are included in the token count. All of it is sent again at every step, which is how it “remembers”.
+    tools: 'The tools as the model is given them: a name, a description and rules for the inputs. The orange label is added
+      by this site to mark tools that change things.'
     context: Tokens read at each step. Each bar's height matches the number above it. They grow because each step re-reads
       everything before it.

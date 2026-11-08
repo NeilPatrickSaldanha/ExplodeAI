@@ -1,6 +1,6 @@
 # Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
 # and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
-# Numbers are asserted by backend/tests/test_teaching.py.
+# Numbers are asserted by backend/tests/test_teaching.py. Reviewed against the code on 2026-11-08 (research_notes/Teaching review).
 big_picture:
   story: When you read “the cat sat on the mat”, the meaning of each word depends on the others. Attention is how a model
     lets every word look at every other word and decide which ones matter for it. Each word asks a question, every word offers
@@ -31,7 +31,8 @@ big_picture:
   example:
     title: The sentence we will follow
     input: the cat sat on the mat
-    note: Six words. Each becomes 64 numbers, and two heads each work with 32 of them.
+    note: Six words. Each becomes 64 numbers. Each of the two heads reads all 64 and makes its own 32-number query, key and
+      value.
 connections:
   tokens->embed_pos: Each word needs a vector of numbers before any maths can happen, and a position so the layer knows where
     it sits.
@@ -51,20 +52,22 @@ stages:
     thread: “the cat sat on the mat” becomes 6 words, numbered 0 to 5. The word “the” appears twice, at positions 0 and 4.
     check:
       question: Why does the toy keep each word's position number?
-      answer: Because later steps need to know where each word sits in the sentence.
+      answer: The next step adds a position pattern to each word's vector, so it needs each word's place.
   embed_pos:
     story: Each word becomes a vector of numbers (64 here). On its own, attention has no sense of order, so a pattern that
-      encodes each word's position is added to the vector. Without it, “dog bites man” and “man bites dog” would look identical
-      to the layer.
+      encodes each word's position is added to the vector. Without it, and with no mask, each word gets exactly the same output
+      vector whatever order the words arrive in, so “dog bites man” and “man bites dog” cannot be told apart.
     thread: Each of our 6 words becomes 64 numbers. The two “the” words start with the same word vector, but they differ once
       their positions are added.
     check:
       question: Why does the layer need position information?
-      answer: Attention alone doesn't know word order, so without it, rearranging the words gives the same result.
+      answer: Attention alone doesn't know word order, so without position (and with no mask) each word gets the same output
+        vector however the words are arranged.
   qkv:
     story: Each word's vector is turned into three new vectors. The query says what this word is looking for. The key says
       what this word offers to others. The value is what it passes on if someone picks it. They are made by multiplying by
-      three different tables of numbers. With 2 heads, each head works on 32 of the 64 numbers.
+      three different tables of numbers. With 2 heads, each head reads all 64 numbers and makes its own 32-number query, key
+      and value.
     thread: For the word “sat”, the query asks the other words, and each other word's key says what it offers in reply.
     check:
       question: What do Q, K and V mean in plain words?
@@ -77,8 +80,8 @@ stages:
     thread: 6 words give a 6 × 6 grid, 36 scores, for each head.
     check:
       question: Why are the scores divided by the square root of the head size?
-      answer: Without it, scores grow with the vector size and softmax can pile everything onto one word. Dividing keeps their
-        spread steady.
+      answer: Without it, the spread of the scores grows with the square root of the head size, and softmax can pile almost
+        everything onto one word. Dividing keeps the spread steady.
   mask:
     story: Sometimes a word must not see the words after it, for example when a model writes text one word at a time. The
       causal mask hides them by setting their scores to minus infinity, so they end up with exactly zero weight. In this lesson
@@ -98,54 +101,62 @@ stages:
       answer: Softmax turns scores into shares of one whole, so each word divides its attention among the words it can see.
   mix:
     story: Now each word builds its new vector by blending the values of the words it looked at, in proportion to the weights.
-      A word that pays most attention to “on” ends up with a vector that is mostly “on”'s value. This is the step where information
-      actually moves between words.
+      A word that pays the biggest share of its attention to “on” gets the biggest share of its new vector from “on”'s value.
+      This is the step where information actually moves between words.
     thread: '“sat”''s new vector is a blend: about 30% from “on”, plus smaller shares from the other words and from itself.'
     check:
       question: What does the weighted sum produce?
-      answer: A new vector for every word, made by blending the other words' values using the attention weights.
+      answer: A new vector for every word, made by blending the words' values (its own included) using the attention weights.
   output:
     story: Each head did all of this separately, with its own questions and its own way of matching. The heads' results are
       joined side by side and passed through one more table of numbers, giving a single vector per word, the same size as
-      the input. In a real model this is handed to the next layer.
+      the input. In a real model this is added back to the input, normalised and passed through a feed-forward layer before
+      the next layer.
     thread: 'Two heads of 32 numbers are joined into 64 numbers per word: a 6 × 64 table.'
     check:
       question: Why use more than one head?
-      answer: Each head can look for a different kind of relationship at the same time, and their results are combined.
+      answer: The authors' reason is that each head can attend to different kinds of information at once, and their results
+        are combined. (In this toy the heads are random, so they don't learn anything.)
 experiment:
   intro: This is a toy layer with random numbers, so the patterns show how attention works, not what a trained model has learned.
     Read the grid row by row.
   presets:
     Cat:
       try: Click it and open the Attention grid tab. Click a row label such as “sat”.
-      notice: 'Each row is a word that is asking, and the numbers in a row add up to about 100%. The strongest weight averages
-        about 35%. For “sat”, about 30% goes to “on” (averaged over the two heads). Then switch Causal mask on: 15 of the
-        36 cells hatch out.'
+      notice: 'Each row is a word that is asking, and the numbers in a row add up to about 100%. The strongest weight (the
+        average of each row''s largest weight, over both heads) is about 35%. For “sat”, about 30% goes to “on” (averaged
+        over the two heads). Then switch Causal mask on: 15 of the 36 cells hatch out.'
     Pronoun:
-      try: Click it and look at the row for “it”.
+      try: Click it, open the One word tab and pick “it”.
       notice: In a trained model, “it” might pay attention to “animal”. In this toy “it” gives its biggest share (about 28%)
-        to “too”, and only about 9% to “animal”. The weights are random, so they carry no meaning. That is the point of the
-        warning on this lesson.
+        to “too”, and only about 9% to “animal”. That 28% comes mostly from head 2; use Head to show to compare, because head
+        1 looks most at “tired”. The weights are random, so they carry no meaning. That is the point of the warning on this
+        lesson.
     Order:
       try: Click it, set Position vectors Off, then On, and press Check my fix in Break & fix → Order-blind attention.
-      notice: 'With position off (and the mask off) the layer can''t tell “dog bites man” from “man bites dog”: the order
-        difference is exactly 0. With position on it is about 0.45. This shows up in the Break & fix check and in the “What
-        breaks if removed?” card on Vectors + position.'
+      notice: 'With position off (and the mask off) the layer can''t tell “dog bites man” from “man bites dog”, and the check
+        shows “Order matters: no”. With position on it shows “yes”. (The size of the difference is exactly 0 versus about
+        0.45.) This also shows up in the Break & fix check and in the “What breaks if removed?” card on Vectors + position.'
   ideas:
-  - do: Set Heads to 8 and Scale scores to Off.
-    see: 'The strongest weight rises to about 63% for “the cat sat on the mat”: with big scores, softmax piles almost everything
-      onto one word. Turn scaling back on to spread it out.'
+  - do: Set Heads to 1 and Scale scores to Off.
+    see: 'The strongest weight averages about 94% for “the cat sat on the mat”: with big scores softmax piles almost everything
+      onto one word. Turn scaling on and it falls to about 42%. (With 8 heads the effect is smaller: about 63% without scaling,
+      37% with it.)'
   - do: Use Head to show to switch between Average, Head 1 and Head 2.
-    see: The heads have different patterns because they use different random tables of numbers. In a real model each head
-      learns a different job.
+    see: The heads have different patterns because they use different random tables of numbers. In a trained model, heads
+      can end up doing different jobs, though not every head is equally useful.
   - do: Turn Causal mask on and read the later-words figure under the grid.
     see: It drops to 0%. Words can no longer look ahead.
   - do: Open the One word tab and pick different words.
-    see: You can see exactly where each word looks and how its new vector is blended from the others.
+    see: 'You can see exactly where each word looks: the weights it gives to every word. The new vector is a blend of the
+      words'' values using those weights.'
   tabs:
     grid: Rows are words that ask, columns are the words they look at. The numbers in each row add up to about 100%. Click
-      a row label to pick a word. Hatched cells are hidden by the mask.
-    word: Pick one word to see where it looks and how its new vector is blended from the others.
+      a row label to pick a word. Hatched cells are hidden by the mask. (For sentences longer than 8 words the cells show
+      bars only; hover a cell to read its number.)
+    word: Pick one word to see the weights it gives to every word. Its new vector is a blend of the words' values using those
+      weights.
     qkv: 'The three vectors each word makes (the first few of their numbers): a query, a key and a value, for the head you
       chose.'
-    out: The final vector for each word after the heads are joined. These would go to the next layer in a real model.
+    out: The final vector for each word after the heads are joined. In a real model these would be added back to the input,
+      normalised and passed through a feed-forward layer before the next layer.
