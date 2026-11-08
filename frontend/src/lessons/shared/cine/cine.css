@@ -1212,6 +1212,8 @@
   border-radius: var(--radius-lg);
   background: var(--color-paper-2);
   box-shadow: var(--shadow-card);
+  position: relative;
+  z-index: var(--z-sticky);
 }
 
 .bigpic__summary {
@@ -1241,12 +1243,21 @@
   text-align: right;
 }
 
+/* Opens over the page instead of pushing it down. */
 .bigpic__body {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: -1px;
+  right: -1px;
   display: grid;
   gap: var(--space-lg);
-  padding: 0 var(--space-lg) var(--space-lg);
-  max-height: min(55vh, 28rem);
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  max-height: min(70vh, 34rem);
   overflow-y: auto;
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper-2);
+  box-shadow: var(--shadow-chrome);
 }
 
 @media (min-width: 64rem) {
