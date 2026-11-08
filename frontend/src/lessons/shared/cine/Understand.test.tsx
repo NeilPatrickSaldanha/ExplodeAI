@@ -15,19 +15,23 @@ const explain: Explain = {
   misconfigured: 'Wrong model, wrong answer.',
   learn_more: 'Technical depth.',
   claims: ['a', 'b'],
+  story: 'A short story about this stage.',
+  thread: 'In the example, cat becomes numbers.',
+  check: { question: 'What goes in?', answer: 'Text goes in.' },
 }
 
 function setup(reducedMotion = false) {
   const onGoTo = vi.fn()
-  render(<Understand component={comp('x', 'X')} explain={explain} before={[comp('p', 'Prev')]} after={[comp('n', 'Next')]} reducedMotion={reducedMotion} onGoTo={onGoTo} />)
+  render(<Understand component={comp('x', 'X')} explain={explain} before={[{ component: comp('p', 'Prev'), note: 'Prev hands over text.' }]} after={[{ component: comp('n', 'Next'), note: 'Next needs numbers.' }]} reducedMotion={reducedMotion} onGoTo={onGoTo} />)
   return onGoTo
 }
 
 describe('Understand', () => {
   it('shows the short version first and keeps the depth collapsed', () => {
     setup()
-    expect(screen.getByText('Turns text into numbers.')).toBeInTheDocument()
-    expect(screen.getByText(/ANALOGY/)).toBeInTheDocument()
+    expect(screen.getByText('A short story about this stage.')).toBeInTheDocument()
+    expect(screen.getByText('In the example, cat becomes numbers.')).toBeInTheDocument()
+    expect(screen.getByText(/THINK OF IT LIKE/)).toBeInTheDocument()
     const why = screen.getByText('Why it is needed').closest('details')!
     expect(why.open).toBe(false)
     fireEvent.click(screen.getByText('Why it is needed'))
@@ -39,6 +43,20 @@ describe('Understand', () => {
     fireEvent.click(screen.getByRole('button', { name: /to Next/ }))
     fireEvent.click(screen.getByRole('button', { name: /from Prev/ }))
     expect(onGoTo.mock.calls).toEqual([['n'], ['p']])
+  })
+
+  it('explains each hand-off in full sentences', () => {
+    setup()
+    expect(screen.getByText('Prev hands over text.')).toBeInTheDocument()
+    expect(screen.getByText('Next needs numbers.')).toBeInTheDocument()
+  })
+
+  it('asks a question first and only then shows the answer', () => {
+    setup()
+    expect(screen.getByText('What goes in?')).toBeInTheDocument()
+    expect(screen.queryByText('Text goes in.')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show the answer/i }))
+    expect(screen.getByText('Text goes in.')).toBeInTheDocument()
   })
 
   it('steps through the example one step at a time', () => {

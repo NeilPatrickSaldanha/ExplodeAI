@@ -1,0 +1,113 @@
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
+# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+big_picture:
+  story: 'A language model can''t read letters. It reads numbers. A tokenizer is the translator: it cuts text into pieces
+    called tokens and gives every piece a number. This lesson builds a tokenizer from scratch in two halves. Learning happens
+    once, on a pile of example text (the first five stages). Using it happens for every new sentence (the last three).'
+  analogy:
+    title: Building words from glued-together bricks
+    mapping:
+    - part: Training corpus
+      becomes: the pile of text we study to see which bricks stick together most often
+    - part: Pre-tokenizer
+      becomes: splitting the pile into words so bricks never get glued across two words
+    - part: Base alphabet
+      becomes: the smallest single bricks (256 byte-sized ones)
+    - part: Merge learner
+      becomes: the habit of gluing the most common neighbouring pair into a bigger brick
+    - part: Vocabulary
+      becomes: the box of every brick, each stamped with a number
+    - part: Input text
+      becomes: the new sentence we want to build
+    - part: Encoder
+      becomes: building the sentence by replaying the gluing in the order we learned it
+    - part: Decoder
+      becomes: taking the bricks apart again to read the sentence back
+    breaks: Real tokenizers (the ones inside GPT, Claude or Gemini) have their own much bigger vocabularies. This one is tiny
+      and learns from a made-up lighthouse log, so its token counts are not theirs.
+  example:
+    title: The sentence we will follow
+    input: The keeper lit the lantern at dusk.
+    note: One sentence travels through the stages. It is 35 symbols long to start and 8 tokens at the end.
+connections:
+  corpus->pre_tokenizer: The learner needs the pile cut into words first, so it never learns a token that spans two words.
+  pre_tokenizer->base_alphabet: Each word-piece is spelled out in the smallest starting symbols, ready to be glued together.
+  base_alphabet->merge_learner: The learner counts which neighbouring symbols appear together most. It can only glue symbols
+    that exist, which is why the starting alphabet comes first.
+  merge_learner->vocabulary: Every merge becomes a new entry in the vocabulary, and the order of the merges is saved because
+    the encoder will need it.
+  vocabulary->encoder: The encoder needs the vocabulary's numbers and the saved merge order to rebuild any new text in exactly
+    the same way.
+  input_text->encoder: The sentence you want to tokenize enters here. It is the one input that changes from run to run.
+  encoder->decoder: The token numbers go to the decoder, which turns them back into text to prove nothing was lost.
+stages:
+  corpus:
+    story: 'Before it can split anything, the tokenizer studies a pile of example text to learn which letter combinations
+      are common. That pile is the training corpus. A tokenizer is only as good as the text it learned from: words that are
+      common in the corpus become single tokens, and rare words get chopped into pieces.'
+    thread: Our corpus is a small made-up lighthouse keeper's log. Words like “keeper” and “lantern” appear often in it, so
+      they will earn their own tokens.
+    check:
+      question: Why does the choice of training text change the tokens?
+      answer: The tokenizer glues the pairs it sees most often, so words common in its training text become single tokens
+        and rare words are split into pieces.
+  pre_tokenizer:
+    story: First the text is cut into word-like pieces. This stops the learner from gluing the end of one word to the start
+      of the next. Notice that a space sticks to the front of the word that follows it, so “ keeper” (with a space) and “keeper”
+      are different pieces.
+    thread: 'Our sentence splits into 8 pieces: The, “ keeper”, “ lit”, “ the”, “ lantern”, “ at”, “ dusk” and “.”.'
+    check:
+      question: Why cut the text into word-like pieces before learning any merges?
+      answer: So that no learned token can span two words, like a token joining the end of one word to the start of the next.
+  base_alphabet:
+    story: Every piece is first spelled out in the smallest symbols the tokenizer has. Here those are the 256 possible bytes,
+      so any text, in any language, even an emoji, can be written down. Starting from bytes means the tokenizer never meets
+      a symbol it doesn't know.
+    thread: '“ keeper” starts as 7 separate symbols: space, k, e, e, p, e, r. Our whole sentence starts as 35 symbols.'
+    check:
+      question: Why can a byte alphabet spell any text when a character alphabet can't?
+      answer: Every possible byte is already in the alphabet. A character alphabet only holds characters seen in training,
+        so anything else becomes an unknown token and can't be recovered.
+  merge_learner:
+    story: This is where the learning happens. Look at every pair of neighbouring symbols in the corpus, find the pair that
+      appears most often, and glue it into one new symbol. Then do it again, and again. Each round is called a merge. After
+      100 merges the tokenizer knows 100 gluing recipes, in the order it learned them.
+    thread: 'The first recipes are small: h and e become “he”, then a space and t become “ t”, then “ t” and “he” become “
+      the”. Six of the early merges (er, ep, ke, “ ke”, “ keep”, “ keeper”) build the whole word “ keeper” out of its 7 symbols.'
+    check:
+      question: What does one merge do?
+      answer: It finds the most frequent pair of neighbouring symbols and glues them into one new symbol.
+  vocabulary:
+    story: 'The vocabulary is the finished box of bricks: every starting symbol and every glued symbol, each with its own
+      number. That number is what the model actually receives. More merges means a bigger vocabulary.'
+    thread: 'With 100 merges our vocabulary has 357 entries: 257 to start with (the 256 bytes plus one special token) and
+      100 merges. “ keeper” is number 269 and “ lantern” is number 275.'
+    check:
+      question: How does the number of merges set the size of the vocabulary?
+      answer: The vocabulary is the starting symbols plus one new symbol per merge (plus special tokens), so more merges means
+        a bigger vocabulary.
+  input_text:
+    story: This is the new sentence you want to tokenize. It can contain words the tokenizer has never seen. That is fine,
+      because it can always fall back on single bytes.
+    thread: Our sentence is “The keeper lit the lantern at dusk.” It is 35 bytes long.
+    check:
+      question: What happens to a word the tokenizer never saw during learning?
+      answer: It is split into smaller known pieces, down to single bytes if necessary, so nothing is lost.
+  encoder:
+    story: The encoder turns your sentence into numbers. It cuts the sentence into pieces, spells each piece in bytes, and
+      then replays the learned recipes in the order they were learned. The order matters, because later recipes use symbols
+      that earlier recipes made. When no recipe applies any more, each remaining symbol's number is written down.
+    thread: “ keeper” shrinks from 7 symbols to 1 token. The whole sentence shrinks from 35 symbols to 8 tokens, with the
+      numbers 262, 269, 346, 258, 275, 285, 321 and 46.
+    check:
+      question: Why must the merges be replayed in the same order they were learned?
+      answer: Later merges glue symbols that earlier merges created. Out of order, the pieces they need don't exist yet, so
+        words stay in fragments.
+  decoder:
+    story: 'The decoder does the reverse: it looks up each number, turns it back into bytes, and joins the bytes into text.
+      If decoding gives back exactly what you started with, the tokenizer lost nothing. That round trip is a good test that
+      the whole pipeline is working.'
+    thread: Our 8 numbers decode to exactly “The keeper lit the lantern at dusk.” with no unknown tokens.
+    check:
+      question: Why is a successful decode a useful test?
+      answer: If the text comes back exactly as it went in, the tokenizer didn't lose or change anything.

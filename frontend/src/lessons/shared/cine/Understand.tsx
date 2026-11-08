@@ -2,12 +2,18 @@ import { ArrowRight, Lightbulb, Play, SkipForward } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import type { Component, Explain } from '../../../api/types'
 
+/** A neighbouring stage and, in full sentences, why the hand-off between the two exists. */
+export interface Neighbour {
+  component: Component
+  note?: string | null
+}
+
 interface Props {
   component: Component
   explain: Explain
   /** The stages that feed this one and the ones it feeds, from the lesson's connections. */
-  before: Component[]
-  after: Component[]
+  before: Neighbour[]
+  after: Neighbour[]
   reducedMotion: boolean
   onGoTo: (id: string) => void
 }
@@ -24,29 +30,43 @@ export function Understand({ component, explain, before, after, reducedMotion, o
       <h4 id="understand-title" className="understand__title">
         <Lightbulb weight="fill" aria-hidden /> Understand this stage
       </h4>
-      <p className="understand__what">{explain.what}</p>
+      {explain.story ? <p className="understand__story">{explain.story}</p> : <p className="understand__what">{explain.what}</p>}
+
+      {explain.thread && (
+        <div className="understand__thread">
+          <span className="label">IN OUR EXAMPLE</span>
+          <p>{explain.thread}</p>
+        </div>
+      )}
+
       <p className="understand__analogy">
-        <span className="label">ANALOGY · TEACHING AID</span>
+        <span className="label">THINK OF IT LIKE · TEACHING AID</span>
         {explain.analogy}
       </p>
 
       <div className="understand__connect">
-        <span className="label">CONNECTED STAGES</span>
-        <div className="understand__links" role="group" aria-label="Connected stages">
-          {before.map((c) => (
-            <button key={c.id} type="button" className="chip" onClick={() => onGoTo(c.id)}>
-              ← from {c.label}
+        <span className="label">HOW IT CONNECTS</span>
+        {before.map((n) => (
+          <div key={`b-${n.component.id}`} className="handoff">
+            <button type="button" className="chip" onClick={() => onGoTo(n.component.id)}>
+              ← from {n.component.label}
             </button>
-          ))}
-          {after.map((c) => (
-            <button key={c.id} type="button" className="chip" onClick={() => onGoTo(c.id)}>
-              to {c.label} →
+            {n.note && <p>{n.note}</p>}
+          </div>
+        ))}
+        {after.map((n) => (
+          <div key={`a-${n.component.id}`} className="handoff">
+            <button type="button" className="chip" onClick={() => onGoTo(n.component.id)}>
+              to {n.component.label} →
             </button>
-          ))}
-        </div>
+            {n.note ? <p>{n.note}</p> : <p>{explain.goes_to}</p>}
+          </div>
+        ))}
       </div>
 
       <MiniDemo key={component.id} example={explain.example} reducedMotion={reducedMotion} />
+
+      {explain.check && <CheckYourself key={`c-${component.id}`} check={explain.check} />}
 
       <Section title="Why it is needed">
         <p>{explain.why}</p>
@@ -58,9 +78,6 @@ export function Understand({ component, explain, before, after, reducedMotion, o
           ))}
         </ol>
       </Section>
-      <Section title="Where it goes next">
-        <p>{explain.goes_to}</p>
-      </Section>
       <Section title="If it is set up wrong" tone="warn">
         <p>{explain.misconfigured}</p>
       </Section>
@@ -69,6 +86,26 @@ export function Understand({ component, explain, before, after, reducedMotion, o
         <p className="label">BACKED BY {explain.claims.length} VERIFIED {explain.claims.length === 1 ? 'CLAIM' : 'CLAIMS'} BELOW</p>
       </Section>
     </section>
+  )
+}
+
+/** Retrieval practice: try to answer first, then look. */
+function CheckYourself({ check }: { check: { question: string; answer: string } }) {
+  const [shown, setShown] = useState(false)
+  return (
+    <div className="check-yourself" role="group" aria-label="Check yourself">
+      <span className="label">CHECK YOURSELF</span>
+      <p className="check-yourself__q">{check.question}</p>
+      {shown ? (
+        <p className="check-yourself__a" role="status">
+          {check.answer}
+        </p>
+      ) : (
+        <button type="button" className="btn" onClick={() => setShown(true)}>
+          Think first, then show the answer
+        </button>
+      )}
+    </div>
   )
 }
 

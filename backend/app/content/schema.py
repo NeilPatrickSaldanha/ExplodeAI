@@ -91,6 +91,13 @@ class ExampleDemo(BaseModel):
     output: str
 
 
+class CheckYourself(BaseModel):
+    """A retrieval-practice question: the learner tries to answer, then reveals the answer."""
+
+    question: str
+    answer: str
+
+
 class Explain(BaseModel):
     """Beginner-friendly depth for one stage. Facts restate `claims`; analogies and
     examples are teaching aids and are labelled as such in the UI."""
@@ -104,6 +111,11 @@ class Explain(BaseModel):
     misconfigured: str
     learn_more: str  # optional technical depth, behind a "Learn more" toggle
     claims: list[str] = Field(min_length=1)
+    # Teaching layer (content/lessons/<id>/teaching.yaml): the stage told as a short story, what it does to
+    # the lesson's running example, and a question the learner can answer before revealing the answer.
+    story: str | None = None
+    thread: str | None = None
+    check: CheckYourself | None = None
 
 
 class Component(BaseModel):
@@ -133,6 +145,33 @@ class Connection(BaseModel):
     payload: str
     # Visual flow class: text moving, vectors moving, or the user's question.
     flow: Literal["document", "vector", "query"] | None = None
+    # Why this hand-off exists, in full sentences: what the sender passes on and why the receiver needs it.
+    explain: str | None = None
+
+
+class AnalogyPart(BaseModel):
+    part: str  # a stage label
+    becomes: str  # what it is in the analogy
+
+
+class Analogy(BaseModel):
+    title: str
+    mapping: list[AnalogyPart] = Field(min_length=1)
+    breaks: str  # where the analogy stops being true
+
+
+class RunningExample(BaseModel):
+    title: str
+    input: str
+    note: str
+
+
+class BigPicture(BaseModel):
+    """The whole lesson in plain words, told before the parts: a story, one analogy, one example to follow."""
+
+    story: str
+    analogy: Analogy
+    example: RunningExample
 
 
 class Visual(BaseModel):
@@ -219,6 +258,7 @@ class Lesson(BaseModel):
     reconstruction: Reconstruction
     tour: list[TourStep]
     verification_report: str
+    big_picture: BigPicture | None = None
 
 
 def validate_lesson(lesson: Lesson, registry: SourceRegistry) -> list[str]:
@@ -298,6 +338,21 @@ def validate_lesson(lesson: Lesson, registry: SourceRegistry) -> list[str]:
                     problems.append(
                         f"challenge {ch.id}: check '{check.type}' is not available for engine '{engine}'"
                     )
+
+    if lesson.status == "published":
+        if lesson.big_picture is None:
+            problems.append("published lesson has no big_picture (teaching.yaml)")
+        labels = {c.label for c in lesson.components}
+        if lesson.big_picture and {m.part for m in lesson.big_picture.analogy.mapping} != labels:
+            problems.append("big_picture analogy must map every stage label exactly once")
+        for comp in lesson.components:
+            ex = comp.explain
+            if ex and not (ex.story and ex.thread and ex.check):
+                problems.append(f"component {comp.id}: needs a story, a thread and a check in teaching.yaml")
+        for conn in lesson.connections:
+            if not conn.explain:
+                link = f"{conn.source}->{conn.target}"
+                problems.append(f"connection {link}: needs an explanation in teaching.yaml")
 
     deps = lesson.reconstruction.dependencies
     if set(deps) != component_ids:

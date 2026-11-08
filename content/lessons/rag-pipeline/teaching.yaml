@@ -1,0 +1,127 @@
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
+# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+big_picture:
+  story: A language model writes fluently, but it only knows what it saw during training. It has never read your private documents.
+    RAG, short for retrieval-augmented generation, fixes that by looking things up first. It searches your documents for the
+    pieces that match the question, puts those pieces in front of the model together with the question, and asks the model
+    to answer from them. This lesson has two halves. Getting the documents ready happens once, ahead of time (the first four
+    stages). Answering happens every time someone asks (the last four).
+  analogy:
+    title: A help desk with a binder and index cards
+    mapping:
+    - part: Knowledge source
+      becomes: the binder of help articles
+    - part: Chunker
+      becomes: cutting each page into small index cards
+    - part: Chunk embedder
+      becomes: writing a fingerprint of numbers on every card
+    - part: Vector index
+      becomes: the box where the fingerprinted cards are filed
+    - part: Query embedder
+      becomes: making a fingerprint of the customer's question the same way
+    - part: Retriever
+      becomes: pulling out the few cards whose fingerprints match best
+    - part: Prompt assembler
+      becomes: clipping those cards and the question onto one sheet
+    - part: Generator
+      becomes: the writer who answers using only that sheet
+    breaks: A person reads a card and understands it. The computer only compares numbers, so it can pull the wrong card for
+      a silly reason, and in this lesson the fingerprints are deliberately crude (they are built from the words used). A real
+      writer would also sometimes ignore the sheet; a model can too.
+  example:
+    title: The question we will follow
+    input: How long do I have to return a bike?
+    note: One question travels through all eight stages. Look for it in the box called “In our example” on each stage.
+connections:
+  corpus->chunker: The chunker needs the whole documents so it can cut them into small pieces. A big document can't be searched
+    precisely or fitted into a prompt.
+  chunker->embedder: Each chunk is fingerprinted on its own, because the search will later hand back whole chunks, not whole
+    documents.
+  embedder->vector_index: The fingerprints are filed in the index together with which chunk each belongs to, so a match can
+    be turned back into text.
+  vector_index->retriever: The retriever searches the index. It needs every stored fingerprint to compare the question against.
+  query_encoder->retriever: The question's fingerprint is what the retriever compares with every stored one. Without it there
+    is nothing to search for.
+  retriever->prompt_builder: The best chunks go to the prompt builder because they are the evidence the model is allowed to
+    use.
+  prompt_builder->generator: The assembled prompt is the only thing the generator sees. A fact that isn't in the prompt can't
+    appear in the answer.
+stages:
+  corpus:
+    story: This is the pile of documents the system is allowed to answer from. A language model only knows what it was trained
+      on, so it has never seen your private articles. Keeping the documents outside the model means you can change what the
+      system knows just by changing the documents. Every later stage works on these documents and nothing else.
+    thread: 'Our pile is six made-up help articles from a bike shop, 271 words in all: returns, warranty, battery care, shipping,
+      sizing and service.'
+    check:
+      question: Why keep the documents outside the model instead of teaching them to the model?
+      answer: Because you can replace or update the documents at any time without retraining anything, and the model never
+        needed to see them in training.
+  chunker:
+    story: 'Whole articles are too big to search precisely and too big to fit in a prompt, so the chunker cuts each one into
+      small pieces called chunks. Think of cutting a page into index cards, one idea per card. Where you cut matters: if the
+      cut falls in the middle of a fact, no single card holds the whole fact. You choose how big the chunks are and whether
+      neighbouring chunks overlap.'
+    thread: 'With sentence chunks of up to 40 words, our six articles become 11 chunks. The returns article becomes two: returns#0
+      and returns#1.'
+    check:
+      question: A fact is split across two chunks, so neither holds the whole sentence. What are two ways to fix that?
+      answer: Make the chunks bigger, or let neighbouring chunks overlap, so a whole fact sits inside at least one chunk.
+  embedder:
+    story: 'A computer can''t compare the meaning of two paragraphs directly, so the embedder turns each chunk into a list
+      of numbers, called a vector, that stands for it. Think of writing a fingerprint on every index card. Chunks about similar
+      things should get similar fingerprints. In this lesson the default embedder is deliberately simple: it builds the fingerprint
+      from the words used, 1024 numbers per chunk, so it matches words better than it matches meaning.'
+    thread: Each of our 11 chunks becomes a vector of 1024 numbers. The returns chunk and a question about returning share
+      words like “return”, so their fingerprints look alike.
+    check:
+      question: What does an embedding give the computer that plain text doesn't?
+      answer: A list of numbers it can compare quickly, where chunks about similar things end up with similar numbers.
+  vector_index:
+    story: 'The index is the box where all the fingerprints are filed so they can be searched. Here it is a flat index: to
+      answer a question it compares the question''s fingerprint with every stored one, one by one. That is slow when there
+      are millions of chunks, but it always finds the exact best match. Bigger systems use approximate indexes that trade
+      a little accuracy for a lot of speed.'
+    thread: Our index holds 11 vectors, one per chunk. A search compares the question with all 11.
+    check:
+      question: What is the trade-off between a flat index and an approximate one?
+      answer: A flat index checks everything, so it is exact but slows down as data grows. An approximate index is much faster
+        but may occasionally miss the true best match.
+  query_encoder:
+    story: The question needs the same treatment as the chunks, using the same embedder, so the two can be compared. This
+      is where the question enters the machine, which is why it arrives on its own dotted line. If the question and the chunks
+      were turned into numbers in different ways, comparing them would be meaningless.
+    thread: Our question, “How long do I have to return a bike?”, becomes one vector of 1024 numbers, made the same way as
+      the chunk vectors.
+    check:
+      question: What would go wrong if the question used a different embedder from the chunks?
+      answer: Their vectors would live in different spaces, so the distances between them would mean nothing.
+  retriever:
+    story: The retriever is the search step. It compares the question's fingerprint with the stored ones, ranks every chunk
+      from most to least similar, and keeps the top few (here k = 3). Keeping only a few matters because the prompt has limited
+      room. This lesson can rank by meaning (dense), by keywords (BM25), or by both combined (hybrid).
+    thread: For our question the top three are returns#0, battery#1 and returns#1. The two returns chunks are what we want.
+      The battery chunk sneaks in because the simple embedder is only matching words.
+    check:
+      question: Why keep only the top few chunks instead of all of them?
+      answer: The prompt has a limited size, and extra chunks add irrelevant text that can distract the model or push out
+        the useful chunks.
+  prompt_builder:
+    story: 'Now the system builds one message for the model: the retrieved chunks first, then the question, with an instruction
+      to answer from the chunks. There is a size limit, called the budget. If the chunks don''t all fit, the last ones are
+      dropped, and a chunk that was found but dropped never reaches the model.'
+    thread: Our three chunks use 66 of the 200 words allowed, so all three fit.
+    check:
+      question: A chunk was retrieved, yet the answer is missing from the model's reply. What could explain it?
+      answer: The context budget may have dropped that chunk, so it never made it into the prompt.
+  generator:
+    story: The generator writes the answer from the prompt. In a real system this is a language model that reads the chunks
+      and writes a reply, ideally pointing to the chunks it used. In this lesson, to stay free and repeatable, it is a simple
+      baseline that picks the best sentences from the chunks and quotes them, and it is labelled “not an LLM”. Retrieval makes
+      wrong answers less likely, but it doesn't make them impossible.
+    thread: 'It quotes two sentences from returns#0: “Ridgeline Bikes accepts returns of unused bikes within 30 days of delivery.”
+      and “Returned bikes must include the original packaging.”'
+    check:
+      question: Does RAG guarantee a correct answer?
+      answer: No. It reduces hallucination, but the retrieved text can be wrong or incomplete and the model can still misuse
+        it, so the sources should be checked.

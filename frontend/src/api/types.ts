@@ -45,6 +45,16 @@ export interface Explain {
   misconfigured: string
   learn_more: string
   claims: string[]
+  /** Teaching layer: the stage as a short story, what it does to the running example, and a self-check. */
+  story?: string | null
+  thread?: string | null
+  check?: { question: string; answer: string } | null
+}
+
+export interface BigPicture {
+  story: string
+  analogy: { title: string; mapping: { part: string; becomes: string }[]; breaks: string }
+  example: { title: string; input: string; note: string }
 }
 
 export interface Component {
@@ -97,13 +107,14 @@ export interface Lesson {
   objectives: string[]
   claims: Claim[]
   components: Component[]
-  connections: { source: string; target: string; payload: string; flow?: 'document' | 'vector' | 'query' | null }[]
+  connections: { source: string; target: string; payload: string; flow?: 'document' | 'vector' | 'query' | null; explain?: string | null }[]
   visuals: Visual[]
   experiment: { engine: string; presets: { label: string; query?: string; text?: string; note?: string }[]; corpus_note: string }
   challenges: Challenge[]
   reconstruction: { prompt: string; dependencies: Record<string, string[]> }
   tour: { component: string; title: string; body: string; claims: string[] }[]
   sources: Source[]
+  big_picture?: BigPicture | null
   validation_problems: string[]
 }
 

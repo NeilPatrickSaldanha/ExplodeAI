@@ -27,7 +27,26 @@ def read_lesson_data(path: Path) -> dict:
         for comp in data["components"]:
             if comp["id"] in explain:
                 comp["explain"] = explain[comp["id"]]
+    teaching_path = path.with_name("teaching.yaml")
+    if teaching_path.exists():
+        _merge_teaching(data, _read_yaml(teaching_path))
     return data
+
+
+def _merge_teaching(data: dict, teaching: dict) -> None:
+    """Add the teaching layer: the big picture, each hand-off's explanation, each stage's story."""
+    if "big_picture" in teaching:
+        data["big_picture"] = teaching["big_picture"]
+    handoffs = teaching.get("connections", {})
+    for conn in data["connections"]:
+        text = handoffs.get(f"{conn['source']}->{conn['target']}")
+        if text:
+            conn["explain"] = text
+    stages = teaching.get("stages", {})
+    for comp in data["components"]:
+        extra = stages.get(comp["id"])
+        if extra and comp.get("explain") is not None:
+            comp["explain"].update(extra)
 
 
 def load_lessons(content_dir: Path) -> dict[str, Lesson]:

@@ -12,6 +12,7 @@ import { FlowLegend, type FlowLabels } from './FlowLegend'
 import { StageBar } from './StageBar'
 import { StagePanel } from './StagePanel'
 import { TutorPanel } from '../../../tutor/TutorPanel'
+import { BigPicture } from './BigPicture'
 import { Tutorial } from './Tutorial'
 import { tutorialSeen } from './tutorialStorage'
 
@@ -255,6 +256,8 @@ export function CineLesson({ lesson, spec, readouts, live, eyebrow, title, summa
             </Tabs.List>
           </div>
         </header>
+
+        <BigPicture lesson={lesson} onGoTo={goToStage} />
 
         <div className="cine__grid">
           <section className="cine__stage" aria-label="Exploded model">

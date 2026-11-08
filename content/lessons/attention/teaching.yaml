@@ -1,0 +1,113 @@
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
+# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+big_picture:
+  story: When you read “the cat sat on the mat”, the meaning of each word depends on the others. Attention is how a model
+    lets every word look at every other word and decide which ones matter for it. Each word asks a question, every word offers
+    something in reply, the best matches get the biggest share of attention, and each word ends up as a blend of what it paid
+    attention to. This lesson runs one real attention layer, step by step. It is a toy with random numbers, so it shows how
+    the mechanism works, not what a trained model has learned.
+  analogy:
+    title: A classroom where every student can listen to everyone
+    mapping:
+    - part: Words in
+      becomes: students lining up, one per word
+    - part: Vectors + position
+      becomes: each student's profile plus a seat number
+    - part: Q · K · V
+      becomes: each student's question, name tag and what they would say if called on
+    - part: Score grid
+      becomes: every student comparing their question with everyone's name tag
+    - part: Mask
+      becomes: a rule that you can't listen to students who haven't spoken yet
+    - part: Softmax
+      becomes: turning the scores into shares of attention that add up to 100%
+    - part: Weighted sum
+      becomes: each student mixing what others said, in proportion to those shares
+    - part: Heads + output
+      becomes: several small discussion groups at once, whose notes are then combined
+    breaks: Real models learn what to ask and what to offer by training. In this toy the numbers are random, so who listens
+      to whom is arbitrary. The grid shows how the mechanism works, not what a trained model understands.
+  example:
+    title: The sentence we will follow
+    input: the cat sat on the mat
+    note: Six words. Each becomes 64 numbers, and two heads each work with 32 of them.
+connections:
+  tokens->embed_pos: Each word needs a vector of numbers before any maths can happen, and a position so the layer knows where
+    it sits.
+  embed_pos->qkv: From each word's vector, the layer makes its question, its name tag and its message. Those three are what
+    attention works with.
+  qkv->scores: Queries and keys are compared with each other to find which words match. Values aren't needed yet.
+  scores->mask: The grid of scores passes through the mask, which can hide the scores of words that must not be seen.
+  mask->softmax: Softmax needs the (possibly masked) scores to turn into shares. A hidden score becomes a share of exactly
+    zero.
+  softmax->mix: The shares tell the mixing step how much of each word's message to take.
+  qkv->mix: The messages being blended are the values, made earlier, so the mixing step needs them as well as the shares.
+  mix->output: Each head produced its own blended vectors. The last stage joins them into one vector per word.
+stages:
+  tokens:
+    story: Attention works on a list of items, so the sentence is first cut into words. Every word will get a turn to look
+      at all the others. (Real models cut text into tokens as in Lesson 2. This toy uses whole words to keep the grid readable.)
+    thread: “the cat sat on the mat” becomes 6 words, numbered 0 to 5. The word “the” appears twice, at positions 0 and 4.
+    check:
+      question: Why does the toy keep each word's position number?
+      answer: Because later steps need to know where each word sits in the sentence.
+  embed_pos:
+    story: Each word becomes a vector of numbers (64 here). On its own, attention has no sense of order, so a pattern that
+      encodes each word's position is added to the vector. Without it, “dog bites man” and “man bites dog” would look identical
+      to the layer.
+    thread: Each of our 6 words becomes 64 numbers. The two “the” words start with the same word vector, but they differ once
+      their positions are added.
+    check:
+      question: Why does the layer need position information?
+      answer: Attention alone doesn't know word order, so without it, rearranging the words gives the same result.
+  qkv:
+    story: Each word's vector is turned into three new vectors. The query says what this word is looking for. The key says
+      what this word offers to others. The value is what it passes on if someone picks it. They are made by multiplying by
+      three different tables of numbers. With 2 heads, each head works on 32 of the 64 numbers.
+    thread: For the word “sat”, the query asks the other words, and each other word's key says what it offers in reply.
+    check:
+      question: What do Q, K and V mean in plain words?
+      answer: 'Query: what I''m looking for. Key: what I offer so others can find me. Value: what I hand over if you pick
+        me.'
+  scores:
+    story: 'Every word''s query is compared with every word''s key. A high score means a good match. The result is a grid:
+      each row is a word that is asking, each column is a word being looked at. The scores are divided by the square root
+      of the head size to keep them in a sensible range.'
+    thread: 6 words give a 6 × 6 grid, 36 scores, for each head.
+    check:
+      question: Why are the scores divided by the square root of the head size?
+      answer: Without it, scores grow with the vector size and softmax can pile everything onto one word. Dividing keeps their
+        spread steady.
+  mask:
+    story: Sometimes a word must not see the words after it, for example when a model writes text one word at a time. The
+      causal mask hides them by setting their scores to minus infinity, so they end up with exactly zero weight. In this lesson
+      the mask is off until you switch it on.
+    thread: 'With the mask on, the upper triangle of our grid is hidden: 15 of the 36 cells.'
+    check:
+      question: What does a causal mask stop a word from doing?
+      answer: Looking at the words that come after it.
+  softmax:
+    story: Scores can be any numbers, but we need shares. Softmax turns each row of scores into positive weights that add
+      up to 100%, giving the biggest share to the biggest scores. These weights are the attention. If one score is far bigger
+      than the rest, softmax gives it almost everything.
+    thread: Averaged over both heads, “sat” gives about 30% of its attention to “on” and splits the rest among the other words
+      and itself. (The numbers are random in this toy, so this says nothing about meaning.)
+    check:
+      question: Why do each row's weights add up to 100%?
+      answer: Softmax turns scores into shares of one whole, so each word divides its attention among the words it can see.
+  mix:
+    story: Now each word builds its new vector by blending the values of the words it looked at, in proportion to the weights.
+      A word that pays most attention to “on” ends up with a vector that is mostly “on”'s value. This is the step where information
+      actually moves between words.
+    thread: '“sat”''s new vector is a blend: about 30% from “on”, plus smaller shares from the other words and from itself.'
+    check:
+      question: What does the weighted sum produce?
+      answer: A new vector for every word, made by blending the other words' values using the attention weights.
+  output:
+    story: Each head did all of this separately, with its own questions and its own way of matching. The heads' results are
+      joined side by side and passed through one more table of numbers, giving a single vector per word, the same size as
+      the input. In a real model this is handed to the next layer.
+    thread: 'Two heads of 32 numbers are joined into 64 numbers per word: a 6 × 64 table.'
+    check:
+      question: Why use more than one head?
+      answer: Each head can look for a different kind of relationship at the same time, and their results are combined.

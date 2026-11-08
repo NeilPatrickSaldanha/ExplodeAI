@@ -1,0 +1,111 @@
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
+# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+big_picture:
+  story: Embeddings turn text into lists of numbers so that a computer can tell which texts mean similar things. Texts with
+    related meaning get numbers that are close together. This lesson takes a real, small embedding model apart and follows
+    one sentence from words, to pieces, to one list of 384 numbers, to a point on a map where its nearest neighbours are the
+    sentences that mean something similar.
+  analogy:
+    title: A map of meaning with pins
+    mapping:
+    - part: Sample library
+      becomes: pins already placed on the map (24 sentences)
+    - part: Your text
+      becomes: a new place you want to find the neighbours of
+    - part: Tokenizer
+      becomes: reading the sentence piece by piece
+    - part: Encoder
+      becomes: a reader who understands each piece in the context of the whole sentence
+    - part: Pooling
+      becomes: writing one summary for the whole sentence
+    - part: Normalizer
+      becomes: drawing every summary the same length, so only its direction matters
+    - part: Similarity
+      becomes: measuring how far your place is from every pin
+    - part: Semantic space
+      becomes: the picture of the map itself
+    breaks: A paper map has two dimensions. This one has 384, and the 3D picture squashes it down, keeping only part of the
+      spread. Distances in the picture are only a hint. The Neighbours list uses the exact numbers.
+  example:
+    title: The sentence we will follow
+    input: a place to put my books
+    note: It shares no words with the sentence we hope it finds, “The bookshelf is full of old novels.” Only meaning can connect
+      them.
+connections:
+  library->tokenizer: The library sentences go through the same reading steps as your text, so that all of them end up on
+    the same map.
+  your_text->tokenizer: Your sentence is cut into word pieces first, because the model reads pieces, not raw letters.
+  tokenizer->encoder: The encoder reads all the pieces together, so each one can be understood in the context of the others.
+  encoder->pooling: The encoder gives one list of numbers per piece. Pooling is needed to turn them into one list for the
+    whole sentence.
+  pooling->normalizer: The sentence summary is scaled to length 1 so that only its direction matters when it is compared.
+  normalizer->similarity: Similarity compares your normalized vector with every library vector to find the closest ones.
+  normalizer->semantic_space: The map is drawn from the same normalized vectors, squashed down to three dimensions so you
+    can see them.
+stages:
+  library:
+    story: 'The library is the set of example sentences your text is compared against: 24 short sentences in four topics (animals,
+      food, furniture and vehicles). Each one is also turned into a vector by the same model, so they all live on the same
+      map. Think of them as pins already placed on it.'
+    thread: Our library has 24 sentences. One of them, about a bookshelf, is in the furniture topic.
+    check:
+      question: Why must the library and your text be embedded by the same model?
+      answer: Vectors from different models live in different spaces, so comparing them would be meaningless.
+  your_text:
+    story: This is the sentence you type. It is what you want to find neighbours for. You can type anything, and the example
+      buttons show where the model shines and where it stumbles.
+    thread: We follow “a place to put my books”. It shares no words with “The bookshelf is full of old novels”, the sentence
+      we hope it finds.
+    check:
+      question: Why is “a place to put my books” a good test of an embedding model?
+      answer: It shares no words with the bookshelf sentence yet means something related, so only a method that understands
+        meaning can connect them.
+  tokenizer:
+    story: 'The model can''t read raw text. First the text is cut into word pieces called tokens, and two special markers
+      are added: [CLS] at the start and [SEP] at the end. Rare words are split into smaller pieces. This model can read at
+      most 512 tokens.'
+    thread: '“a place to put my books” becomes 8 tokens: [CLS], a, place, to, put, my, books and [SEP].'
+    check:
+      question: What happens to text longer than 512 tokens?
+      answer: It is cut off. Anything past the limit never reaches the model.
+  encoder:
+    story: 'The encoder is the model proper: twelve layers that read all the tokens together and give every token a vector
+      of 384 numbers that reflects its meaning in this sentence. Because each token is read in the context of the others,
+      the same word gets a different vector in different sentences, like “bank” beside a river and “bank” for money.'
+    thread: Our 8 tokens become 8 vectors of 384 numbers each, an 8 × 384 table.
+    check:
+      question: Why does the same word get different vectors in different sentences?
+      answer: Each token's vector is computed from the whole sentence, so its context changes the result.
+  pooling:
+    story: Now we have one vector per token, but we want one vector for the whole sentence. Pooling squashes them into one.
+      This model uses the vector of the [CLS] token, a special marker it was trained to use as a summary of the whole sentence.
+    thread: 'The 8 × 384 table becomes 1 × 384: just the [CLS] token''s vector.'
+    check:
+      question: What does pooling do?
+      answer: It turns many token vectors into a single vector for the whole text.
+  normalizer:
+    story: Next the vector is scaled to length exactly 1, like turning every arrow into a unit arrow so that only its direction
+      matters. After this, cosine similarity, dot product and Euclidean distance all rank results in the same order.
+    thread: Our vector's length goes from 9.25 to 1.00.
+    check:
+      question: After normalizing, why do cosine similarity and dot product agree?
+      answer: Cosine similarity is the dot product of two length-1 vectors, so once the vectors have length 1 the two are
+        the same.
+  similarity:
+    story: Now your vector is scored against every library vector and the results are sorted. A higher score means closer.
+      The scores aren't percentages. What matters is the order.
+    thread: The top three are the bookshelf sentence (0.695), the desk (0.566) and the armchair (0.554), all from the furniture
+      topic.
+    check:
+      question: Is a score of 0.6 “quite similar”?
+      answer: Not by itself. The scores aren't calibrated, and even unrelated texts can score above zero, so compare scores
+        with each other rather than with a fixed threshold.
+  semantic_space:
+    story: 'This stage is a picture, not a calculation. The 384 numbers can''t be drawn, so a technique called PCA squashes
+      them into 3 so you can see the map. Squashing loses information: the picture keeps only part of the real spread, and
+      its label says how much. The Neighbours list uses the real numbers.'
+    thread: Your sentence appears as a ring among the 24 library points. Its three nearest neighbours, by the real numbers,
+      are all furniture.
+    check:
+      question: Why trust the Neighbours list more than the 3D map?
+      answer: The map squashes 384 dimensions into 3 and loses information. The list is computed from the full vectors.

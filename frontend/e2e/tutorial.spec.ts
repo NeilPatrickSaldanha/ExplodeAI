@@ -24,6 +24,7 @@ test('first visit offers the tutorial once; skipping remembers it', async ({ pag
 })
 
 test('walkthrough: spotlights controls, asks for real actions, and finishes', async ({ page }) => {
+  test.setTimeout(100_000) // a dozen steps, each scrolling to its spotlight
   await page.goto('/lessons/embeddings')
   await expect(card(page)).toBeVisible()
   await next(page).click() // Start
@@ -88,8 +89,8 @@ test('the tutorial can go back, is a labelled modal, and dims everything else', 
   await expect(card(page)).toHaveAttribute('aria-modal', 'true')
   // Clicking the dimmed page behind the spotlight does nothing.
   const hit = await page.evaluate(() => {
-    const r = document.querySelector('.cine__modes')!.getBoundingClientRect()
-    return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.className
+    // The left edge of the screen, level with the middle: nothing is spotlighted there.
+    return document.elementFromPoint(4, window.innerHeight / 2)?.className
   })
   expect(String(hit)).toContain('tut__dim')
 })

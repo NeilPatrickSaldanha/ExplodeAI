@@ -4,7 +4,7 @@ import type { Claim, Component, Lesson, Source } from '../../../api/types'
 import type { PartSpec } from '../../../engine/types'
 import { ClaimCard } from '../../rag/Inspector'
 import { StageIcon } from './StageIcon'
-import { Understand } from './Understand'
+import { Understand, type Neighbour } from './Understand'
 
 const PartCloseup = lazy(() => import('./PartCloseup').then((m) => ({ default: m.PartCloseup })))
 
@@ -36,6 +36,16 @@ interface Props {
   /** Jump to another stage (from the connected-stage chips). */
   onGoTo: (id: string) => void
   tour?: TourState
+}
+
+/** The stages that feed this one (or that it feeds), each with the sentence that explains the hand-off. */
+function neighbours(lesson: Lesson, id: string, side: 'before' | 'after'): Neighbour[] {
+  return lesson.connections
+    .filter((c) => (side === 'before' ? c.target === id : c.source === id))
+    .flatMap((c) => {
+      const other = lesson.components.find((x) => x.id === (side === 'before' ? c.source : c.target))
+      return other ? [{ component: other, note: c.explain }] : []
+    })
 }
 
 const passed = (c: Claim) =>
@@ -141,8 +151,8 @@ export function StagePanel({ lesson, component, part, index, io, breaks, sources
         <Understand
           component={component}
           explain={component.explain}
-          before={lesson.connections.filter((c) => c.target === component.id).map((c) => lesson.components.find((x) => x.id === c.source)).filter((c): c is Component => !!c)}
-          after={lesson.connections.filter((c) => c.source === component.id).map((c) => lesson.components.find((x) => x.id === c.target)).filter((c): c is Component => !!c)}
+          before={neighbours(lesson, component.id, 'before')}
+          after={neighbours(lesson, component.id, 'after')}
           reducedMotion={reducedMotion}
           onGoTo={onGoTo}
         />

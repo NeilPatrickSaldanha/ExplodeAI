@@ -1,0 +1,113 @@
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
+# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+big_picture:
+  story: 'An agent is a language model that can take actions. Instead of answering straight away, it works in a loop: it decides
+    what to do next, asks for a tool, your program runs that tool, the result goes back to the model, and the model decides
+    again, until it has an answer. The important part is who does what. The model only asks. Your code runs the tools, checks
+    the requests and decides what is allowed. In this lesson a short rule plays the model, so every run is free and repeatable,
+    but the loop around it is real.'
+  analogy:
+    title: A new assistant at a shop's help desk
+    mapping:
+    - part: Goal
+      becomes: the customer's note on the desk
+    - part: Tool registry
+      becomes: the list of things the assistant is allowed to do
+    - part: Decide
+      becomes: the assistant thinking about what to do next
+    - part: Check
+      becomes: a supervisor glancing over a form before it goes anywhere
+    - part: Run
+      becomes: the back office actually doing the task
+    - part: Result
+      becomes: the answer note coming back from the back office
+    - part: Context
+      becomes: the case file the assistant rereads before every decision
+    - part: Stop
+      becomes: handing over the answer, or giving up after too many tries
+    breaks: A person understands the note. A language model can be fooled by text it reads, such as an instruction hidden
+      in a document, and here a simple stand-in rule plays the model, so it shows the loop and not how a real model behaves.
+  example:
+    title: The request we will follow
+    input: Hi! I'd like to return my E-Trail from order 1001. Can I get a refund?
+    note: To answer, the agent needs the returns policy, the order and the delivery date, and it must ask a person before
+      moving money.
+connections:
+  goal->decide: The goal is the first thing the model reads at every step. It is what all the steps are working towards.
+  tools->decide: The tool list tells the model what it may ask for. It can only choose from what it has been shown.
+  decide->validate: Every tool call the model writes is checked before it can run, because a model's request can be malformed.
+  validate->execute: Only calls that pass the check are run, by the application.
+  execute->observe: The tool's raw output is sent back so the model can see what happened.
+  observe->context: The result is added to the conversation so that later steps can use it.
+  context->decide: The whole conversation, including every result so far, is sent to the model again for its next decision.
+  decide->stop: When the model gives a final answer instead of asking for a tool, the loop ends.
+stages:
+  goal:
+    story: An agent starts with a request. It is the first message in the conversation, and everything that follows is the
+      agent working towards it, one step at a time. Some requests need one lookup, others need several steps.
+    thread: 'Our customer writes: “Hi! I''d like to return my E-Trail from order 1001. Can I get a refund?” That needs the
+      returns policy, the order itself and the delivery date.'
+    check:
+      question: What makes this an agent rather than a single question and answer?
+      answer: It can take several steps, choosing tools and using their results, in a loop until the job is done.
+  tools:
+    story: The agent can only do what its tools allow. Each tool has a name, a plain-language description and rules for its
+      inputs. The model never sees the code behind a tool, only this description, so the description is what it uses to choose.
+      Vague descriptions lead to poor choices.
+    thread: 'Our agent has four tools: search the help centre, look up an order, count the days between two dates, and issue
+      a refund. The refund tool changes something real, so it needs a person''s approval.'
+    check:
+      question: Why do tool descriptions matter so much?
+      answer: The model only sees each tool's name and description, so that is all it has to pick the right tool with.
+  decide:
+    story: At every step the model looks at the goal, the tool list and everything so far, then either asks for one tool (with
+      its inputs) or gives the final answer. In this lesson a short rule plays the model, and the bars show how well each
+      tool's description matched what it needed.
+    thread: 'Step 1: it needs the returns policy, so it picks the help-centre search. Later steps look up the order, count
+      the days and ask for the refund.'
+    check:
+      question: What are the two things the model can do at each step?
+      answer: Ask for one tool call with its inputs, or give the final answer.
+  validate:
+    story: 'Before anything runs, the application checks the call against the tool''s rules: the right kind of input, in the
+      right shape. A model''s request is not a guarantee. If the check fails, the problem goes back as an error and the call
+      is not run.'
+    thread: In our run the agent first writes the order as “1001”, but the tool needs an A followed by four digits. The check
+      rejects it with a message, and the agent retries with “A1001”.
+    check:
+      question: What happens when a tool call fails the check?
+      answer: It isn't run. An error message goes back to the agent so it can correct the call.
+  execute:
+    story: 'The model only asks. Your application runs the tool, with ordinary code. This is also the place to put a human
+      in the loop for anything risky: the refund waits until a person approves it.'
+    thread: The help search, the order lookup and the date count run straight away. The refund is held with the message “waiting
+      for a person to approve”.
+    check:
+      question: Who actually runs a tool, the model or the application?
+      answer: The application. The model only asks for it.
+  observe:
+    story: 'Whatever the tool returns goes back to the model as a message that points at the call it answers. The model reads
+      that result like any other text. That is powerful but risky: if a result contains hidden instructions, the model may
+      treat them as commands.'
+    thread: 'The order lookup returns: E-Trail electric bike, 2,899 CAD, delivered on 2026-10-05.'
+    check:
+      question: Why is it risky that the model reads tool results like ordinary text?
+      answer: A web page or document can hide instructions in its text and steer the agent. This is called prompt injection.
+  context:
+    story: 'The model remembers nothing between steps by itself. At every step the whole conversation so far is sent again:
+      the instructions, the tool list, every call and every result. That is how it “remembers”, and it is also why each step
+      costs more than the one before.'
+    thread: Step 1 reads about 1,475 tokens. By step 5 it reads 2,799. Across the first five steps the model reads about 11,000
+      tokens in total.
+    check:
+      question: Why does each step cost more than the one before?
+      answer: The conversation keeps growing, and the whole thing is read again at every step.
+  stop:
+    story: The loop ends when the model gives a final answer. A step limit is a second way out in case it never does. Without
+      a limit, a confused agent can go round and round, spending more each time.
+    thread: 'After you approve the refund, the agent answers: the bike was delivered 16 days ago, which is within the 30-day
+      window, and refund R-001 was issued. That took 6 steps in all.'
+    check:
+      question: Why have a step limit?
+      answer: So a confused agent can't loop forever. It stops, and you can see that something went wrong instead of paying
+        for endless steps.
