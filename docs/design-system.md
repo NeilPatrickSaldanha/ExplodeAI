@@ -6,8 +6,8 @@ Built with the **Hallmark**, **ui-ux-pro-max** and **ui-styling** skills.
 
 - **Genre** · atmospheric (AI tool, dark canvas)
 - **Macrostructure** · Map / Diagram: a single spatial system organises the page
-- **Theme** · custom, tuned from Lumen. Night palette by default: `oklch(13% 0.014 265)` paper, molten-brass accent `oklch(76% 0.17 50)`. Day palette in light mode: cool bone paper, indigo accent `oklch(46% 0.24 268)`.
-- **Type** · Instrument Serif (roman, lowercase display heads) · Geist (body, sentence case) · JetBrains Mono (UPPERCASE machine readouts, code, prompts)
+- **Theme** · redesigned 2026-11-08 to be friendlier. Dark is "midnight neon": deep navy paper `oklch(14% 0.035 268)`, electric-blue accent `oklch(74% 0.18 245)`, pink and cyan supporting neons. Light is "cream and cocoa": warm cream paper `oklch(96.5% 0.022 85)`, cocoa-brown accent `oklch(47% 0.1 55)`, terracotta support. Every text pairing is at least 4.5:1.
+- **Type** · Fredoka (rounded, bubbly headings, mixed case) · Nunito (rounded body and labels) · JetBrains Mono (code only). Bigger base text, rounder corners (`--radius-md` 18px, `--radius-lg` 26px), softer shadows.
 - **Enrichment** · the 3D exploded view is the page's single apparatus. It's interactive, so three.js earns its place.
 - **Nav / footer** · N9 edge-aligned minimal · Ft2 inline single line
 - **Motion** · one load-time explosion · flow packets (pausable) · camera glide to the selected part

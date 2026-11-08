@@ -51,7 +51,7 @@ Free tiers change often. Re-check the official page the day you deploy.
 - **Frontend dev/test tools:** Vite, Vitest, jsdom, oxlint, Testing Library are MIT; TypeScript and Playwright are Apache-2.0.
 - **Backend:** FastAPI, SQLModel, pydantic-settings and PyYAML are MIT; httpx, uvicorn and numpy are BSD-3-Clause (numpy's package lists additional bundled-component licences); fastembed is Apache-2.0. onnxruntime (installed with fastembed) was not checked here. **[unverified]**
 - **Models:** `BAAI/bge-small-en-v1.5` states **MIT** and says the models "can be used for commercial purposes free of charge" *official*. `Qdrant/bge-small-en-v1.5-onnx-Q` states **MIT** and calls itself a "Quantized ONNX port" of the BAAI model *official*.
-- **Fonts:** Instrument Serif, Geist and JetBrains Mono are loaded from Google Fonts. Google Fonts hosts open-source fonts, and I believe all three are SIL Open Font License, but I could not confirm that from the Google page today. **[unverified]**
+- **Fonts:** Fredoka, Nunito and JetBrains Mono are loaded from Google Fonts (changed from Instrument Serif and Geist on 2026-11-08). Google Fonts hosts open-source fonts, and I believe all three are SIL Open Font License, but I have not confirmed that from Google's pages. **[unverified]**
 
 ### Assets and references in the repository
 - A scan of `frontend/src` and `frontend/public` found **no third-party images, fonts or media files**; the only asset file is `favicon.svg`. All lesson artwork is drawn in code (three.js and SVG). *measured*
