@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import { useState } from 'react'
 import type { AttendParams, AttendResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented } from '../../components/controls'
@@ -50,7 +51,8 @@ export function AttendExperimentPanel({ lesson, params, update, result, loading,
             ))}
           </div>
         )}
-        {presetNote && <p className="notice">{presetNote}</p>}
+        {!isLocked('text') && <ExperimentGuide guide={lesson.experiment.guide} presets={lesson.experiment.presets} value={params.text} />}
+        {!lesson.experiment.guide && presetNote && <p className="notice">{presetNote}</p>}
       </div>
 
       <div className="controls">
@@ -83,6 +85,7 @@ export function AttendExperimentPanel({ lesson, params, update, result, loading,
               <Tabs.Trigger value="out" className="rtabs__tab">Output</Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="grid" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="grid" />
               {heads > 1 && (
                 <Segmented label="Head to show" value={String(shown)} onChange={(v) => { const x = v === 'mean' ? 'mean' : Number(v); setView(x); if (x !== 'mean') update('head', x) }}
                   options={[{ value: 'mean', label: 'Average' }, ...Array.from({ length: heads }, (_, i) => ({ value: String(i), label: `Head ${i + 1}` }))]} />
@@ -98,12 +101,15 @@ export function AttendExperimentPanel({ lesson, params, update, result, loading,
               <StatsStrip result={result} />
             </Tabs.Content>
             <Tabs.Content value="word" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="word" />
               <LookFrom result={result} row={safeRow} onRow={setRow} head={shown} />
             </Tabs.Content>
             <Tabs.Content value="qkv" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="qkv" />
               <QKVView result={result} head={head} />
             </Tabs.Content>
             <Tabs.Content value="out" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="out" />
               <OutputView result={result} />
             </Tabs.Content>
           </Tabs.Root>

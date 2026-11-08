@@ -1502,3 +1502,100 @@ main:focus {
 .lesson-link__summary {
   line-height: 1.6;
 }
+
+/* ======================================================================= experiment guidance */
+.xguide {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper-emit);
+}
+
+.xguide__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-size: var(--text-md);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.xguide__title svg {
+  color: var(--color-accent);
+  font-size: 1.3em;
+}
+
+.xguide__intro,
+.xguide__hint {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--color-ink-2);
+}
+
+.xguide__preset {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+}
+
+.xguide__preset p {
+  margin: 0;
+  line-height: 1.65;
+  color: var(--color-ink);
+}
+
+.xguide__preset .label {
+  display: block;
+  color: var(--color-accent);
+}
+
+.xguide__ideas summary {
+  cursor: pointer;
+  font-weight: var(--weight-strong);
+  color: var(--color-ink);
+}
+
+.xguide__ideas ul {
+  list-style: none;
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.xguide__ideas li {
+  display: grid;
+  gap: var(--space-3xs);
+  padding-left: var(--space-sm);
+  border-left: 3px solid var(--color-rule-2);
+  line-height: 1.6;
+}
+
+.xguide__ideas li span {
+  color: var(--color-ink-2);
+}
+
+.tabhint {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--color-paper-2);
+  border: 1px dashed var(--color-rule-2);
+  line-height: 1.55;
+  color: var(--color-ink-2);
+}
+
+.tabhint .label {
+  margin-right: var(--space-2xs);
+  color: var(--color-accent);
+}
+
+.xguide,
+.xguide * {
+  min-width: 0;
+}

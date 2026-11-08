@@ -37,6 +37,8 @@ def _merge_teaching(data: dict, teaching: dict) -> None:
     """Add the teaching layer: the big picture, each hand-off's explanation, each stage's story."""
     if "big_picture" in teaching:
         data["big_picture"] = teaching["big_picture"]
+    if "experiment" in teaching:
+        data["experiment"]["guide"] = teaching["experiment"]
     handoffs = teaching.get("connections", {})
     for conn in data["connections"]:
         text = handoffs.get(f"{conn['source']}->{conn['target']}")

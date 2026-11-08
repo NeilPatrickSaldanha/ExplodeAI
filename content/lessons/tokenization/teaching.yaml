@@ -1,5 +1,6 @@
-# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
-# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
+# and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
+# Numbers are asserted by backend/tests/test_teaching.py.
 big_picture:
   story: 'A language model can''t read letters. It reads numbers. A tokenizer is the translator: it cuts text into pieces
     called tokens and gives every piece a number. This lesson builds a tokenizer from scratch in two halves. Learning happens
@@ -111,3 +112,42 @@ stages:
     check:
       question: Why is a successful decode a useful test?
       answer: If the text comes back exactly as it went in, the tokenizer didn't lose or change anything.
+experiment:
+  intro: 'Every run here is a real tokenizer. Drag the Merges learned slider first: it is the single most informative control.'
+  presets:
+    Familiar sentence:
+      try: Drag Merges learned from 0 up to 100, then to 300.
+      notice: The sentence is 35 tokens at 0 merges, 15 at 25, 8 at 100 and still 8 at 300. At 100 every word is one token.
+        After that, more merges don't help this sentence, but the vocabulary keeps growing (257, 282, 357, 473).
+    Unseen words:
+      try: Click it and set Merges learned to 100.
+      notice: 18 tokens. Words the tokenizer learned stay whole (“ lantern”, “ clock”) while words it never saw fall into
+        pieces (“ke”, “ep”, “er”, “s” for “keepers”). At 0 merges it is 37 tokens, at 25 it is 23 and at 300 it is 16.
+    Accents and emoji:
+      try: Click it, set Base alphabet to Training characters, then to 256 bytes.
+      notice: With Training characters, 4 tokens become [UNK] (unknown) and decoding no longer gives the text back. With 256
+        bytes, there are no unknown tokens (17 tokens) and the text round-trips exactly. A byte alphabet can spell anything.
+    Numbers (none in the corpus):
+      try: Click it, then set Base alphabet to Training characters.
+      notice: 'The training text has no digits, so every digit stays a separate symbol: 28 tokens. With Training characters,
+        six of them become [UNK]. The tokenizer can only be as good as the text it learned from.'
+  ideas:
+  - do: Open the Replay tab and pick “ keeper”.
+    see: Seven starting symbols become one token in six merges (er, ep, ke, “ ke”, “ keep”, “ keeper”). You are watching the
+      learned recipes being replayed in order.
+  - do: Set Merge order when encoding to Reversed (try 200 merges on “The keeper trimmed the lantern wick.”).
+    see: '“ keeper” and “ lantern” are no longer single tokens: later recipes need pieces made by earlier ones, so out of
+      order they can''t fire.'
+  - do: Set Pre-tokenizer to None with 150 merges.
+    see: 84 learned tokens now span a word boundary, such as “e ” (the end of one word glued to a space). The pre-tokenizer
+      is what stops that.
+  - do: Open the Trade-off tab.
+    see: 'The chart shows vocabulary size against tokens for your text, with your setting marked: more merges shrink the sequence,
+      with diminishing returns.'
+  tabs:
+    tokens: Your text split into tokens, as this tokenizer sees it. The count at the top is how many tokens this small tokenizer
+      needs (real models count with their own tokenizers, so their numbers differ).
+    replay: Pick a word and step through the merges that built it, from single symbols to the final token.
+    merges: The merge table in the order it was learned. The earliest merges are the most frequent pairs in the training text.
+    tradeoff: Vocabulary size against tokens for your text, with your current setting marked. This is the trade-off tokenizer
+      designers weigh.

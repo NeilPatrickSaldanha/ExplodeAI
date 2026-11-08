@@ -1,5 +1,6 @@
-# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
-# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
+# and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
+# Numbers are asserted by backend/tests/test_teaching.py.
 big_picture:
   story: A language model writes fluently, but it only knows what it saw during training. It has never read your private documents.
     RAG, short for retrieval-augmented generation, fixes that by looking things up first. It searches your documents for the
@@ -125,3 +126,49 @@ stages:
       question: Does RAG guarantee a correct answer?
       answer: No. It reduces hallucination, but the retrieved text can be wrong or incomplete and the model can still misuse
         it, so the sources should be checked.
+experiment:
+  intro: Every run here is the real pipeline. Change one setting at a time, then look at the Chunks, Ranking and Prompt tabs
+    to see what that setting did.
+  presets:
+    Return policy:
+      try: Click it and leave every setting alone.
+      notice: 'Only one of the three retrieved chunks is from the returns article (returns#0). The other two, service#1 and
+        battery#1, are distractions: the simple word-based embedder is easily pulled off course. The Answer tab still quotes
+        “Returned bikes must include the original packaging.” and the 30-day sentence, because returns#0 contains both.'
+    Warranty:
+      try: Click it and leave every setting alone.
+      notice: 'The retrieved chunks are warranty#0, sizing#1 and returns#0. Only warranty#0 matters: it holds both facts the
+        question asks about (the lifetime frame warranty and the 2 years on components). The Answer tab quotes both.'
+    Battery storage:
+      try: Click it, then set Context budget to 15 words.
+      notice: At first the retrieved chunks are battery#1, returns#0 and service#0, and only battery#1 matters. With a 15-word
+        budget the Prompt tab shows the useful chunk can be dropped for not fitting, which is exactly the “Retrieved, then
+        dropped” challenge.
+    Synonym test (lexical embedder fails it):
+      try: Click it, look at the Chunks tab, then set Embedder to Local neural.
+      notice: With the simple embedder the first result is battery#0, a battery chunk, and the Answer tab finds nothing to
+        quote, because “money back” shares no words with “refund”. With the Local neural embedder (if installed) the first
+        result is returns#0, the returns policy. Keyword-style matching needs shared words; embeddings match meaning.
+  ideas:
+  - do: Set Chunking to Fixed words and Chunk size to 8 (leave the question as it is).
+    see: The six articles become 37 tiny chunks instead of 11. Set Overlap to 4 and it becomes 65, with neighbouring chunks
+      sharing words. Set Chunk size to 120 and it becomes 6, one per article.
+  - do: Set Top-k to 1, then to 6.
+    see: Top-k 1 retrieves only returns#0. Top-k 6 retrieves six chunks and the prompt holds about 145 words. More chunks
+      means more room used and more noise.
+  - do: Set Context budget to 15 words.
+    see: The Prompt tab shows 1 chunk included and 2 dropped. A chunk can be found by the retriever and still never reach
+      the model.
+  - do: Switch Retrieval between Dense, BM25 and Hybrid.
+    see: For the default question all three pick the same three chunks. The Ranking tab shows where the three methods disagree
+      about the remaining chunks.
+  tabs:
+    chunks: Each box is one chunk, named after its article (returns#0 is the first chunk of “Returns and refunds”). The ones
+      the retriever picked are marked. Look at where each chunk starts and ends.
+    space: Your question is the diamond; the retrieved chunks are filled dots and the rest are hollow. The label says how
+      much of the real spread this 3D picture keeps, so treat distances as hints.
+    ranking: 'Every chunk is ranked three ways: by meaning (dense), by keywords (BM25) and combined (hybrid). If a chunk you
+      expected is low in one column, that is why it was missed.'
+    prompt: The exact text the generator will read, and which chunks fit into the budget and which were dropped.
+    answer: A labelled baseline that quotes sentences from the chunks. It is not a language model. If it quotes nothing, the
+      retrieved chunks held no matching sentence.

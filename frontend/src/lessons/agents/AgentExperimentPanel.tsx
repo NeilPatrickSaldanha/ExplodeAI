@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { AgentParams, AgentResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented } from '../../components/controls'
 import { ApprovalCard, ContextChart, ConversationView, LoopTrace, StatsStrip, ToolsView } from './AgentViews'
@@ -45,7 +46,8 @@ export function AgentExperimentPanel({ lesson, params, update, result, loading, 
             ))}
           </div>
         )}
-        {presetNote && <p className="notice">{presetNote}</p>}
+        {!isLocked('goal') && <ExperimentGuide guide={lesson.experiment.guide} presets={lesson.experiment.presets} value={params.goal} />}
+        {!lesson.experiment.guide && presetNote && <p className="notice">{presetNote}</p>}
       </div>
 
       <div className="controls">
@@ -84,16 +86,20 @@ export function AgentExperimentPanel({ lesson, params, update, result, loading, 
               <Tabs.Trigger value="context" className="rtabs__tab">Token cost</Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="loop" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="loop" />
               <LoopTrace result={result} />
               <StatsStrip result={result} />
             </Tabs.Content>
             <Tabs.Content value="conversation" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="conversation" />
               <ConversationView result={result} />
             </Tabs.Content>
             <Tabs.Content value="tools" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="tools" />
               <ToolsView tools={result.tools} />
             </Tabs.Content>
             <Tabs.Content value="context" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="context" />
               <ContextChart result={result} />
             </Tabs.Content>
           </Tabs.Root>

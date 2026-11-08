@@ -51,6 +51,13 @@ export interface Explain {
   check?: { question: string; answer: string } | null
 }
 
+export interface ExperimentGuide {
+  intro: string
+  presets: Record<string, { try: string; notice: string }>
+  ideas: { do: string; see: string }[]
+  tabs: Record<string, string>
+}
+
 export interface BigPicture {
   story: string
   analogy: { title: string; mapping: { part: string; becomes: string }[]; breaks: string }
@@ -109,7 +116,13 @@ export interface Lesson {
   components: Component[]
   connections: { source: string; target: string; payload: string; flow?: 'document' | 'vector' | 'query' | null; explain?: string | null }[]
   visuals: Visual[]
-  experiment: { engine: string; presets: { label: string; query?: string; text?: string; note?: string }[]; corpus_note: string }
+  experiment: {
+    engine: string
+    presets: { label: string; query?: string; text?: string; note?: string }[]
+    corpus_note: string
+    /** Plain-words "what to notice" guidance: per example button, other things to try, and a hint per result tab. */
+    guide?: ExperimentGuide
+  }
   challenges: Challenge[]
   reconstruction: { prompt: string; dependencies: Record<string, string[]> }
   tour: { component: string; title: string; body: string; claims: string[] }[]

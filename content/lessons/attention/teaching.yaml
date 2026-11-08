@@ -1,5 +1,6 @@
-# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
-# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
+# and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
+# Numbers are asserted by backend/tests/test_teaching.py.
 big_picture:
   story: When you read “the cat sat on the mat”, the meaning of each word depends on the others. Attention is how a model
     lets every word look at every other word and decide which ones matter for it. Each word asks a question, every word offers
@@ -111,3 +112,40 @@ stages:
     check:
       question: Why use more than one head?
       answer: Each head can look for a different kind of relationship at the same time, and their results are combined.
+experiment:
+  intro: This is a toy layer with random numbers, so the patterns show how attention works, not what a trained model has learned.
+    Read the grid row by row.
+  presets:
+    Cat:
+      try: Click it and open the Attention grid tab. Click a row label such as “sat”.
+      notice: 'Each row is a word that is asking, and the numbers in a row add up to about 100%. The strongest weight averages
+        about 35%. For “sat”, about 30% goes to “on” (averaged over the two heads). Then switch Causal mask on: 15 of the
+        36 cells hatch out.'
+    Pronoun:
+      try: Click it and look at the row for “it”.
+      notice: In a trained model, “it” might pay attention to “animal”. In this toy “it” gives its biggest share (about 28%)
+        to “too”, and only about 9% to “animal”. The weights are random, so they carry no meaning. That is the point of the
+        warning on this lesson.
+    Order:
+      try: Click it, set Position vectors Off, then On, and press Check my fix in Break & fix → Order-blind attention.
+      notice: 'With position off (and the mask off) the layer can''t tell “dog bites man” from “man bites dog”: the order
+        difference is exactly 0. With position on it is about 0.45. This shows up in the Break & fix check and in the “What
+        breaks if removed?” card on Vectors + position.'
+  ideas:
+  - do: Set Heads to 8 and Scale scores to Off.
+    see: 'The strongest weight rises to about 63% for “the cat sat on the mat”: with big scores, softmax piles almost everything
+      onto one word. Turn scaling back on to spread it out.'
+  - do: Use Head to show to switch between Average, Head 1 and Head 2.
+    see: The heads have different patterns because they use different random tables of numbers. In a real model each head
+      learns a different job.
+  - do: Turn Causal mask on and read the later-words figure under the grid.
+    see: It drops to 0%. Words can no longer look ahead.
+  - do: Open the One word tab and pick different words.
+    see: You can see exactly where each word looks and how its new vector is blended from the others.
+  tabs:
+    grid: Rows are words that ask, columns are the words they look at. The numbers in each row add up to about 100%. Click
+      a row label to pick a word. Hatched cells are hidden by the mask.
+    word: Pick one word to see where it looks and how its new vector is blended from the others.
+    qkv: 'The three vectors each word makes (the first few of their numbers): a query, a key and a value, for the head you
+      chose.'
+    out: The final vector for each word after the heads are joined. These would go to the next layer in a real model.

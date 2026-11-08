@@ -137,3 +137,138 @@ def test_agent_running_example():
     done = run_agent(AgentParams(approve=True))
     assert len(done["steps"]) == 6 and done["refunds"][0]["refund_id"] == "R-001"
     assert "16 days ago" in done["answer"] and "30 days" in done["answer"]
+
+
+# --- the Experiment tab's "what to notice" guidance quotes these results -------------------------------
+
+
+def _guide(lesson_id):
+    return LESSONS[lesson_id].experiment["guide"]
+
+
+@pytest.mark.parametrize("lesson_id", list(LESSONS))
+def test_every_example_button_and_tab_has_guidance(lesson_id):
+    lesson = LESSONS[lesson_id]
+    guide = _guide(lesson_id)
+    assert {p["label"] for p in lesson.experiment["presets"]} == set(guide["presets"])
+    assert len(guide["ideas"]) >= 3 and guide["intro"]
+    assert all(g["try"] and len(g["notice"]) > 60 for g in guide["presets"].values())
+
+
+def test_rag_guidance_numbers():
+    base = dict(
+        strategy="sentence",
+        chunk_size=40,
+        overlap=0,
+        embedder="lexical-hashing",
+        method="dense",
+        top_k=3,
+        context_budget_words=200,
+    )
+    ids = lambda r: [h["chunk_id"] for h in r["retrieved"]]  # noqa: E731
+    cases = {
+        "How long do I have to return a bike, and what must I include?": [
+            "returns#0",
+            "service#1",
+            "battery#1",
+        ],
+        "What does the warranty cover for the frame and for components like brakes?": [
+            "warranty#0",
+            "sizing#1",
+            "returns#0",
+        ],
+        "How should I store the battery long term?": ["battery#1", "returns#0", "service#0"],
+        "Can I get my money back?": ["battery#0", "returns#0", "returns#1"],
+    }
+    for question, expected in cases.items():
+        assert ids(run_rag(RagParams(**base, query=question))) == expected
+    assert run_rag(RagParams(**base, query="Can I get my money back?"))["answer"]["sentences"] == []
+    q = "How long do I have to return a bike?"
+    assert len(run_rag(RagParams(**{**base, "strategy": "fixed", "chunk_size": 8}, query=q))["chunks"]) == 37
+    assert (
+        len(
+            run_rag(RagParams(**{**base, "strategy": "fixed", "chunk_size": 8, "overlap": 4}, query=q))[
+                "chunks"
+            ]
+        )
+        == 65
+    )
+    assert len(run_rag(RagParams(**{**base, "strategy": "fixed", "chunk_size": 120}, query=q))["chunks"]) == 6
+    assert ids(run_rag(RagParams(**{**base, "top_k": 1}, query=q))) == ["returns#0"]
+    assert run_rag(RagParams(**{**base, "top_k": 6}, query=q))["prompt"]["context_words"] == 145
+    tiny = run_rag(RagParams(**{**base, "context_budget_words": 15}, query=q))["prompt"]
+    assert (len(tiny["included"]), len(tiny["dropped"])) == (1, 2)
+
+
+def test_tokenization_guidance_numbers():
+    base = dict(corpus_id="greyhaven-keepers-log", base="bytes", pre_tokenizer="words", merge_order="learned")
+
+    def count(text, merges, **kw):
+        return run_tokenize(TokenizeParams(**{**base, **kw}, text=text, merges=merges))
+
+    familiar, unseen = "The keeper lit the lantern at dusk.", "The lanternkeepers rewound clockwork."
+    assert [count(familiar, m)["encoding"]["count"] for m in (0, 25, 100, 300)] == [35, 15, 8, 8]
+    assert [count(familiar, m)["vocabulary"]["size"] for m in (0, 25, 100, 300)] == [257, 282, 357, 473]
+    assert [count(unseen, m)["encoding"]["count"] for m in (0, 25, 100, 300)] == [37, 23, 18, 16]
+    accents = "Café crème at the lantern ☕"
+    assert (
+        count(accents, 100)["encoding"]["count"] == 17 and count(accents, 100)["decoding"]["unk_count"] == 0
+    )
+    chars = count(accents, 100, base="chars")
+    assert chars["decoding"]["unk_count"] == 4 and not chars["decoding"]["round_trip"]
+    digits = "Tide at 04:15, height 3.2 metres."
+    assert count(digits, 100)["encoding"]["count"] == 28
+    assert count(digits, 100, base="chars")["decoding"]["unk_count"] == 6
+
+
+def test_embeddings_guidance_numbers():
+    pytest.importorskip("fastembed")
+    from app.experiments.embed.pipeline import EmbedParams
+    from app.experiments.embed.pipeline import run as run_embed
+
+    def top(text, **kw):
+        r = run_embed(EmbedParams(text=text, top_k=3, **kw))
+        return [(n["category"], round(n["score"], 3)) for n in r["neighbours"]], r
+
+    puppy, _ = top("A puppy playing fetch in the park")
+    assert puppy == [("animals", 0.717), ("animals", 0.637), ("animals", 0.564)]
+    commute, _ = top("getting to the office")
+    assert commute[:2] == [("furniture", 0.588), ("vehicles", 0.561)]
+    assisted, _ = top("getting to the office", query_instruction=True)
+    assert assisted[:2] == [("vehicles", 0.515), ("furniture", 0.502)]
+    rails, r = top("a vehicle that runs on rails")
+    assert [s for _, s in rails] == [0.619, 0.613, 0.597]
+    train = next(i for i in r["library"]["items"] if "train" in i["text"].lower())
+    assert train["rank"] == 14
+    long_text = next(
+        p["text"] for p in LESSONS["embeddings"].experiment["presets"] if p["label"] == "Long text"
+    )
+    assert run_embed(EmbedParams(text=long_text))["query"]["truncated"] is True
+    both_lexical, _ = top("a place to put my books", library_embedder="lexical", query_embedder="lexical")
+    assert both_lexical[0][1] == 0.0
+
+
+def test_attention_guidance_numbers():
+    pronoun = "the animal did not cross the street because it was too tired"
+    r = attend.run(attend.AttendParams(text=pronoun, heads=2, scale=True, causal=False, position=True))
+    words = [t["text"] for t in r["tokens"]]
+    row = np.array(r["weights_mean"])[words.index("it")]
+    assert len(words) == 12 and words[int(row.argmax())] == "too"
+    assert round(row.max() * 100) == 28 and round(row[words.index("animal")] * 100) == 9
+    cat = attend.run(attend.AttendParams(text="the cat sat on the mat", heads=2, scale=True))
+    assert round(cat["stats"]["mean_max_weight"] * 100) == 35
+    wide = attend.run(attend.AttendParams(text="the cat sat on the mat", heads=8, scale=False))
+    assert round(wide["stats"]["mean_max_weight"] * 100) == 63
+    order = attend.run(attend.AttendParams(text="dog bites man", position=False))
+    assert order["stats"]["order_gap"] == 0.0
+
+
+def test_agent_guidance_numbers():
+    steps = lambda goal, **kw: len(run_agent(AgentParams(goal=goal, **kw))["steps"])  # noqa: E731
+    assert steps("Can I return order A1002?") == 4 and steps("I want to return order A1003") == 4
+    assert steps("Where is my order A1004?") == 2 and steps("How long do refunds take?") == 2
+    assert "within 5 business days" in run_agent(AgentParams(goal="How long do refunds take?"))["answer"]
+    assert "50 days ago" in run_agent(AgentParams(goal="Can I return order A1002?"))["answer"]
+    assert "custom-built" in run_agent(AgentParams(goal="I want to return order A1003"))["answer"]
+    runaway = run_agent(AgentParams(descriptions="vague", max_steps=None))
+    assert runaway["status"] == "safety_cap" and len(runaway["steps"]) == 30

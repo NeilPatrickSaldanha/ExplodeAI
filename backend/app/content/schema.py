@@ -349,6 +349,14 @@ def validate_lesson(lesson: Lesson, registry: SourceRegistry) -> list[str]:
             ex = comp.explain
             if ex and not (ex.story and ex.thread and ex.check):
                 problems.append(f"component {comp.id}: needs a story, a thread and a check in teaching.yaml")
+        guide = lesson.experiment.get("guide") or {}
+        for preset in lesson.experiment.get("presets", []):
+            label = preset.get("label")
+            entry = (guide.get("presets") or {}).get(label)
+            if not (entry and entry.get("try") and entry.get("notice")):
+                problems.append(f"experiment preset '{label}': needs a try/notice guide in teaching.yaml")
+        if len(guide.get("ideas") or []) < 2 or not guide.get("tabs") or not guide.get("intro"):
+            problems.append("experiment guide needs an intro, two or more ideas and a hint for each tab")
         for conn in lesson.connections:
             if not conn.explain:
                 link = f"{conn.source}->{conn.target}"

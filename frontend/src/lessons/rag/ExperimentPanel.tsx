@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import { lazy, Suspense } from 'react'
 import type { Lesson, RagParams, RagResult, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
@@ -51,6 +52,7 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
             ))}
           </div>
         )}
+        {!isLocked('query') && <ExperimentGuide guide={lesson.experiment.guide} presets={lesson.experiment.presets} value={params.query} />}
       </div>
 
       <div className="controls">
@@ -113,21 +115,26 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
             <Tabs.Trigger value="answer" className="rtabs__tab">Answer</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="chunks" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="chunks" />
             <ChunkDocView result={result} />
           </Tabs.Content>
           <Tabs.Content value="space" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="space" />
             <KindBadge visual={visual('vector-space')} />
             <Suspense fallback={<p className="label">Loading…</p>}>
               <VectorSpace result={result} />
             </Suspense>
           </Tabs.Content>
           <Tabs.Content value="ranking" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="ranking" />
             <RankingTable result={result} />
           </Tabs.Content>
           <Tabs.Content value="prompt" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="prompt" />
             <PromptView result={result} />
           </Tabs.Content>
           <Tabs.Content value="answer" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="answer" />
             <KindBadge visual={visual('answer')} />
             <AnswerView result={result} params={locked.length ? undefined : params} />
           </Tabs.Content>

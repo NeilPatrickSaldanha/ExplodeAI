@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { EmbedParams, EmbedResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
 import { Chips } from '../tokenization/TokStageIO'
@@ -43,7 +44,8 @@ export function EmbedExperimentPanel({ lesson, params, update, result, loading, 
             ))}
           </div>
         )}
-        {presetNote && <p className="notice">{presetNote}</p>}
+        {!isLocked('text') && <ExperimentGuide guide={lesson.experiment.guide} presets={lesson.experiment.presets} value={params.text} />}
+        {!lesson.experiment.guide && presetNote && <p className="notice">{presetNote}</p>}
       </div>
 
       <div className="controls">
@@ -77,18 +79,22 @@ export function EmbedExperimentPanel({ lesson, params, update, result, loading, 
             <Tabs.Trigger value="vector" className="rtabs__tab">Vector</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="space" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="space" />
             <KindBadge visual={visual('semantic-space')} />
             <SemanticSpace result={result} />
           </Tabs.Content>
           <Tabs.Content value="neighbours" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="neighbours" />
             <Neighbours result={result} />
           </Tabs.Content>
           <Tabs.Content value="tokens" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="tokens" />
             <Chips items={result.query.tokens.map((t) => t.text)} max={60} label="Tokens the model reads" />
             {result.query.truncated && <p className="notice notice--warn">Longer than {result.model.max_tokens} tokens: the rest was cut off before the model saw it.</p>}
             {result.query.token_vectors && <TokenHeat tokens={result.query.tokens} rows={result.query.token_vectors} />}
           </Tabs.Content>
           <Tabs.Content value="vector" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="vector" />
             <VectorStrip values={result.query.pooled_preview} label={`First ${result.query.pooled_preview.length} of ${result.query.dim} values`} />
             <p className="label">
               FIRST {result.query.pooled_preview.length} OF {result.query.dim} VALUES · LENGTH {result.query.norm_before.toFixed(3)} → {result.query.norm_after.toFixed(3)}

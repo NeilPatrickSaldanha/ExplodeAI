@@ -142,7 +142,7 @@ Confirmed by reading the code, running the app in a browser, and the test suites
 ## 2.2 The five modes
 1. **Explore:** click any part or stage card to see what goes in, what comes out, and what breaks without it.
 2. **Tour:** a guided walk through the stages. **Play** advances one stage automatically every 8 seconds (4 seconds at 2×), shows a countdown, and stops at the end; **Pause** stops it anywhere; arrows step manually; Play on the last step restarts from the first. It only starts when the viewer presses Play.
-3. **Experiment:** change real parameters and see real results. Runs happen automatically about 0.25 s after the last change (debounced); each is a real backend execution and is logged. Results appear in tabs (see each lesson).
+3. **Experiment:** change real parameters and see real results. Runs happen automatically about 0.25 s after the last change (debounced); each is a real backend execution and is logged. Results appear in tabs (see each lesson). A **"What to notice"** card (added 2026-11-08) sits under the example buttons: pick an example and it says what to do and what you should see, with a "More things to try" list, and each result tab opens with a one-line hint.
 4. **Break & fix:** pick a broken setup (some controls are locked), fix it with the unlocked controls, press **Check my fix**. The server re-runs your settings and answers "Fixed." or "Still broken." with the reason. Locked parameters are forced back to their broken values server-side, so the client cannot cheat. Each lesson has 3 or 4 challenges.
 5. **Rebuild:** put the stages in an order that could actually run. Drag them, or use the Move up / Move down buttons. The server checks the order against the real dependency graph.
 

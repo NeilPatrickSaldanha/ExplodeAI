@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { Lesson, TokenizeParams, TokenizeResult, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
 import { MergeReplay, MergeTable, TokenStrip, TradeoffChart } from './TokenViews'
@@ -43,6 +44,7 @@ export function TokenizeExperimentPanel({ lesson, params, update, result, loadin
             ))}
           </div>
         )}
+        {!isLocked('text') && <ExperimentGuide guide={lesson.experiment.guide} presets={lesson.experiment.presets} value={params.text} />}
       </div>
 
       <div className="controls">
@@ -103,16 +105,20 @@ export function TokenizeExperimentPanel({ lesson, params, update, result, loadin
             <Tabs.Trigger value="tradeoff" className="rtabs__tab">Trade-off</Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="tokens" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="tokens" />
             <TokenStrip result={result} />
           </Tabs.Content>
           <Tabs.Content value="replay" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="replay" />
             <KindBadge visual={visual('merge-replay')} />
             <MergeReplay result={result} reducedMotion={reducedMotion} />
           </Tabs.Content>
           <Tabs.Content value="merges" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="merges" />
             <MergeTable result={result} />
           </Tabs.Content>
           <Tabs.Content value="tradeoff" className="rtabs__panel">
+<TabHint guide={lesson.experiment.guide} id="tradeoff" />
             <KindBadge visual={visual('tradeoff')} />
             <TradeoffChart result={result} />
           </Tabs.Content>

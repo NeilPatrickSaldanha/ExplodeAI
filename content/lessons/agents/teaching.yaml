@@ -1,5 +1,6 @@
-# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
-# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
+# and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
+# Numbers are asserted by backend/tests/test_teaching.py.
 big_picture:
   story: 'An agent is a language model that can take actions. Instead of answering straight away, it works in a loop: it decides
     what to do next, asks for a tool, your program runs that tool, the result goes back to the model, and the model decides
@@ -111,3 +112,47 @@ stages:
       question: Why have a step limit?
       answer: So a confused agent can't loop forever. It stops, and you can see that something went wrong instead of paying
         for endless steps.
+experiment:
+  intro: The loop, the tools and the checks are real. The decisions come from a short stand-in rule, not a language model.
+    Watch The loop tab to see every step.
+  presets:
+    Return:
+      try: Click it and read The loop tab, then press Approve this refund.
+      notice: 'Five steps: the agent writes the order as “1001”, the Check step rejects it, the agent retries with “A1001”,
+        counts 16 days, and asks for the refund, which waits for you. After you approve, it is 6 steps and the agent answers.
+        Notice the tool-match bars under each decision.'
+    Too late:
+      try: Click it and read the last step's answer.
+      notice: 'Four steps: policy, order, days, answer. The order was delivered 50 days ago, past the 30-day window, so the
+        agent says it can no longer be returned, and no refund is asked for.'
+    Custom:
+      try: Click it and read the answer.
+      notice: Four steps. The order data says the bike is custom-built, and the policy says custom-built bikes can't be returned,
+        so the agent refuses.
+    Status:
+      try: Click it and count the steps.
+      notice: 'Only two steps: one order lookup, then the answer. Not every request needs the whole loop.'
+    Policy:
+      try: Click it and count the steps.
+      notice: 'Two steps: one help-centre search, then an answer that says refunds go to the original payment method within
+        5 business days.'
+  ideas:
+  - do: Set Tool descriptions to Vague and Step limit to None.
+    see: 'The stand-in keeps searching the help centre until the experiment''s own safety cap of 30 steps, and the token cost
+      balloons. Set the limit back to 8: it stops at 8 with no answer.'
+  - do: Set Check arguments before running to Off.
+    see: “1001” goes straight to the tool, which finds no such order, so the agent confidently tells the customer there is
+      none.
+  - do: Type the goal “What is your returns policy?”, set Forum post to On and Person approves refunds to Off.
+    see: The stand-in obeys an instruction hidden in the retrieved page and issues a refund nobody approved. Turn approval
+      on, or switch the refund tool off, and it can't.
+  - do: Open the Token cost tab.
+    see: 'Each bar is one step. They grow because the whole conversation is re-read every step: about 1,475 tokens at step
+      1 and 2,799 by step 5.'
+  tabs:
+    loop: 'Every step the agent took: what it decided, whether the call passed the check, whether it ran, and what came back.
+      The bars show how well each tool''s description matched.'
+    conversation: Everything the model reads on its last step. All of it is sent again at every step, which is how it “remembers”.
+    tools: 'The four tools exactly as the model sees them: a name, a description and the rules for its inputs.'
+    context: Tokens read at each step. Each bar's height matches the number above it. They grow because each step re-reads
+      everything before it.

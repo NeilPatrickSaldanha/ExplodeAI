@@ -1,5 +1,6 @@
-# Teaching layer: the whole lesson in plain words, why each hand-off exists, and one story, example and check per stage.
-# Teaching text, not verified claims. Numbers are asserted by backend/tests/test_teaching.py.
+# Teaching layer: the whole lesson in plain words, why each hand-off exists, one story, example and check per stage,
+# and the Experiment tab's 'what to notice' guidance. Teaching text, not verified claims.
+# Numbers are asserted by backend/tests/test_teaching.py.
 big_picture:
   story: Embeddings turn text into lists of numbers so that a computer can tell which texts mean similar things. Texts with
     related meaning get numbers that are close together. This lesson takes a real, small embedding model apart and follows
@@ -109,3 +110,47 @@ stages:
     check:
       question: Why trust the Neighbours list more than the 3D map?
       answer: The map squashes 384 dimensions into 3 and loses information. The list is computed from the full vectors.
+experiment:
+  intro: 'Every run here uses a real small model on your computer. Change one thing at a time and watch the Neighbours tab:
+    compare the order of the scores, not the numbers.'
+  presets:
+    Puppy:
+      try: Click it and open the Neighbours tab.
+      notice: 'The nearest sentences are all about animals: the puppy fetching sticks (0.717), the dog chasing a ball (0.637)
+        and the horse grazing (0.564). Notice that the match is by meaning, not just words.'
+    Bookshelf:
+      try: Click it, then switch both embedders to Lexical.
+      notice: 'With the neural model the nearest are the bookshelf (0.695), the desk (0.566) and the armchair (0.554), all
+        furniture, even though “a place to put my books” shares no words with them. With Lexical the neighbours are animal
+        sentences at score 0.0: no shared words, nothing to match.'
+    Commute:
+      try: Click it, then turn BGE query instruction on.
+      notice: 'At first the top match is the desk (0.588), then the bus (0.561): not what you meant. With the instruction
+        on, the bus wins (0.515 against the desk''s 0.502). The margin is thin, which is why the lesson calls this a tendency,
+        not a guarantee.'
+    Where it goes wrong:
+      try: Click it and look at the top three.
+      notice: '“A vehicle that runs on rails” finds a truck (0.619), a horse (0.613) and a small plane (0.597). The train
+        sentence is not there: it ranks 14th of 24. Embeddings are approximate, and this is a real miss.'
+    Long text:
+      try: Click it and open the Tokens tab.
+      notice: A warning says the text was cut off. The model reads at most 512 tokens, so the end of the passage (including
+        its last sentence) never reaches it.
+  ideas:
+  - do: Set only one of the two embedders to Lexical.
+    see: A red notice says the two sets of vectors can't be compared, because they come from different models.
+  - do: Switch Similarity between Cosine and Dot product with Normalize on.
+    see: The order of the neighbours is the same. With vectors scaled to length 1, the two measures agree.
+  - do: Turn Normalize off and look at the Dot product scores.
+    see: They are no longer limited to between −1 and 1, because the vectors keep their raw length. Cosine itself isn't affected.
+  - do: Switch Pooling between [CLS] token and Mean of tokens.
+    see: Both turn the token vectors into one sentence vector, in different ways, so the scores change. Compare the order
+      of the neighbours to see whether it matters for your text.
+  tabs:
+    space: Your text is a ring among the 24 library sentences, coloured and shaped by topic. Hover a point to read it. The
+      label says how much of the real spread the picture keeps. “Show as table” lists everything.
+    neighbours: 'The exact scores, highest first. Compare the order of the scores rather than the numbers: they aren''t percentages.'
+    tokens: 'The pieces the model actually reads, including [CLS] at the start and [SEP] at the end. Rare words split into
+      ## pieces. A warning appears if the text was cut at 512 tokens.'
+    vector: 'The real numbers for your text: a small slice of each vector, where a bar''s height is the size of the number
+      and its fill shows whether it is positive or negative. These are the numbers being compared.'
