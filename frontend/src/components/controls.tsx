@@ -3,6 +3,8 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Cube, Flask, LockSimple, PencilRuler } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import type { Visual } from '../api/types'
+import { Named } from '../voice'
+import { useLabelText } from '../voiceContext'
 
 const KIND_META: Record<Visual['kind'], { icon: ReactNode; text: string }> = {
   real_execution: { icon: <Flask weight="bold" aria-hidden />, text: 'Real execution' },
@@ -35,12 +37,13 @@ interface SliderProps {
 }
 
 export function Slider({ id, label, value, min, max, step = 1, unit, disabled, onChange, format }: SliderProps) {
+  const labelText = useLabelText(label)
   const shown = format ? format(value) : `${value}${unit ? ` ${unit}` : ''}`
   return (
     <div className={`field${disabled ? ' is-locked' : ''}`}>
       <div className="field__head">
         <label className="label" id={`${id}-label`} htmlFor={id}>
-          {label}
+          <Named label={label} />
           {disabled && <LockSimple aria-label="locked" weight="bold" className="field__lock" />}
         </label>
         <output className="field__value" htmlFor={id}>
@@ -60,7 +63,7 @@ export function Slider({ id, label, value, min, max, step = 1, unit, disabled, o
         <RSlider.Track className="slider__track">
           <RSlider.Range className="slider__range" />
         </RSlider.Track>
-        <RSlider.Thumb className="slider__thumb" id={id} aria-label={label} aria-valuetext={shown} />
+        <RSlider.Thumb className="slider__thumb" id={id} aria-label={labelText} aria-valuetext={shown} />
       </RSlider.Root>
     </div>
   )
@@ -75,10 +78,11 @@ interface SegmentedProps<T extends string> {
 }
 
 export function Segmented<T extends string>({ label, value, options, onChange, disabled }: SegmentedProps<T>) {
+  const labelText = useLabelText(label)
   return (
-    <div className={`field${disabled ? ' is-locked' : ''}`} role="group" aria-label={label}>
+    <div className={`field${disabled ? ' is-locked' : ''}`} role="group" aria-label={labelText}>
       <span className="label">
-        {label}
+        <Named label={label} />
         {disabled && <LockSimple aria-label="locked" weight="bold" className="field__lock" />}
       </span>
       <ToggleGroup.Root
@@ -87,11 +91,11 @@ export function Segmented<T extends string>({ label, value, options, onChange, d
         value={value}
         onValueChange={(v) => v && onChange(v as T)}
         disabled={disabled}
-        aria-label={label}
+        aria-label={labelText}
       >
         {options.map((o) => (
           <ToggleGroup.Item key={o.value} value={o.value} className="segmented__item" disabled={o.disabled}>
-            {o.label}
+            <Named label={o.label} />
           </ToggleGroup.Item>
         ))}
       </ToggleGroup.Root>

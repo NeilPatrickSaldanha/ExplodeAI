@@ -19,9 +19,19 @@ export default defineConfig({
     trace: 'retain-on-failure',
     // Most specs are not about the first-run tutorial, so start them as a returning visitor.
     // tutorial.spec.ts clears this to behave like a first visit.
+    // The older specs address controls by their technical names, so they run in the "technical names" voice;
+    // plain.spec.ts runs the default plain-words voice.
     storageState: {
       cookies: [],
-      origins: [{ origin: `http://127.0.0.1:${WEB_PORT}`, localStorage: [{ name: 'explodeai.tutorial', value: 'done' }] }],
+      origins: [
+        {
+          origin: `http://127.0.0.1:${WEB_PORT}`,
+          localStorage: [
+            { name: 'explodeai.tutorial', value: 'done' },
+            { name: 'explodeai.voice', value: 'technical' },
+          ],
+        },
+      ],
     },
   },
   projects: [

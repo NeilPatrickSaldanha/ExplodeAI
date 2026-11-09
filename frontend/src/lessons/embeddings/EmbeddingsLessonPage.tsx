@@ -38,15 +38,19 @@ export function EmbeddingsLessonPage({ lesson }: { lesson: Lesson }) {
       spec={spec}
       readouts={readoutsFromResult(exp.result)}
       live={!!exp.result}
-      eyebrow={`LESSON 03 · TEXT → TOKENS → VECTORS → MEANING · ${lesson.estimated_minutes} MIN`}
+      eyebrow={`LESSON 03 · ${lesson.ui?.eyebrow ?? 'TEXT → TOKENS → VECTORS → MEANING'} · ${lesson.estimated_minutes} MIN`}
       title={
         <>
           embeddings,&nbsp;<em>exploded</em>
         </>
       }
-      summary="Watch a sentence become 384 numbers and land near sentences that mean the same thing. Click any part to see what goes in, what comes out, and what breaks without it."
-      sceneTitle="Exploded view of a sentence-embedding model"
-      flowLabels={FLOW_LABELS}
+      summary={lesson.ui?.summary ?? 'Watch a sentence become 384 numbers and land near sentences that mean the same thing. Click any part to see what goes in, what comes out, and what breaks without it.'}
+      sceneTitle={lesson.ui?.scene_title ?? 'Exploded view of a sentence-embedding model'}
+      flowLabels={{
+        document: lesson.ui?.flow_document ?? FLOW_LABELS.document,
+        vector: lesson.ui?.flow_vector ?? FLOW_LABELS.vector,
+        query: lesson.ui?.flow_query ?? FLOW_LABELS.query,
+      }}
       renderIO={(c) => <EmbedStageIO component={c} result={exp.result} />}
       renderBreaks={(c) => (
         <BreaksCard
@@ -69,7 +73,7 @@ export function EmbeddingsLessonPage({ lesson }: { lesson: Lesson }) {
               challenges={challenges}
               active={challenge}
               solved={progress.solved}
-              intro="Each setup below finds the wrong neighbours, or none, for one specific reason. Find it in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result."
+              intro={lesson.ui?.challenges_intro ?? 'Each setup below finds the wrong neighbours, or none, for one specific reason. Find it in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result.'}
               onCheck={(c) => api.checkEmbedChallenge(lesson.id, c.id, exp.params)}
               onStart={startChallenge}
               onExit={exitChallenge}

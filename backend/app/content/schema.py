@@ -98,6 +98,13 @@ class CheckYourself(BaseModel):
     answer: str
 
 
+class Term(BaseModel):
+    """A word the learner will hear, with its everyday meaning (plain voice, at the stage that introduces it)."""
+
+    word: str
+    meaning: str
+
+
 class Explain(BaseModel):
     """Beginner-friendly depth for one stage. Facts restate `claims`; analogies and
     examples are teaching aids and are labelled as such in the UI."""
@@ -116,6 +123,8 @@ class Explain(BaseModel):
     story: str | None = None
     thread: str | None = None
     check: CheckYourself | None = None
+    # Plain voice: new words this stage introduces, each with an everyday meaning.
+    terms: list[Term] = []
 
 
 class Component(BaseModel):
@@ -137,6 +146,8 @@ class Component(BaseModel):
     # lesson's executable pipeline and must be backed by an ablation test.
     breaks_if_removed: str | None = None
     explain: Explain | None = None
+    # Set only in the plain-words voice: the standard name for this stage, shown beside the everyday one.
+    technical_name: str | None = None
 
 
 class Connection(BaseModel):
@@ -258,6 +269,8 @@ class Lesson(BaseModel):
     reconstruction: Reconstruction
     tour: list[TourStep]
     verification_report: str
+    # Free-form page text that the plain-words voice (plain.yaml) can replace, e.g. the lesson's summary line.
+    ui: dict = {}
     big_picture: BigPicture | None = None
 
 

@@ -66,6 +66,20 @@ export function Understand({ component, explain, before, after, reducedMotion, o
 
       <MiniDemo key={component.id} example={explain.example} reducedMotion={reducedMotion} />
 
+      {explain.terms && explain.terms.length > 0 && (
+        <div className="understand__terms">
+          <span className="label">WORDS YOU WILL HEAR</span>
+          <dl>
+            {explain.terms.map((t) => (
+              <div key={t.word}>
+                <dt>{t.word}</dt>
+                <dd>{t.meaning}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
       {explain.check && <CheckYourself key={`c-${component.id}`} check={explain.check} />}
 
       <Section title="Why it is needed">

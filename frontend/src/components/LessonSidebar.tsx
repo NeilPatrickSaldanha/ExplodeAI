@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { api } from '../api/client'
 import type { LessonSummary } from '../api/types'
+import { useVoice } from '../voiceContext'
 
 /** Short names for the side list; falls back to the lesson's own title. */
 const SHORT: Record<string, string> = {
@@ -20,12 +21,13 @@ const SHORT: Record<string, string> = {
  */
 export function LessonSidebar() {
   const { pathname } = useLocation()
+  const { voice } = useVoice()
   const [lessons, setLessons] = useState<LessonSummary[]>([])
   const [done, setDone] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    api.lessons().then(setLessons).catch(() => undefined)
-  }, [])
+    api.lessons(voice).then(setLessons).catch(() => undefined)
+  }, [voice])
 
   // Re-read progress when you move between pages, so a check appears after you finish a lesson.
   useEffect(() => {

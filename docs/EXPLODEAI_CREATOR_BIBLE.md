@@ -965,3 +965,9 @@ First, reply with (a) 5-8 lines on what you understood about the project and me,
 - `partPosition` (`frontend/src/engine/math.ts`) re-checked: linear in `t` with a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md`; not edited.
 - Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (line 133, not edited).
 - `docs/STUDY_GUIDE.md` untouched. `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.
+
+## A.17 Final verification (2026-11-08, automated run)
+- Sections 1-7 and Appendix A are complete; 104 `https://` lines and the `[OWNER]` markers are preserved. No new content was needed.
+- `partPosition` (`frontend/src/engine/math.ts`) re-checked: linear in `t` with a `sin(pi x t)` lift (`LIFT` = 0.9), matching `docs/architecture.md` (lines 15-17); not edited.
+- Ledger re-queried read-only: 8 rows, summed `estimated_cost_usd` = $0.0006971 (estimates only). Actual billing and who ran the calls remain **unconfirmed [OWNER]**. The stale "never called live" sentence remains only in `reports/RAG pipeline verification.md` (not edited).
+- `deep-research` was not run, no URL was re-fetched, and no application code was changed, committed or pushed.

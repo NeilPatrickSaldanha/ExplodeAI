@@ -53,7 +53,7 @@ test('walkthrough: spotlights controls, asks for real actions, and finishes', as
   await next(page).click()
   // Pick a stage
   await expect(page.locator('.tut__title')).toHaveText(/open a stage/i)
-  await page.getByRole('navigation', { name: 'Pipeline stages' }).getByRole('button', { name: /Encoder/ }).click()
+  await page.getByRole('navigation', { name: 'Pipeline stages' }).getByRole('button', { name: /Meaning reader/ }).click()
   await expect(page.locator('.tut__task')).toContainText('that worked')
   await next(page).click()
   await next(page).click() // panel

@@ -1,3 +1,4 @@
+import { useLabelText } from '../../voiceContext'
 import { ArrowRight, CheckCircle, XCircle } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import type { Component, TokenOut, TokenizeResult } from '../../api/types'
@@ -32,8 +33,9 @@ const Mono = ({ children }: { children: ReactNode }) => <code className="io-mono
 
 /** Small token chips; unknown and partial tokens are labelled, never colour alone. */
 export function Chips({ items, max = 10, label }: { items: string[]; max?: number; label: string }) {
+  const labelText = useLabelText(label)
   return (
-    <ol className="io-chips" aria-label={label}>
+    <ol className="io-chips" aria-label={labelText}>
       {items.slice(0, max).map((t, i) => (
         <li key={i} className={`io-chip${t === '[UNK]' ? ' io-chip--unk' : ''}`}>
           {t === '[UNK]' ? '[UNK]' : showToken(t)}

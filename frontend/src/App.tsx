@@ -7,6 +7,8 @@ import { RagLessonPage } from './lessons/rag/RagLessonPage'
 import { TokenizationLessonPage } from './lessons/tokenization/TokenizationLessonPage'
 import { EmbeddingsLessonPage } from './lessons/embeddings/EmbeddingsLessonPage'
 import { LessonSidebar } from './components/LessonSidebar'
+import { LabelsProvider, VoiceProvider } from './voice'
+import { useVoice } from './voiceContext'
 import { AgentLessonPage } from './lessons/agents/AgentLessonPage'
 import { AttentionLessonPage } from './lessons/attention/AttentionLessonPage'
 
@@ -35,6 +37,19 @@ function useTheme(): [Theme, (t: Theme) => void] {
   return [theme, setTheme]
 }
 
+function VoiceSwitch() {
+  const { voice, setVoice } = useVoice()
+  return (
+    <div className="voice" role="group" aria-label="Wording">
+      {(['plain', 'technical'] as const).map((v) => (
+        <button key={v} type="button" className="voice__opt" aria-pressed={voice === v} onClick={() => setVoice(v)}>
+          {v === 'plain' ? 'Plain words' : 'Technical names'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useTheme()
   const isLight = theme === 'light' || (theme === null && window.matchMedia?.('(prefers-color-scheme: light)').matches)
@@ -51,6 +66,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           explode<span>ai</span>
         </Link>
         <div className="nav__right">
+          <VoiceSwitch />
           <Link to="/" className="nav__link">
             Lessons
           </Link>
@@ -73,11 +89,12 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 function Home() {
+  const { voice } = useVoice()
   const [lessons, setLessons] = useState<LessonSummary[] | null>(null)
   const [error, setError] = useState(false)
   useEffect(() => {
-    api.lessons().then(setLessons).catch(() => setError(true))
-  }, [])
+    api.lessons(voice).then(setLessons).catch(() => setError(true))
+  }, [voice])
   return (
     <section className="home">
       <p className="label">AI ENGINEERING, TAKEN APART</p>
@@ -116,31 +133,42 @@ function Home() {
 
 function LessonRoute() {
   const { id = '' } = useParams()
+  const { voice } = useVoice()
   const [state, setState] = useState<{ id: string; lesson?: Lesson; error?: string } | null>(null)
   useEffect(() => {
     let live = true
     api
-      .lesson(id)
+      .lesson(id, voice)
       .then((lesson) => live && setState({ id, lesson }))
       .catch((e) => live && setState({ id, error: e.status === 404 ? 'This lesson does not exist or has not been published.' : 'Could not load the lesson.' }))
     return () => {
       live = false
     }
-  }, [id])
+  }, [id, voice])
   const current = state?.id === id ? state : null
   if (current?.error) return <p className="notice notice--error page-pad">{current.error}</p>
   const lesson = current?.lesson
   if (!lesson) return <p className="label page-pad">Loading lesson…</p>
-  if (lesson.id === 'rag-pipeline') return <RagLessonPage lesson={lesson} />
-  if (lesson.id === 'tokenization') return <TokenizationLessonPage lesson={lesson} />
-  if (lesson.id === 'embeddings') return <EmbeddingsLessonPage lesson={lesson} />
-  if (lesson.id === 'attention') return <AttentionLessonPage lesson={lesson} />
-  if (lesson.id === 'agents') return <AgentLessonPage lesson={lesson} />
-  return <p className="notice page-pad">This lesson has no interactive module yet.</p>
+  const page =
+    lesson.id === 'rag-pipeline' ? (
+      <RagLessonPage lesson={lesson} />
+    ) : lesson.id === 'tokenization' ? (
+      <TokenizationLessonPage lesson={lesson} />
+    ) : lesson.id === 'embeddings' ? (
+      <EmbeddingsLessonPage lesson={lesson} />
+    ) : lesson.id === 'attention' ? (
+      <AttentionLessonPage lesson={lesson} />
+    ) : lesson.id === 'agents' ? (
+      <AgentLessonPage lesson={lesson} />
+    ) : (
+      <p className="notice page-pad">This lesson has no interactive module yet.</p>
+    )
+  return <LabelsProvider labels={lesson.experiment.labels}>{page}</LabelsProvider>
 }
 
 export default function App() {
   return (
+    <VoiceProvider>
     <BrowserRouter>
       <Shell>
         <Routes>
@@ -150,5 +178,6 @@ export default function App() {
         </Routes>
       </Shell>
     </BrowserRouter>
+    </VoiceProvider>
   )
 }

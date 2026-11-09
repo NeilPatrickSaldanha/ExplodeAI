@@ -49,6 +49,8 @@ export interface Explain {
   story?: string | null
   thread?: string | null
   check?: { question: string; answer: string } | null
+  /** Plain-words voice: new words this stage introduces, each with an everyday meaning. */
+  terms?: { word: string; meaning: string }[]
 }
 
 export interface ExperimentGuide {
@@ -81,6 +83,8 @@ export interface Component {
   outputs?: string[]
   breaks_if_removed?: string | null
   explain?: Explain | null
+  /** Plain-words voice only: the standard name for this stage, shown beside the everyday one. */
+  technical_name?: string | null
 }
 
 export interface Visual {
@@ -120,6 +124,8 @@ export interface Lesson {
     engine: string
     presets: { label: string; query?: string; text?: string; note?: string }[]
     corpus_note: string
+    /** Plain-words voice only: everyday names for controls and tabs, keyed by their technical names. */
+    labels?: Record<string, string>
     /** Plain-words "what to notice" guidance: per example button, other things to try, and a hint per result tab. */
     guide?: ExperimentGuide
   }
@@ -129,6 +135,8 @@ export interface Lesson {
   sources: Source[]
   big_picture?: BigPicture | null
   validation_problems: string[]
+  /** Page text the plain-words voice can replace (summary line, challenge intro, scene title). */
+  ui?: Record<string, string>
 }
 
 export interface LessonSummary {

@@ -60,8 +60,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const post = <T>(path: string, body: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(body) })
 
 export const api = {
-  lessons: () => request<LessonSummary[]>('/api/lessons'),
-  lesson: (id: string) => request<Lesson>(`/api/lessons/${id}`),
+  lessons: (voice: 'plain' | 'technical' = 'technical') => request<LessonSummary[]>(`/api/lessons?voice=${voice}`),
+  lesson: (id: string, voice: 'plain' | 'technical' = 'technical') => request<Lesson>(`/api/lessons/${id}?voice=${voice}`),
   ragConfig: () => request<RagConfig>('/api/experiments/rag/config'),
   runAgent: (params: Partial<import('./types').AgentParams>) =>
     post<import('./types').AgentResult>('/api/experiments/agent/run', params),

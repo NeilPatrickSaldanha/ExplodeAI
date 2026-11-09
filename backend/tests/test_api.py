@@ -23,7 +23,7 @@ def test_draft_lessons_hidden_unless_enabled(client, monkeypatch):
 
     registry, real = loader.content()
     draft = real["rag-pipeline"].model_copy(update={"status": "draft"})
-    monkeypatch.setattr(lessons_router, "content", lambda: (registry, {"rag-pipeline": draft}))
+    monkeypatch.setattr(lessons_router, "content", lambda voice="technical": (registry, {"rag-pipeline": draft}))
     monkeypatch.setattr(get_settings(), "show_draft_lessons", False)
     assert client.get("/api/lessons").json() == []
     assert client.get("/api/lessons/rag-pipeline").status_code == 404

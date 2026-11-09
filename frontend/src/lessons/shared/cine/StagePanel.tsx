@@ -137,6 +137,11 @@ export function StagePanel({ lesson, component, part, index, io, breaks, sources
         </span>
         <div>
           <h2 className="spanel__title">{component.label}</h2>
+          {component.technical_name && (
+            <p className="spanel__tech">
+              <span className="label">TECHNICAL NAME</span> {component.technical_name}
+            </p>
+          )}
           <p className="spanel__lede">{component.short}</p>
         </div>
       </div>

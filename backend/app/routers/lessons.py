@@ -12,8 +12,8 @@ def _visible(lesson: Lesson) -> bool:
     return lesson.status == "published" or get_settings().show_draft_lessons
 
 
-def get_lesson_or_404(lesson_id: str) -> Lesson:
-    _, lessons = content()
+def get_lesson_or_404(lesson_id: str, voice: str = "technical") -> Lesson:
+    _, lessons = content("plain" if voice == "plain" else "technical")
     lesson = lessons.get(lesson_id)
     if lesson is None or not _visible(lesson):
         raise HTTPException(404, "lesson not found")
@@ -21,8 +21,8 @@ def get_lesson_or_404(lesson_id: str) -> Lesson:
 
 
 @router.get("")
-def list_lessons():
-    _, lessons = content()
+def list_lessons(voice: str = "technical"):
+    _, lessons = content("plain" if voice == "plain" else "technical")
     return [
         {
             "id": lesson.id,
@@ -38,8 +38,8 @@ def list_lessons():
 
 
 @router.get("/{lesson_id}")
-def get_lesson(lesson_id: str):
-    lesson = get_lesson_or_404(lesson_id)
+def get_lesson(lesson_id: str, voice: str = "technical"):
+    lesson = get_lesson_or_404(lesson_id, voice)
     registry, _ = content()
     by_id = registry.by_id()
     cited = sorted({c.source for claim in lesson.claims for c in claim.citations})

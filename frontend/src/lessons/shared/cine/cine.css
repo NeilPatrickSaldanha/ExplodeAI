@@ -1400,3 +1400,40 @@
   justify-content: flex-end;
   overflow-x: visible;
 }
+
+/* ---- plain-words voice: technical name beside the everyday one, and the words a stage introduces ---- */
+.spanel__tech {
+  margin: var(--space-3xs) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  display: flex;
+  gap: var(--space-xs);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.understand__terms {
+  display: grid;
+  gap: var(--space-2xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper-2);
+}
+
+.understand__terms dl {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.understand__terms dt {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.understand__terms dd {
+  margin: 0;
+  color: var(--color-ink-2);
+  line-height: 1.55;
+}

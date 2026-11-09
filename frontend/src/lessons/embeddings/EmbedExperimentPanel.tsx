@@ -2,6 +2,7 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { EmbedParams, EmbedResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
+import { Named } from '../../voice'
 import { Chips } from '../tokenization/TokStageIO'
 import { VectorStrip } from '../rag/StageIO'
 import { Neighbours, SemanticSpace, TokenHeat } from './EmbedViews'
@@ -32,7 +33,7 @@ export function EmbedExperimentPanel({ lesson, params, update, result, loading, 
 
       <div className={`field${isLocked('text') ? ' is-locked' : ''}`}>
         <label className="label" htmlFor="emb-text">
-          Your text
+          <Named label="Your text" />
         </label>
         <input id="emb-text" className="input" value={params.text} maxLength={4000} disabled={isLocked('text')} onChange={(e) => update('text', e.target.value)} />
         {!isLocked('text') && (
@@ -73,10 +74,10 @@ export function EmbedExperimentPanel({ lesson, params, update, result, loading, 
       {result && (
         <Tabs.Root defaultValue="space" className="rtabs">
           <Tabs.List className="rtabs__list" aria-label="Experiment results">
-            <Tabs.Trigger value="space" className="rtabs__tab">Semantic space</Tabs.Trigger>
-            <Tabs.Trigger value="neighbours" className="rtabs__tab">Neighbours</Tabs.Trigger>
-            <Tabs.Trigger value="tokens" className="rtabs__tab">Tokens</Tabs.Trigger>
-            <Tabs.Trigger value="vector" className="rtabs__tab">Vector</Tabs.Trigger>
+            <Tabs.Trigger value="space" className="rtabs__tab"><Named label="Semantic space" /></Tabs.Trigger>
+            <Tabs.Trigger value="neighbours" className="rtabs__tab"><Named label="Neighbours" /></Tabs.Trigger>
+            <Tabs.Trigger value="tokens" className="rtabs__tab"><Named label="Tokens" /></Tabs.Trigger>
+            <Tabs.Trigger value="vector" className="rtabs__tab"><Named label="Vector" /></Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="space" className="rtabs__panel">
 <TabHint guide={lesson.experiment.guide} id="space" />
