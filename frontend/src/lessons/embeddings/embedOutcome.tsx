@@ -1,13 +1,14 @@
 import type { EmbedAblationOutcome } from '../../api/types'
+import { Named } from '../../voice'
 
 /** One side of the embeddings "what breaks if removed?" comparison. */
 export function embedOutcome(o: EmbedAblationOutcome) {
   return (
     <>
       <dl className="outcome__stats">
-        <div><dt>Library vectors</dt><dd>{o.library_vectors ?? '—'}</dd></div>
-        <div><dt>Your vector</dt><dd>{o.query_vector_dim ? `${o.query_vector_dim}-D` : o.token_vectors ? `${o.token_vectors} tokens` : '—'}</dd></div>
-        <div><dt>Map</dt><dd>{o.has_map ? 'yes' : 'no'}</dd></div>
+        <div><dt><Named label="Library vectors" /></dt><dd>{o.library_vectors ?? '—'}</dd></div>
+        <div><dt><Named label="Your vector" /></dt><dd>{o.query_vector_dim ? `${o.query_vector_dim}-D` : o.token_vectors ? `${o.token_vectors} tokens` : '—'}</dd></div>
+        <div><dt><Named label="Map" /></dt><dd>{o.has_map ? 'yes' : 'no'}</dd></div>
       </dl>
       {o.neighbours.length > 0 ? (
         <ol className="outcome__list">

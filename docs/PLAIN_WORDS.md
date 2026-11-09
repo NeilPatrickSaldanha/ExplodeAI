@@ -17,3 +17,6 @@ Written 2026-11-09. This is the rulebook for the default "Plain words" voice of 
 7. **No hedging pile-ups and no claims the verified text does not make.** Plain does not mean less careful: when something is only a tendency, say "usually" or "often".
 8. **Never use "simply", "just", "obviously" or "of course".** If it were obvious, the learner would not be here.
 9. **Controls and tabs get an everyday name.** The technical name is shown small beside it, so the two are linked.
+
+## Editing
+Edit `plain.yaml` directly. Quote any sentence that contains a colon followed by a space, or the file will not parse. After a change, restart the backend (lessons are cached) and run `uv run pytest tests/test_plain_words.py`.

@@ -3,6 +3,7 @@ import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { AgentParams, AgentResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented } from '../../components/controls'
 import { ApprovalCard, ContextChart, ConversationView, LoopTrace, StatsStrip, ToolsView } from './AgentViews'
+import { Named } from '../../voice'
 
 interface Props {
   lesson: Lesson
@@ -80,10 +81,10 @@ export function AgentExperimentPanel({ lesson, params, update, result, loading, 
           <ApprovalCard result={result} onApprove={() => update('approve', true)} />
           <Tabs.Root defaultValue="loop" className="rtabs">
             <Tabs.List className="rtabs__list" aria-label="Experiment results">
-              <Tabs.Trigger value="loop" className="rtabs__tab">The loop</Tabs.Trigger>
-              <Tabs.Trigger value="conversation" className="rtabs__tab">What the model reads</Tabs.Trigger>
-              <Tabs.Trigger value="tools" className="rtabs__tab">Tools</Tabs.Trigger>
-              <Tabs.Trigger value="context" className="rtabs__tab">Token cost</Tabs.Trigger>
+              <Tabs.Trigger value="loop" className="rtabs__tab"><Named label="The loop" /></Tabs.Trigger>
+              <Tabs.Trigger value="conversation" className="rtabs__tab"><Named label="What the model reads" /></Tabs.Trigger>
+              <Tabs.Trigger value="tools" className="rtabs__tab"><Named label="Tools" /></Tabs.Trigger>
+              <Tabs.Trigger value="context" className="rtabs__tab"><Named label="Token cost" /></Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="loop" className="rtabs__panel">
 <TabHint guide={lesson.experiment.guide} id="loop" />

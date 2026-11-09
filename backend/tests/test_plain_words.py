@@ -15,6 +15,79 @@ from app.content.schema import validate_lesson
 # Technical words a beginner has not met yet, per lesson. Each must be introduced (as a term, in a stage's
 # "Words you will hear") before any plain text uses it. Everyday words are not listed here.
 JARGON: dict[str, list[str]] = {
+    "agents": [
+        r"schema",
+        r"\bJSON\b",
+        r"\btokens?\b",
+        r"\bcontext\b",
+        r"\bAPI\b",
+        r"prompt injection",
+        r"language model",
+        r"\bLLM\b",
+        r"validat",
+        r"tool calls?",
+        r"human in the loop",
+        r"step limit",
+    ],
+    "rag-pipeline": [
+        r"\bchunk",
+        r"\bvectors?\b",
+        r"embedd?",
+        r"\bindex\b(?! cards?)",
+        r"retriev(?!al-augmented)",
+        r"\bprompt",
+        r"top-k",
+        r"BM25",
+        r"\bdense\b",
+        r"hybrid",
+        r"language model",
+        r"\bLLM\b",
+        r"hallucinat",
+        r"cosine",
+        r"TF-IDF",
+        r"hash",
+        r"lexical",
+        r"neural",
+        r"\bgenerator\b",
+        r"context budget",
+        r"\btokens?\b",
+        r"\boverlap",
+    ],
+    "attention": [
+        r"\bvectors?\b",
+        r"\bquer(?:y|ies)\b",
+        r"\bkeys?\b",
+        r"\bvalues?\b",
+        r"\bheads?\b",
+        r"softmax",
+        r"\bmask\b",
+        r"\bcausal\b",
+        r"matri(?:x|ces)",
+        r"dot product",
+        r"\btokens?\b",
+        r"residual",
+        r"feed-forward",
+        r"normalis",
+        r"embedding",
+        r"transformer",
+        r"self-attention",
+        r"position pattern",
+        r"weighted sum",
+    ],
+    "tokenization": [
+        r"corpus",
+        r"\bBPE\b",
+        r"\bbytes?\b",
+        r"\bmerges?\b",
+        r"vocabulary",
+        r"alphabet",
+        r"pre-tokenizer",
+        r"(?<!pair )\bencod(?:er|ing|e)\b",
+        r"\bdecod(?:er|ing|e)\b",
+        r"\[UNK\]",
+        r"\bASCII\b",
+        r"round trip",
+    ],
     "embeddings": [
         r"embedding",
         r"vector",
@@ -132,10 +205,12 @@ def test_plain_voice_uses_no_word_before_it_is_introduced(lid):
     def known_by(index: int, pattern: str) -> bool:
         return any(i <= index and re.search(pattern, w, re.IGNORECASE) for w, i in introduced_at.items())
 
+    problems: list[str] = []
+
     def check(where: str, text: str, index: int):
         for pattern in JARGON[lid]:
             if re.search(pattern, text, re.IGNORECASE) and not known_by(index, pattern):
-                pytest.fail(f"{lid}: {where} uses '{pattern}' before it is introduced")
+                problems.append(f"{where} uses '{pattern}' before it is introduced")
 
     last = len(p.components) - 1
     check("summary", p.summary, -1)
@@ -156,6 +231,7 @@ def test_plain_voice_uses_no_word_before_it_is_introduced(lid):
         )
     for step in p.tour:
         check(f"tour '{step.title}'", f"{step.title} {step.body}", ids.index(step.component))
+    assert not problems, f"{lid}:\n" + "\n".join(problems)
 
 
 @pytest.mark.parametrize("lid", _plain_ids())

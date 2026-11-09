@@ -1,4 +1,5 @@
 import * as Tabs from '@radix-ui/react-tabs'
+import { Named } from '../../voice'
 import { ExperimentGuide, TabHint } from '../../components/ExperimentGuide'
 import type { Lesson, TokenizeParams, TokenizeResult, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
@@ -32,7 +33,7 @@ export function TokenizeExperimentPanel({ lesson, params, update, result, loadin
 
       <div className={`field${isLocked('text') ? ' is-locked' : ''}`}>
         <label className="label" htmlFor="tok-text">
-          Text to tokenize
+          <Named label="Text to tokenize" />
         </label>
         <input id="tok-text" className="input" value={params.text} maxLength={400} disabled={isLocked('text')} onChange={(e) => update('text', e.target.value)} />
         {!isLocked('text') && (
@@ -81,12 +82,14 @@ export function TokenizeExperimentPanel({ lesson, params, update, result, loadin
         />
       </div>
       <p className="notice">
-        This tokenizer is trained on the sample corpus only. Its token counts tell you nothing about the GPT, Claude or
-        Gemini tokenizers, which learned far larger vocabularies from far more text.
+        {lesson.ui?.tokenizer_notice ??
+          'This tokenizer is trained on the sample corpus only. Its token counts tell you nothing about the GPT, Claude or Gemini tokenizers, which learned far larger vocabularies from far more text.'}
       </p>
       {ranOut && (
         <p className="notice notice--warn" role="status">
-          Training ran out of pairs after {result.training.merges_learned} merges: every piece of the corpus is already a single token.
+          {lesson.ui?.ran_out
+            ? lesson.ui.ran_out.replace('{n}', String(result.training.merges_learned))
+            : `Training ran out of pairs after ${result.training.merges_learned} merges: every piece of the corpus is already a single token.`}
         </p>
       )}
 
@@ -99,10 +102,10 @@ export function TokenizeExperimentPanel({ lesson, params, update, result, loadin
       {result && (
         <Tabs.Root defaultValue="tokens" className="rtabs">
           <Tabs.List className="rtabs__list" aria-label="Experiment results">
-            <Tabs.Trigger value="tokens" className="rtabs__tab">Tokens</Tabs.Trigger>
-            <Tabs.Trigger value="replay" className="rtabs__tab">Replay</Tabs.Trigger>
-            <Tabs.Trigger value="merges" className="rtabs__tab">Merges</Tabs.Trigger>
-            <Tabs.Trigger value="tradeoff" className="rtabs__tab">Trade-off</Tabs.Trigger>
+            <Tabs.Trigger value="tokens" className="rtabs__tab"><Named label="Tokens" /></Tabs.Trigger>
+            <Tabs.Trigger value="replay" className="rtabs__tab"><Named label="Replay" /></Tabs.Trigger>
+            <Tabs.Trigger value="merges" className="rtabs__tab"><Named label="Merges" /></Tabs.Trigger>
+            <Tabs.Trigger value="tradeoff" className="rtabs__tab"><Named label="Trade-off" /></Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="tokens" className="rtabs__panel">
 <TabHint guide={lesson.experiment.guide} id="tokens" />

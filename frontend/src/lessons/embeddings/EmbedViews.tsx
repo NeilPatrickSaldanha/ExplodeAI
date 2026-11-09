@@ -5,6 +5,7 @@ import type { EmbedResult } from '../../api/types'
 import { resolveTokenColor, scenePalette } from '../../engine/colors'
 import { hasWebGL, useThemeVersion } from '../../engine/hooks'
 import { CATEGORY_SHAPE, categoryToken } from './adapter'
+import { Named } from '../../voice'
 
 /**
  * One row per token, one cell per dimension (first 24 of 384 shown). Cell height
@@ -173,10 +174,10 @@ function SpaceTable({ result }: { result: EmbedResult }) {
       <table className="ranking">
         <thead>
           <tr>
-            <th scope="col">Rank</th>
-            <th scope="col">Topic</th>
-            <th scope="col">Sentence</th>
-            <th scope="col">Score</th>
+            <th scope="col"><Named label="Rank" /></th>
+            <th scope="col"><Named label="Topic" /></th>
+            <th scope="col"><Named label="Sentence" /></th>
+            <th scope="col"><Named label="Score" /></th>
           </tr>
         </thead>
         <tbody>

@@ -1,15 +1,16 @@
 import { CheckCircle, XCircle } from '@phosphor-icons/react'
 import type { TokenizeAblationOutcome } from '../../api/types'
 import { Chips } from './TokStageIO'
+import { Named } from '../../voice'
 
 /** One side of the tokenization "what breaks if removed?" comparison. */
 export function tokOutcome(o: TokenizeAblationOutcome) {
   return (
     <>
       <dl className="outcome__stats">
-        <div><dt>Tokens</dt><dd>{o.tokens ?? '—'}</dd></div>
-        <div><dt>Merges</dt><dd>{o.merges}</dd></div>
-        <div><dt>Unknown</dt><dd>{o.unk_count}</dd></div>
+        <div><dt><Named label="Tokens" /></dt><dd>{o.tokens ?? '—'}</dd></div>
+        <div><dt><Named label="Merges" /></dt><dd>{o.merges}</dd></div>
+        <div><dt><Named label="Unknown" /></dt><dd>{o.unk_count}</dd></div>
       </dl>
       {o.preview.length > 0 && <Chips items={o.preview} max={12} label="First tokens" />}
       <p className="outcome__answer">

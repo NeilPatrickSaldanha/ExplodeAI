@@ -1,0 +1,631 @@
+# Plain-words voice for Lesson 01. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
+# nothing about AI yet. Same facts and numbers; see docs/PLAIN_WORDS.md for the rules.
+title: Retrieval-Augmented Generation, exploded
+summary: An AI model only knows what it saw in training. RAG (retrieval-augmented generation) gives it your documents to read
+  before it answers. Take the whole machine apart piece by piece, run it for real, break it on purpose, and rebuild it.
+objectives:
+- Name the eight stages of RAG, and what each one hands to the next.
+- Predict how the size of the pieces, the overlap, the number kept and the room on the page change what the model sees.
+- Explain why searching by number-fingerprint, by keywords and by both together rank the pieces differently.
+- Work out what went wrong in a broken pipeline from the pieces it found and the page it built.
+ui:
+  eyebrow: GETTING READY → ANSWERING
+  scene_title: Exploded view of a machine that looks things up before it answers
+  flow_document: Text
+  flow_vector: Fingerprints
+  flow_query: Your question
+  summary: Follow a real RAG machine from your documents to an answer. Click any part to see what goes in, what comes out,
+    and what breaks without it.
+  challenges_intro: Each puzzle below breaks the pipeline in one specific way. Find the reason in the experiment, then fix
+    it using the controls that are left unlocked. The server runs your settings again and checks the result.
+  lexical_notice: 'The built-in fingerprint maker only counts words: it folds them into {dim} numbers, so "refund" and "money
+    back" do not land near each other. A small AI model would put them close together.'
+components:
+  corpus:
+    label: Help articles
+    subtitle: What it can read
+    short: The documents the system is allowed to answer from.
+    detail: Private or recent text that the AI model was never trained on. Here it is six made-up help articles from a bike
+      shop.
+    inputs:
+    - Help articles
+    outputs:
+    - Documents
+    breaks_if_removed: There is nothing to cut up, file or search, so every question comes back with no evidence at all.
+    explain:
+      what: The pile of documents the system is allowed to answer from. Here it is six made-up help articles from a bike shop.
+      why: An AI model only knows what it saw while it was being trained, and that rarely includes your private or newest
+        documents. Looking things up lets it use them without being trained again.
+      analogy: An open-book exam. The student (the AI model) can still think, but the answers come from the book on the desk.
+      happens:
+      - The documents are loaded as plain text.
+      - Nothing is changed or summarised yet.
+      - They wait to be cut into pieces in the next stage.
+      goes_to: The card cutter, which cuts each document into smaller pieces.
+      example:
+        input: 'Returns policy: items can be returned within 30 days.'
+        steps:
+        - Loaded as plain text
+        - Kept whole, with its title
+        output: One document, ready to be cut up
+      misconfigured: If the documents are missing, out of date or wrong, every later stage can work perfectly and the answer
+        will still be wrong.
+      story: This is the pile of documents the system is allowed to answer from. A language model is a computer program that
+        writes text, and it only knows what it saw while it was being trained. It has never seen your private articles. Keeping
+        the documents outside the model means you can change what the system knows just by changing the documents and rebuilding
+        the card box (cutting them up again and giving the pieces new fingerprints). Nothing needs training again. Every later
+        stage works on these documents and nothing else.
+      thread: 'Our pile is six made-up help articles from a bike shop, 271 words in all: returns, warranty, battery care,
+        shipping, sizing and service.'
+      check:
+        question: Why keep the documents outside the model, instead of teaching them to the model?
+        answer: Because you can replace or update the documents, and rebuild the card box (cut them up again and give them
+          new fingerprints), without training anything again. The model never needed to see them while it was being trained.
+      terms:
+      - word: RAG
+        meaning: Retrieval-augmented generation. Looking up the right pieces of your documents first, then giving them to
+          an AI model so it can answer from them.
+      - word: Language model
+        meaning: A computer program that writes text. It learned patterns from reading huge amounts of text, and it only knows
+          what it saw then.
+  chunker:
+    label: Card cutter
+    subtitle: Cut into cards
+    short: Cuts each document into small pieces that can be found one by one.
+    detail: The pieces are what the search finds. If one fact is cut across an edge, no single piece holds all of it.
+    inputs:
+    - Documents
+    outputs:
+    - Pieces
+    breaks_if_removed: Each whole document becomes one piece. The search can only hand back whole documents, which use up
+      the room on the page much faster.
+    explain:
+      what: Cuts each document into smaller pieces called chunks. A chunk is the thing the search finds and hands back.
+      why: A whole article mixes several topics, so it only vaguely matches a question. Small focused pieces match a question
+        more closely, and fit on the page.
+      analogy: Cutting a textbook into index cards so you can pull out just the cards you need.
+      happens:
+      - The document text is cut into pieces of a size you choose (this lesson counts words).
+      - Neighbouring pieces can overlap so a sentence at the edge is not cut in half (the overlap starts at zero here).
+      - Each piece remembers which document it came from.
+      goes_to: The fingerprint maker, which gives every piece a fingerprint.
+      example:
+        input: Items can be returned within 30 days. Refunds go to the original payment method.
+        steps:
+        - Cut into two sentence-sized pieces
+        - With overlap, the end of piece 1 is repeated at the start of piece 2
+        output: Two pieces that each make sense on their own (an illustration)
+      misconfigured: Too small and a piece loses the context it needs. Too big and several topics blur together. A fact cut
+        across an edge may not fit completely inside any single piece.
+      story: 'A whole article mixes several topics, so it matches a question only vaguely, and the page you send to the model
+        has limited room. So the card cutter cuts each article into small pieces called chunks. Think of cutting a page into
+        index cards. This lesson cuts by sentence or by a set number of words, not by idea, so a card can hold half a topic.
+        Where you cut matters: if the cut falls in the middle of a fact, no single card holds the whole fact. You choose how
+        big the chunks are and whether neighbouring chunks overlap, which means they share some words.'
+      thread: 'With sentence chunks of up to 40 words, our six articles become 11 chunks. The returns article becomes two:
+        returns#0 and returns#1.'
+      check:
+        question: A fact is split across two chunks, so neither holds the whole sentence. What can you do about it?
+        answer: Let neighbouring chunks overlap, make the chunks bigger, or cut at sentence edges. Each makes it more likely
+          that a whole fact sits inside one chunk, though bigger chunks are less precise.
+      terms:
+      - word: Chunk
+        meaning: One piece of a document, cut small enough to be found and used on its own.
+      - word: Overlap
+        meaning: Words that two neighbouring chunks share, so a sentence at the edge is not cut in half.
+  embedder:
+    label: Fingerprint maker
+    subtitle: Cards get fingerprints
+    short: Gives each piece a list of numbers that stands for it, like a fingerprint.
+    detail: Every piece is turned into numbers once, ahead of time. With an AI model for this, pieces about similar things
+      get similar numbers. The built-in maker here only counts words, so only shared words bring pieces together.
+    inputs:
+    - Pieces
+    outputs:
+    - Fingerprints (lists of numbers)
+    breaks_if_removed: There are no fingerprints, so the number-based search finds nothing. The keyword search still works,
+      because it never needed fingerprints.
+    explain:
+      what: Turns each piece into a long list of numbers, called a vector, that stands for what is in the piece.
+      why: Computers compare numbers very fast but cannot compare meaning directly. Turning each piece into numbers makes
+        "is this piece about the question?" a matter of measuring how close two lists of numbers are.
+      analogy: Writing a fingerprint on every index card, so cards about similar things get similar fingerprints.
+      happens:
+      - Each piece goes in and a list of numbers comes out.
+      - In a real system this is done once, ahead of time, and kept. This lesson recomputes it on every run.
+      - The built-in maker only counts words, so it matches wording, not meaning.
+      goes_to: The card box, which keeps the fingerprints so they can be searched.
+      example:
+        input: Items can be returned within 30 days.
+        steps:
+        - The words are turned into counts
+        - The counts are folded into a list of a fixed length
+        output: A list of 1024 numbers (an illustration, not real values)
+      misconfigured: Questions and pieces must be given fingerprints in the same way, because fingerprints from different
+        makers cannot be compared. A word-counting maker misses a paraphrase that shares no words with the piece.
+      story: 'A computer cannot compare the meaning of two paragraphs directly, so the fingerprint maker turns each chunk
+        into a list of numbers that stands for it. Such a list is called a vector, and this step is called embedding. Think
+        of writing a fingerprint on every index card. Chunks about similar things should get similar fingerprints. In this
+        lesson the built-in maker is deliberately simple: it builds the fingerprint from the words used (and pairs of neighbouring
+        words), weighted by how rare they are, and folded into 1024 numbers per chunk, so it matches words better than it
+        matches meaning. Unrelated words can occasionally land in the same slot.'
+      thread: Each of our 11 chunks becomes a list of 1024 numbers. Chunks that share words with the question, like the returns
+        chunk and the word "return", score highest.
+      check:
+        question: What does a list of numbers give the computer that plain text does not?
+        answer: Something it can compare quickly, where chunks about similar things end up with similar numbers.
+      terms:
+      - word: Vector
+        meaning: A list of numbers in a fixed order.
+      - word: Embedding
+        meaning: A vector that stands for a piece of text. Similar texts should get similar embeddings.
+      - word: Embedder
+        meaning: The step (or program) that turns text into embeddings.
+  vector_index:
+    label: Card box
+    subtitle: Keep and search
+    short: Keeps all the fingerprints so they can be searched quickly.
+    detail: A flat box checks every fingerprint, so it always finds the exact best match. Bigger systems use faster boxes
+      that sometimes miss the best match.
+    inputs:
+    - Fingerprints
+    outputs:
+    - A box you can search
+    breaks_if_removed: Nothing is kept, so there is nothing for any search to look through.
+    explain:
+      what: Keeps all the fingerprints so they can be searched. This lesson uses a flat index, which is just the fingerprints
+        in a list, with no extra structure.
+      why: A search needs all the fingerprints in one place. The box is where the system's knowledge lives, so changing the
+        box changes what the system knows.
+      analogy: A library catalogue. It does not hold the meaning of the books. It is the list you search.
+      happens:
+      - The fingerprints are kept as rows in one big table, in the same order as the chunks.
+      - A search compares the question's fingerprint with every row.
+      - The best-scoring rows point back to their chunks.
+      goes_to: The card finder, which searches it.
+      example:
+        input: 11 fingerprints
+        steps:
+        - Kept in a flat list
+        - Ready to search
+        output: A box you can search
+      misconfigured: A flat box is exact but checks everything, so it gets slow with millions of fingerprints. Faster boxes
+        exist, but they can occasionally miss the true best match.
+      story: 'The index is the box where all the fingerprints are filed so they can be searched. Here it is a flat index:
+        to answer a question it compares the question''s fingerprint with every stored one, one by one. That is slow when
+        there are millions of chunks, but it always finds the exact best match. Bigger systems use approximate indexes that
+        give up a little accuracy for a lot of speed.'
+      thread: Our box holds 11 fingerprints, one for each chunk. A search compares the question with all 11.
+      check:
+        question: What is the trade-off between a flat index and a faster one?
+        answer: A flat index checks everything, so it is exact but gets slower as the data grows. A faster, approximate index
+          is much quicker but may occasionally miss the true best match.
+      terms:
+      - word: Index
+        meaning: A store of embeddings that can be searched quickly.
+      - word: Flat index
+        meaning: The simplest kind of index. It keeps the embeddings in a list and checks every one.
+  query_encoder:
+    label: Question fingerprint maker
+    subtitle: Question gets a fingerprint
+    short: Gives the question a fingerprint made the same way as the cards'.
+    detail: The question must get a fingerprint of the same kind as the pieces, so the two can be compared. Some systems use
+      one model for both, and others train a separate one for questions.
+    inputs:
+    - Your question
+    outputs:
+    - The question's fingerprint
+    breaks_if_removed: The question never gets a fingerprint, so the number-based search finds nothing. The keyword search
+      still works on the words of the question.
+    explain:
+      what: Turns the question into a list of numbers of the same kind as the chunks' lists.
+      why: A question can only be compared with the pieces if both are described in the same way.
+      analogy: Looking up a place by dropping a pin on the same map the library uses.
+      happens:
+      - The question text goes in.
+      - A list of numbers of the same kind as the chunks' lists comes out.
+      - This lesson uses the same maker for chunks and questions. Some systems train a separate one for questions.
+      goes_to: The card finder, which compares it against the box.
+      example:
+        input: How long do I have to return a blender?
+        steps:
+        - Made lowercase and cut into word stems
+        - Folded into a list of numbers, like the chunks
+        output: One list of numbers for the question (an illustration)
+      misconfigured: If the question were given a fingerprint in a different way from the chunks, the two could not be compared
+        and the scores would mean nothing.
+      story: The question needs the same treatment as the chunks, using the same maker, so the two can be compared. This is
+        where the question enters the machine, which is why it arrives on its own dotted line. If the question and the chunks
+        were turned into numbers in different ways, comparing them would be meaningless. The question you search with is sometimes
+        called the query.
+      thread: Our question, "How long do I have to return a bike?", becomes one list of 1024 numbers, made the same way as
+        the chunk lists.
+      check:
+        question: What would go wrong if the question was given a fingerprint in a different way from the chunks?
+        answer: Their lists would live in different spaces, so the distances between them would mean nothing.
+      terms:
+      - word: Query
+        meaning: The question or text you search with.
+  retriever:
+    label: Card finder
+    subtitle: Find the best cards
+    short: Ranks the pieces and keeps the best few.
+    detail: It can rank by number-fingerprints, by matching keywords, or by both together.
+    inputs:
+    - The question's fingerprint
+    - A box you can search
+    outputs:
+    - The best few pieces
+    breaks_if_removed: Pieces reach the page unranked, in the order of the documents, so a tight limit on the room can drop
+      the one piece that answers the question.
+    explain:
+      what: Ranks the chunks by how well they match the question and keeps the best few. The number kept is called top-k.
+      why: The page you send to the model has limited room. The card finder picks the few chunks most likely to contain the
+        answer.
+      analogy: A librarian who hands you the three most useful cards, not the whole drawer.
+      happens:
+      - The number-fingerprint method compares lists of numbers. The keyword method (called BM25) matches words. The hybrid
+        method blends both rankings.
+      - The chunks are sorted from best to worst.
+      - The top few are kept.
+      goes_to: The page builder, which puts them on the page.
+      example:
+        input: The question's fingerprint and the box
+        steps:
+        - Score every chunk
+        - Sort by score
+        - Keep the top 3
+        output: The three best-matching chunks
+      misconfigured: Keyword search misses synonyms. In this lesson the default fingerprint maker only counts words, so the
+        number-based search behaves much like a keyword search. Keeping too few chunks can drop the one with the answer, and
+        keeping too many floods the page.
+      story: The retriever is the search step. It compares the question's fingerprint with the stored ones, ranks every chunk
+        from most to least similar, and keeps the top few (here k = 3). Keeping only a few matters because the page has limited
+        room. This lesson can rank by number-fingerprint similarity (called dense retrieval), by keywords (called BM25), or
+        by both together (called hybrid). With the default fingerprint maker, dense ranking is itself word-based. Switch to
+        the small AI model on this computer to get a ranking that goes by meaning.
+      thread: For our question the top three are returns#0, battery#1 and returns#1. The two returns chunks are what we want.
+        The battery chunk sneaks in because the simple fingerprint maker is only matching words.
+      check:
+        question: Why keep only the top few chunks instead of all of them?
+        answer: The page has a limited size, and extra chunks add irrelevant text that can distract the model or push out
+          the useful chunks.
+      terms:
+      - word: Retriever
+        meaning: The search step that finds the best chunks for a question.
+      - word: Top-k
+        meaning: How many of the best chunks to keep. k is just a number you choose.
+      - word: Dense retrieval
+        meaning: Ranking by how close the lists of numbers are.
+      - word: BM25
+        meaning: A classic keyword method. It ranks chunks by how many of the question's words they share, giving more weight
+          to rarer words.
+      - word: Hybrid retrieval
+        meaning: Using both methods and blending their rankings.
+  prompt_builder:
+    label: Page builder
+    subtitle: Put it on one page
+    short: Puts the best pieces and the question onto one page.
+    detail: The documents go first, then the instructions and the question. Whatever does not fit in the room available is
+      left out.
+    inputs:
+    - The best few pieces
+    - Your question
+    outputs:
+    - The finished page
+    breaks_if_removed: The writer gets only the question, with no documents to base the answer on.
+    explain:
+      what: Packs the best chunks and your question into one message, called a prompt, within a limit on its size.
+      why: The writer only sees what is on the page. How the page is laid out changes how well the model uses it.
+      analogy: Laying the relevant pages out on the desk, then pinning the question on top.
+      happens:
+      - The chunks go first, each labelled with its name.
+      - The instructions and the question come after.
+      - A chunk that would push the page over the word limit is left out whole. Nothing is cut in half.
+      goes_to: The writer, which reads the page and answers.
+      example:
+        input: Three chunks plus the question
+        steps:
+        - Chunks go in first
+        - The question goes last
+        - Leave out any chunk that would go over the word limit
+        output: One finished page
+      misconfigured: If the limit is too small, the chunk with the answer is left out. If the key chunk is buried in the middle
+        of a long page, it is more likely to be overlooked.
+      story: 'Now the system builds one message for the model: the retrieved chunks first, then the question, with an instruction
+        to answer from the chunks. This message is called the prompt. There is a size limit, called the context budget. Chunks
+        are added in rank order. A chunk that would push the total over the budget is skipped, and a smaller, lower-ranked
+        chunk can still squeeze in after it. A skipped chunk never reaches the model.'
+      thread: Our three chunks use 66 of the 200 words of room allowed (the limit counts the words in the chunks), so all
+        three fit.
+      check:
+        question: A chunk was found, but the answer is missing from the reply. What could explain it?
+        answer: The limit on the room may have left that chunk out, so it never made it onto the page.
+      terms:
+      - word: Prompt
+        meaning: 'The message given to an AI model: here, the chunks, the instructions and the question.'
+      - word: Context budget
+        meaning: The limit on how many words of chunks can go on the page.
+  generator:
+    label: Writer
+    subtitle: Write the answer
+    short: Writes an answer using only what is on the page.
+    detail: A real system uses an AI model that writes text. To stay free and repeatable, this lesson uses a simple helper
+      that quotes sentences from the page.
+    inputs:
+    - The finished page
+    outputs:
+    - An answer with sources
+    breaks_if_removed: The page is built, but nobody ever answers it.
+    explain:
+      what: Writes the answer from the chunks on the page. Offline, ExplodeAI uses a simple helper that quotes sentences instead
+        of an AI model.
+      why: This is the step that turns the evidence that was found into an answer you can read.
+      analogy: Highlighting the sentences in your notes that best match the question, and noting which page each came from.
+      happens:
+      - The question and the chunks that fit on the page go in.
+      - Each sentence is scored by how many of the question's words it shares.
+      - The best two sentences are given back, each marked with the name of its chunk.
+      goes_to: You. The answer comes with its sources so you can check it.
+      example:
+        input: The returns chunk and your question
+        steps:
+        - Score each sentence by shared words
+        - Keep the best two
+        output: A sentence about returns, with its source
+      misconfigured: If the right chunk was never found, no writer can answer correctly. Even with the right chunk, an AI
+        model can still get things wrong, and this simple helper only copies sentences.
+      story: The generator writes the answer from the page. In a real system this is a language model that reads the chunks
+        and writes a reply, ideally pointing to the chunks it used. In this lesson, to stay free and repeatable, it is a simple
+        helper that picks the best sentences from the chunks and quotes them, and it is labelled as not a real AI model. Below
+        its answer, an optional real-model panel appears; it is off unless the site owner has switched it on. Looking things
+        up first makes wrong answers less likely, but it does not make them impossible.
+      thread: 'It quotes two sentences from returns#0: "Ridgeline Bikes accepts returns of unused bikes within 30 days of
+        delivery." and "Returned bikes must include the original packaging."'
+      check:
+        question: Does RAG guarantee a correct answer?
+        answer: No. It makes wrong answers less likely, but the text that was found can be wrong or incomplete, and the model
+          can still misuse it. So the sources should always be checked.
+      terms:
+      - word: Generator
+        meaning: The step that writes the answer.
+      - word: Hallucination
+        meaning: When an AI model states something that is wrong or made up, as if it were true.
+connections:
+  corpus->chunker:
+    payload: documents
+    explain: The card cutter needs the whole documents so it can cut them into small pieces. A whole article mixes several
+      topics, and a page has limited room, so you want to send only the most useful pieces.
+  chunker->embedder:
+    payload: pieces
+    explain: Each piece gets its own fingerprint (made alongside the others, since how rare a word is depends on all the pieces),
+      because the search will later hand back whole pieces, not whole documents.
+  embedder->vector_index:
+    payload: fingerprints
+    explain: The fingerprints are filed in the box together with which piece each belongs to, so a match can be turned back
+      into text.
+  vector_index->retriever:
+    payload: the box
+    explain: The card finder searches the box. It needs every stored fingerprint to compare the question against.
+  query_encoder->retriever:
+    payload: the question's fingerprint
+    explain: The question's fingerprint is what the card finder compares with every stored one. Without it there is nothing
+      to search for.
+  retriever->prompt_builder:
+    payload: the best pieces
+    explain: The best pieces go to the page builder because they are the evidence the model is allowed to use.
+  prompt_builder->generator:
+    payload: the finished page
+    explain: The finished page is the only place your documents reach the writer. If a fact is not on the page, the writer
+      has nothing from your documents to use. A real AI model may still add things it learned in training, right or wrong.
+      This lesson's helper can only quote the page.
+big_picture:
+  story: A computer program that writes text can sound very fluent, but it only knows what it saw during training. It has
+    never read your private documents. RAG, short for retrieval-augmented generation, fixes that by looking things up first.
+    It searches your documents for the pieces that match the question, puts those pieces in front of the model together with
+    the question, and asks the model to answer from them. This lesson has two halves. Getting the documents ready happens
+    once, ahead of time, in a real system (the first four stages, which this demo repeats on every run). Answering happens
+    every time someone asks (the last four).
+  analogy:
+    title: A help desk with a binder and index cards
+    mapping:
+    - part: Help articles
+      becomes: the binder of help articles
+    - part: Card cutter
+      becomes: cutting each page into small index cards
+    - part: Fingerprint maker
+      becomes: writing a fingerprint of numbers on every card
+    - part: Card box
+      becomes: the box where the fingerprinted cards are filed
+    - part: Question fingerprint maker
+      becomes: making a fingerprint of the customer's question in the same way
+    - part: Card finder
+      becomes: pulling out the few cards whose fingerprints match best
+    - part: Page builder
+      becomes: clipping those cards and the question onto one sheet of paper
+    - part: Writer
+      becomes: the writer who answers using only that sheet
+    breaks: A person reads a card and understands it. The computer only compares numbers, so it can pull out the wrong card
+      for a silly reason, and in this lesson the fingerprints are deliberately crude (they are built from the words used).
+      Unlike a real fingerprint, these are compared by how close they are, not for an exact match. A real writer would also
+      sometimes ignore the sheet, and an AI model can too.
+  example:
+    title: The question we will follow
+    input: How long do I have to return a bike?
+    note: The question joins at the fifth stage, the question fingerprint maker. The first four stages get the documents ready
+      for it to be matched against. Look for it in the box called "In our example" from stage 5 on.
+experiment:
+  corpus_note: Made-up sample data. Nothing in it is a claim about the world.
+  labels:
+    Question: Your question
+    Chunking: How to cut
+    Sentences: By sentence
+    Fixed words: Same number of words
+    Chunk size: Size of each card
+    Overlap: Words shared with the next card
+    Retrieval: How to search
+    Dense: By number-fingerprint
+    BM25: By keywords
+    Hybrid: Both together
+    Top-k: How many cards to keep
+    Context budget: Room on the page
+    Embedder: How cards get fingerprints
+    TF-IDF hashing: Simple word counting
+    Local neural: Small AI model on this computer
+    Local neural (not installed): Small AI model on this computer (not installed)
+    Chunks: Cards
+    Vector space: Fingerprint map
+    Ranking: Ranking
+    Prompt: The page for the writer
+    Answer: Answer
+    Kept: Kept
+    In prompt: On the page
+    Retrieved: Found
+    Chunk: Card
+    Dense rank · cosine: Fingerprint rank · closeness
+    BM25 rank · score: Keyword rank · score
+  presets:
+    Synonym test (lexical embedder fails it):
+      label: Same idea, different words
+  guide:
+    intro: Every run here is the real thing. Change one setting at a time, then look at the "Cards", "Ranking" and "The page
+      for the writer" tabs to see what that setting did. The default fingerprint maker only counts words, so ranking by fingerprint
+      is not yet ranking by meaning.
+    presets:
+      Return policy:
+        try: Click it and leave every setting alone.
+        notice: 'Only one of the three chunks that were found is from the returns article (returns#0). The other two, service#1
+          and battery#1, are distractions: the simple word-counting fingerprint maker is easily pulled off course. The Answer
+          tab still quotes "Returned bikes must include the original packaging." and the 30-day sentence, because returns#0
+          contains both.'
+      Warranty:
+        try: Click it and leave every setting alone.
+        notice: 'The chunks that were found are warranty#0, sizing#1 and returns#0. Only warranty#0 matters: it holds both
+          facts the question asks about (the lifetime frame warranty and the 2 years on components). The Answer tab quotes
+          both.'
+      Battery storage:
+        try: Click it, then set "Room on the page" to 15 words.
+        notice: 'At first the chunks that were found are battery#1, returns#0 and service#0, and only battery#1 matters. With
+          15 words of room all three are left out, because battery#1 alone is 25 words: the page tab shows 0 chunks included.
+          That is exactly the "Found, then left out" puzzle.'
+      Same idea, different words:
+        try: Click it, look at the Cards tab, then set "How cards get fingerprints" to "Small AI model on this computer".
+        notice: With the simple fingerprint maker, no chunk shares a word with the question, so every score is about zero.
+          battery#0 comes first by a coincidence (two unrelated words ended up in the same slot), and returns#0 and returns#1
+          follow only because ties are listed in the order of the chunks. The Answer tab finds nothing to quote. With the
+          small AI model (if it is installed), returns#0 comes first, though only just ahead of a warranty chunk (0.643 against
+          0.641). Fingerprints from an AI model can match different words with the same meaning, which keyword matching cannot.
+          The Answer tab still finds nothing to quote, because the simple helper picks sentences by shared words. A real AI
+          model would read returns#0 and answer.
+    ideas:
+    - do: Set "How to cut" to "Same number of words" and "Size of each card" to 8 (leave the question as it is).
+      see: The six articles become 37 tiny chunks instead of 11. Set "Words shared with the next card" to 4 and it becomes
+        65, with neighbouring chunks sharing words. Set the size to 120 and it becomes 6, one for each article.
+    - do: Set "How many cards to keep" to 1, then to 6.
+      see: Keeping 1 finds only returns#0. Keeping 6 finds six chunks and the page holds about 145 words. More chunks means
+        more room used and more noise.
+    - do: Set "Room on the page" to 15 words.
+      see: The page tab shows 1 chunk included and 2 left out. Chunks are added in rank order, and a chunk that does not fit
+        is skipped, so the short returns#1 fits but returns#0, the chunk that holds the answer, is left out. A chunk can be
+        found by the search and still never reach the model.
+    - do: Switch "How to search" between "By number-fingerprint", "By keywords" and "Both together".
+      see: 'For the default question all three pick the same three chunks. Choose keywords or both together and a keyword
+        column appears next to the fingerprint one. Compare the two columns for the chunks that were not kept: service#1 is
+        4th by fingerprint but 11th by keywords.'
+    tabs:
+      chunks: 'Each box is one article, headed by its name and its number of chunks. Inside it the text is shaded: a ▏ marks
+        where a chunk starts, words shared by two chunks get their own shade, and the chunks the search picked are highlighted.
+        Hover over a ▏ to see the chunk''s name, such as returns#0.'
+      space: Your question is the diamond. The chunks that were found are filled dots and the rest are hollow. The label says
+        how much of the real spread this 3D picture keeps, so treat distances as hints.
+      ranking: Every chunk with its fingerprint rank and closeness score. When "How to search" is by keywords or both together,
+        a keyword rank and score column is added. The Kept column shows the final order for the method you chose. With the
+        default fingerprint maker, ranking by fingerprint is word matching, so it often agrees with the keyword ranking.
+      prompt: The page a real AI model would read, and which chunks fit into the room and which were left out. The simple
+        helper's answer below does not read this text. It quotes from the chunks that were included.
+      answer: A labelled helper that quotes sentences from the chunks. It is not an AI model. If it quotes nothing, the chunks
+        that were found held no sentence that matched. Below it, an optional real-model answer panel appears. It is off unless
+        the site owner has switched it on.
+challenges:
+  boundary-split:
+    title: The fact that got cut in half
+    brief: The return window is split across two chunks, so no chunk that was found contains all of it. Fix how the documents
+      are cut, without changing the question, the way of cutting or the way of searching.
+    hint: Look at where chunk returns#0 ends and returns#1 begins. Overlap keeps the phrase whole somewhere, but does that
+      chunk rank high enough?
+    explanation: Chunks of a fixed size ignore the edges of sentences. Overlap can keep a phrase whole, but tiny chunks carry
+      so few words that the whole one may still rank too low. Here, bigger chunks fix both problems. Very big chunks can bury
+      a fact among unrelated text instead.
+  too-few-results:
+    title: Half an answer
+    brief: The question needs two facts that live in different chunks, but the search only hands back one. Fix it using only
+      the search settings.
+    hint: How many chunks does the answer need?
+    explanation: The number kept sets how many chunks the search passes on (the room on the page can still leave some out).
+      Keep too few and answers with several parts lose a part. Keep too many and the page fills with noise.
+  ranking-miss:
+    title: The ranker that missed
+    brief: Keeping 3 chunks, the number-fingerprint search still misses the chunk about the frame's lifetime warranty. Keep
+      the number at 3 and change how the chunks are ranked.
+    hint: Compare the fingerprint rank and the keyword rank of warranty#0.
+    explanation: Different ways of ranking make different mistakes. Blending the two rankings (reciprocal rank fusion) rewards
+      chunks that rank well in both lists, so a chunk one ranking misses can still make the cut when the other ranks it highly
+      enough.
+  budget-overflow:
+    title: Found, then left out
+    brief: The right chunk is found, but it never reaches the model. Fix it without changing the search.
+    hint: Read the page tab. Which chunks were left out, and why?
+    explanation: Searching and building the page are separate stages. In this machine, a limit on the room that is too small
+      quietly leaves out evidence the search found.
+tour:
+  corpus:
+    title: Start with what the model does not know
+    body: RAG gives a model text to read at the moment it answers, such as private documents or anything newer than its training.
+  chunker:
+    title: Cut the documents into pieces that can be found
+    body: The search hands back chunks, not whole documents, so where you cut decides what can come back.
+  embedder:
+    title: Give each piece a fingerprint
+    body: Each chunk becomes a list of numbers. With an AI model, related text gets similar numbers. This lesson's built-in
+      maker only groups shared words.
+  vector_index:
+    title: Keep the fingerprints
+    body: This box checks every fingerprint, so it is exact. Large systems switch to faster boxes that are only approximate.
+  query_encoder:
+    title: Give the question a fingerprint in the same way
+    body: The question gets the same kind of fingerprint, so it can be compared with the chunks.
+  retriever:
+    title: Rank them and keep the best few
+    body: Searching by number-fingerprint, by keywords and by both together rank the chunks differently. Try all three in
+      the experiment.
+  prompt_builder:
+    title: Build the page
+    body: Chunks go in first, the question last. Whatever does not fit in the room never reaches the model.
+  generator:
+    title: Write the answer, and check the sources
+    body: Answers that are based on documents can still be wrong. The sources let you check.
+reconstruction:
+  prompt: Put the stages in an order that could really work. Each stage must come after everything it needs.
+visuals:
+  exploded-view:
+    label: Picture of the idea
+    description: The positions and shapes are a visual way of explaining. The order of the steps follows the real order.
+  data-flow:
+    label: Animated picture of the idea
+    description: The moving dots show which stage feeds which. Orange solid lines carry text, dashed lines carry fingerprints,
+      and the blue dotted line is your question. The speed means nothing.
+  ablation:
+    label: Real run, one stage removed
+    description: The machine really runs with the chosen stage taken out, side by side with the full machine.
+  experiment:
+    label: Real run
+    description: Cutting, fingerprinting, searching and building the page all run on the ExplodeAI backend with the settings
+      you choose.
+  vector-space:
+    label: Real numbers, squashed picture
+    description: The real fingerprints of the chunks and the question, squashed down to 3 numbers each for drawing. Distances
+      in the picture only roughly match the real distances.
+  answer:
+    label: Real run, not an AI model
+    description: The offline answer is a simple helper that quotes sentences from the chunks that were found. It is not an
+      AI model.

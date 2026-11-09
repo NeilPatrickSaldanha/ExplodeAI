@@ -1,0 +1,587 @@
+# Plain-words voice for Lesson 02. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
+# nothing about AI yet. Same facts and numbers; see docs/PLAIN_WORDS.md for the rules.
+title: Tokenization, exploded
+summary: A computer reads numbers, not letters. A tokenizer cuts text into pieces and gives every piece a number. Build one
+  from scratch, watch new text get chopped up, turn it back into text, and see how a bigger catalogue of pieces means shorter
+  sequences.
+objectives:
+- Explain how a tokenizer learns which pieces to keep by gluing the most common pairs, and then repeats that gluing on new
+  text.
+- Predict how the number of gluing steps changes the size of the catalogue and the number of pieces a sentence needs.
+- Explain why starting from bytes means nothing is ever unknown, while starting from only the practice letters can fail.
+- Read piece counts carefully. They depend on the tokenizer, so they do not carry over between different AI models.
+ui:
+  eyebrow: LEARN → TRANSLATE → READ BACK
+  scene_title: Exploded view of a machine that chops text into numbered pieces
+  flow_document: Text
+  flow_vector: Symbols and numbers
+  flow_query: Your sentence
+  summary: Watch text become piece numbers and come back again. Click any part to see what goes in, what comes out, and what
+    breaks without it.
+  challenges_intro: Each tokenizer below is broken in one specific way. Find the cause in the experiment, then fix it with
+    the controls that are left unlocked. The server runs your settings again and checks the result.
+  tokenizer_notice: This tokenizer only learned from the small practice diary. Its piece counts say nothing about the tokenizers
+    inside big AI models such as GPT, Claude or Gemini, which learned far bigger catalogues from far more text.
+  ran_out: 'The learner ran out of pairs to glue after {n} steps: every piece of the practice text is already a single piece.'
+components:
+  corpus:
+    label: Practice text
+    subtitle: What it learns from
+    short: The text the tokenizer studies to find out which groups of letters are common.
+    detail: The tokenizer decides what to keep together by looking at what is common in this text. Here it is a small made-up
+      diary of a lighthouse keeper, written in plain English letters.
+    inputs:
+    - Lighthouse diary
+    outputs:
+    - Practice text
+    breaks_if_removed: Nothing is learned, so text is spelled one tiny symbol at a time. (If only the letters seen in practice
+      are allowed, everything comes out marked unknown.)
+    explain:
+      what: The pile of text the tokenizer studies to learn which groups of letters are common.
+      why: A tokenizer has to learn which groups of letters are worth keeping together. It learns that from examples, so it
+        needs a pile of example text first.
+      analogy: Studying a pile of old newspapers to see which groups of letters turn up again and again.
+      happens:
+      - The practice text is read in.
+      - It is cut into word-like pieces (the next stage), and each piece is counted.
+      - The counts decide which pairs get glued together first.
+      goes_to: The word splitter, which cuts it into word-like pieces.
+      example:
+        input: the tide was low, the wind came from the west
+        steps:
+        - Pieces are counted
+        - '"the" at the very start is one piece. " the" with a space in front is a different piece, and it shows up twice.'
+        output: A table of how often each piece appears (a simplified illustration)
+      misconfigured: A tokenizer is only as good as its practice text. Words that never appear in it get chopped into many
+        small pieces.
+      story: 'Before it can chop anything, the tokenizer studies a pile of example text to find out which groups of letters
+        are common. That pile is called the corpus. A tokenizer is only as good as the text it learned from: words that are
+        common in the corpus end up as single pieces, and rare words get chopped into smaller ones.'
+      thread: Our practice text is a small made-up diary of a lighthouse keeper. Words like "keeper" and "lantern" appear
+        often in it, so they will earn pieces of their own.
+      check:
+        question: Why does the choice of practice text change the pieces?
+        answer: The tokenizer glues together the pairs it sees most often. So words that are common in its practice text end
+          up as single pieces, and rare words are split up.
+      terms:
+      - word: Corpus
+        meaning: The pile of example text a tokenizer learns from.
+      - word: Token
+        meaning: One piece of text that a model reads. It can be a whole word or just part of a word.
+      - word: Tokenizer
+        meaning: The program that cuts text into tokens and gives each one a number.
+  pre_tokenizer:
+    label: Word splitter
+    subtitle: Cut into word pieces
+    short: Cuts the text into word-like pieces before any gluing starts.
+    detail: Gluing never crosses a cut. A space stays stuck to the front of the word after it, and letters, digits and punctuation
+      go into separate pieces. Turn it off and glued pieces can stretch across two words.
+    inputs:
+    - Practice text
+    outputs:
+    - Word pieces
+    breaks_if_removed: The text is no longer cut at word boundaries, so a glued piece can join parts of two different words.
+    explain:
+      what: Cuts the text into word-like pieces before any gluing happens.
+      why: Without cuts, the learner could glue the end of one word onto the start of the next, which makes pieces that are
+        not useful.
+      analogy: Cutting a long ribbon of letters into separate words before sorting them.
+      happens:
+      - The text is cut at the edges of words, numbers and punctuation.
+      - A single space usually stays stuck to the front of the next word.
+      - Gluing later only happens inside each piece.
+      goes_to: The starting symbols, which spell out each piece in the smallest symbols.
+      example:
+        input: the tide
+        steps:
+        - Cut into pieces
+        - The space stays with the next word
+        output: '"the" and " tide"'
+      misconfigured: If this step is left out, pieces can stretch across the space between two words.
+      story: First the text is cut into word-like pieces. This stops the learner from gluing the end of one word to the start
+        of the next. A space sticks to the front of the word that follows it, so " keeper" with a space and "keeper" without
+        one count as different pieces. This step is called the pre-tokenizer.
+      thread: 'Our sentence is cut into 8 pieces: The, " keeper", " lit", " the", " lantern", " at", " dusk" and ".".'
+      check:
+        question: Why cut the text into word-like pieces before any gluing?
+        answer: So that no glued piece can stretch across two words, for example by joining the end of one word to the start
+          of the next.
+      terms:
+      - word: Pre-tokenizer
+        meaning: The step that cuts text into word-like pieces before anything else happens.
+  base_alphabet:
+    label: Starting symbols
+    subtitle: The smallest pieces
+    short: The smallest symbols that every piece is spelled with at the beginning.
+    detail: With bytes, there are always 256 starting symbols, and any text at all can be spelled. If you only allow the letters
+      seen in practice, any new character is marked as unknown.
+    inputs:
+    - Word pieces
+    outputs:
+    - Pieces spelled in symbols
+    breaks_if_removed: There are no starting symbols, so every character of your text comes out as unknown and the text can
+      never be recovered.
+    explain:
+      what: The smallest symbols that every piece is spelled with, before anything is glued. A byte is one of the 256 values
+        a computer can use to store a symbol.
+      why: Gluing needs something to glue. The starting symbols are the smallest bricks, and everything bigger is built from
+        them.
+      analogy: A box of the smallest LEGO bricks, where every bigger shape is built from those.
+      happens:
+      - Each piece is spelled out as a row of starting symbols.
+      - With the byte choice, those symbols are the 256 possible bytes.
+      - With the practice-letters choice, they are only the characters seen in the practice text, and any other character
+        turns into [UNK], a placeholder that means unknown.
+      goes_to: The pair gluer, which starts combining the most common neighbours.
+      example:
+        input: '" tide"'
+        steps:
+        - Spelled out one byte at a time
+        - One symbol for each byte
+        output: Five single-byte symbols
+      misconfigured: If only the practice letters are allowed, any letter that was never seen turns into [UNK] and the text
+        cannot be put back together.
+      story: Every piece is first spelled out in the smallest symbols the tokenizer has. Here those are the 256 possible bytes,
+        so any text in any language, even an emoji, can be written down. Starting from bytes means the tokenizer never meets
+        a symbol it does not know. The full set of starting symbols is called the alphabet.
+      thread: '" keeper" starts as 7 separate symbols: a space, k, e, e, p, e and r. Our whole sentence starts as 35 symbols.'
+      check:
+        question: Why can the byte choice spell any text, when an alphabet of only the characters seen in practice cannot?
+        answer: Every possible byte is already in the alphabet. A practice-letters alphabet only holds characters seen in
+          practice, so anything else becomes unknown and cannot be recovered.
+      terms:
+      - word: Byte
+        meaning: One of the 256 values a computer uses to store a symbol. Letters, emoji and punctuation are all stored as
+          one or more bytes.
+      - word: Alphabet
+        meaning: The set of starting symbols a tokenizer spells everything with.
+      - word: '[UNK]'
+        meaning: A placeholder that means unknown. It appears when the tokenizer meets a symbol it has no way to spell.
+  merge_learner:
+    label: Pair gluer
+    subtitle: Glue the most common pair
+    short: Again and again, glues the most common pair of neighbours into one bigger piece.
+    detail: Each round counts every pair of neighbouring symbols, giving more weight to pairs in common words, and turns the
+      winner into a new symbol. If two pairs tie, the one whose bytes sort first wins, so the result is always the same.
+    inputs:
+    - Pieces spelled in symbols
+    outputs:
+    - Gluing steps, in order
+    breaks_if_removed: No gluing is learned, so every piece is a single starting symbol and the sequence is as long as it
+      can possibly be.
+    explain:
+      what: Again and again, finds the most common pair of neighbouring symbols and glues it into one new symbol.
+      why: Common groups of letters become single pieces, so common words need fewer pieces and the model reads text more
+        quickly.
+      analogy: Noticing that two LEGO bricks are always used together, and gluing them into one bigger brick.
+      happens:
+      - Count every pair of neighbouring symbols, giving more weight to pairs in words that are common.
+      - Glue the winning pair into a new symbol.
+      - Repeat until you reach the number of gluing steps you asked for, or until nothing is left to glue.
+      goes_to: The piece catalogue, which keeps the starting symbols and the gluing steps in order.
+      example:
+        input: Pieces from the practice text, such as " the"
+        steps:
+        - 'Most common pair: h and e become "he"'
+        - 'Next: a space and t become " t"'
+        - 'Then: " t" and "he" become " the"'
+        output: 'Gluing steps in order: he, " t", " the" (from this lesson''s practice text)'
+      misconfigured: Too few gluing steps leave long sequences of tiny pieces. Too many make a huge catalogue for little gain.
+      story: This is where the learning happens. Look at every pair of neighbouring symbols in the practice text, find the
+        pair that appears most often, and glue it into one new symbol. Then do it again, and again. Each round is called a
+        merge. This way of learning pieces, by gluing the most common pair over and over, is called byte-pair encoding, or
+        BPE. After 100 merges the tokenizer knows 100 gluing recipes, in the order it learned them.
+      thread: 'The first recipes are small: h and e become "he", then a space and t become " t", then " t" and "he" become
+        " the". Six of the early merges (er, ep, ke, " ke", " keep" and " keeper") build the whole word " keeper" out of its
+        7 symbols.'
+      check:
+        question: What does one merge do?
+        answer: It finds the most common pair of neighbouring symbols and glues them into one new symbol.
+      terms:
+      - word: Merge
+        meaning: Gluing two neighbouring symbols into one new, bigger symbol.
+      - word: BPE
+        meaning: Byte-pair encoding. The method of building pieces by gluing the most common pair, over and over.
+  vocabulary:
+    label: Piece catalogue
+    subtitle: Every piece, with a number
+    short: The starting symbols, the glued pieces and a few special pieces, each with its own number.
+    detail: The size of the catalogue is the starting symbols, plus one entry for each gluing step, plus the special pieces.
+      Here there is one special end-of-text marker, as in GPT-2. The order of the gluing steps is saved too, and that order
+      is part of the tokenizer.
+    inputs:
+    - Gluing steps, in order
+    outputs:
+    - Catalogue and gluing order
+    breaks_if_removed: There is no table that gives each piece a number, so nothing can be turned into numbers.
+    explain:
+      what: The table of every piece the tokenizer knows, each with a number, plus the saved list of gluing steps in order.
+      why: The model only works with numbers, so every piece needs a number. The saved order lets any new text be rebuilt
+        the same way every time.
+      analogy: A catalogue of every brick in the shop, each with its own item number.
+      happens:
+      - The starting symbols and the glued symbols each get a number.
+      - Special pieces, such as an end-of-text marker, are added.
+      - The order of the gluing steps is saved, because the order is part of the tokenizer.
+      goes_to: The number translator, which uses it to turn new text into numbers.
+      example:
+        input: 256 starting symbols + 100 gluing steps + 1 special piece
+        steps:
+        - Added up
+        - Each entry numbered
+        output: A table with 357 entries (256 + 100 + 1; simple arithmetic)
+      misconfigured: If the catalogue is lost or reordered, the same text would be turned into different numbers, and the
+        model would read nonsense.
+      story: 'The vocabulary is the finished catalogue of pieces: every starting symbol and every glued piece, each with its
+        own number. That number is what the model really receives. More merges means a bigger vocabulary.'
+      thread: 'With 100 merges our vocabulary has 357 entries: 257 to begin with (the 256 bytes plus one special marker) and
+        100 merges. " keeper" is number 269 and " lantern" is number 275.'
+      check:
+        question: How does the number of merges set the size of the vocabulary?
+        answer: The vocabulary is the starting symbols plus one new entry for each merge (plus the special pieces), so more
+          merges means a bigger vocabulary.
+      terms:
+      - word: Vocabulary
+        meaning: The full list of pieces a tokenizer knows, each with its own number.
+      - word: Token ID
+        meaning: The number that stands for one piece in the vocabulary.
+  input_text:
+    label: Your sentence
+    subtitle: What you type
+    short: The new sentence you want to turn into numbers.
+    detail: It does not have to look like the practice text. Words the practice text never contained still get spelled out
+      from smaller pieces.
+    inputs:
+    - Your sentence
+    outputs:
+    - New sentence
+    breaks_if_removed: There is nothing to turn into numbers, so no pieces are produced.
+    explain:
+      what: The new sentence you want to turn into numbers. It does not have to look like the practice text.
+      why: This is the thing you actually want to use the tokenizer on. Everything before this stage was getting ready for
+        it.
+      analogy: A new sentence that you want to build out of the bricks in the catalogue.
+      happens:
+      - Your sentence is handed to the number translator.
+      - Familiar words are matched to big pieces.
+      - Unfamiliar words are spelled out from smaller pieces.
+      goes_to: The number translator.
+      example:
+        input: lighthouse keeper
+        steps:
+        - Familiar pieces are reused
+        - Unfamiliar parts are spelled out from smaller pieces
+        output: A mix of whole-word pieces and small pieces
+      misconfigured: A word that never appeared in the practice text still works, but it is spelled out in many small pieces,
+        which is less efficient.
+      story: This is the new sentence you want to turn into numbers. It can contain words the tokenizer has never seen. That
+        is fine, because with the 256-byte alphabet it can always fall back on single bytes.
+      thread: Our sentence is "The keeper lit the lantern at dusk." It is 35 bytes long.
+      check:
+        question: What happens to a word the tokenizer never saw while it was learning?
+        answer: With the 256-byte alphabet it is split into smaller known pieces, down to single bytes if it has to be, so
+          nothing is lost. (With only the practice letters, unknown characters would turn into [UNK].)
+      terms:
+      - word: Unseen word
+        meaning: A word that did not appear in the practice text. It gets spelled out from smaller pieces.
+  encoder:
+    label: Number translator
+    subtitle: Text becomes numbers
+    short: Cuts the text into word pieces, spells them in symbols, then glues them again in the order they were learned.
+    detail: It uses the same cutting rules and starting symbols as in learning, and applies the gluing steps in the order
+      they were learned. The number of pieces it ends up with is the token count. That count only holds for this tokenizer.
+    inputs:
+    - Catalogue
+    - New sentence
+    outputs:
+    - Piece numbers
+    breaks_if_removed: No numbers are produced, so the back-translator has nothing to turn back into text.
+    explain:
+      what: Turns your sentence into a list of piece numbers, using the word splitter, the starting symbols and the gluing
+        steps in order.
+      why: 'This is the whole point of a tokenizer: text goes in, and the numbers a model can read come out.'
+      analogy: Rebuilding a sentence from bricks by repeating the gluing in the order you learned it.
+      happens:
+      - Cut the sentence into word pieces.
+      - Spell each piece in starting symbols (in the code, those symbols are already numbers).
+      - Glue pairs again, in the same order they were learned.
+      goes_to: The back-translator, and in a real system the language model itself.
+      example:
+        input: '" the"'
+        steps:
+        - 'Spelled as bytes: a space, t, h and e'
+        - 'Glue in order: h and e first, then a space and t, then " t" and "he"'
+        output: 'One piece: " the" (this lesson''s tokenizer)'
+      misconfigured: If the gluing is done in a different order from the one that was learned, words fall apart into fragments.
+      story: The encoder turns your sentence into numbers. It cuts the sentence into pieces, spells each piece in bytes, and
+        then replays the learned gluing recipes in the order they were learned. The order matters, because later recipes use
+        symbols that earlier recipes made. When no recipe applies any more, each remaining symbol's number is written down.
+        Turning text into numbers like this is called encoding.
+      thread: '" keeper" shrinks from 7 symbols to 1 piece. The whole sentence shrinks from 35 symbols to 8 pieces, with the
+        numbers 262, 269, 346, 258, 275, 285, 321 and 46.'
+      check:
+        question: Why must the gluing be repeated in the same order it was learned?
+        answer: Later gluing steps join symbols that earlier steps made. Out of order, the symbols they need do not exist
+          yet, so words stay in fragments.
+      terms:
+      - word: Encoder
+        meaning: The step that turns text into token IDs.
+      - word: Encoding
+        meaning: Turning text into a list of numbers.
+  decoder:
+    label: Back-translator
+    subtitle: Numbers back to text
+    short: Turns the piece numbers back into bytes, and the bytes back into text.
+    detail: Joining the bytes of every piece gives back your text exactly, unless a piece is marked unknown. With the byte
+      choice, that never happens. A single piece can hold part of a character, so reading only some of the pieces can produce
+      broken text.
+    inputs:
+    - Piece numbers
+    outputs:
+    - Text
+    breaks_if_removed: The numbers are made but never turned back into text, so there is no way to check that nothing was
+      lost.
+    explain:
+      what: Turns piece numbers back into bytes, and then into text.
+      why: 'It proves the tokenizer lost nothing: if the text that comes out matches the text that went in, nothing was damaged
+        on the way.'
+      analogy: Looking up each brick in the catalogue and reading the sentence back to check it matches the original.
+      happens:
+      - Each number is looked up to find its bytes.
+      - The bytes are joined in order.
+      - The result is read as text.
+      goes_to: The text you read.
+      example:
+        input: The piece " the"
+        steps:
+        - 'Look up its bytes: 20 74 68 65'
+        - Join them and read them as text
+        output: '" the"'
+      misconfigured: If decoding does not give back the original text, the tokenizer is losing information somewhere.
+      story: 'The decoder does the reverse. It looks up each number, turns it back into bytes, and joins the bytes into text.
+        If you get back exactly what you started with, the tokenizer lost nothing. This is called a round trip. A passing
+        round trip shows the tokenizer loses nothing. It does not show the pieces are good ones: the 35-piece version at 0
+        merges makes the round trip too.'
+      thread: Our 8 numbers decode to exactly "The keeper lit the lantern at dusk." with nothing unknown.
+      check:
+        question: Why is a successful round trip a useful test?
+        answer: If the text comes back exactly as it went in, the tokenizer did not lose or change anything.
+      terms:
+      - word: Decoder
+        meaning: The step that turns token IDs back into text.
+      - word: Round trip
+        meaning: Turning text into numbers and back again, then checking you got the same text.
+connections:
+  corpus->pre_tokenizer:
+    payload: practice text
+    explain: The learner needs the practice text cut into words first, so it never learns a piece that stretches across two
+      words.
+  pre_tokenizer->base_alphabet:
+    payload: word pieces
+    explain: Each word piece is spelled out in the smallest starting symbols, ready to be glued together.
+  base_alphabet->merge_learner:
+    payload: pieces in symbols
+    explain: The learner counts which neighbouring symbols appear together most. It can only glue symbols that exist, which
+      is why the starting symbols come first.
+  merge_learner->vocabulary:
+    payload: gluing steps in order
+    explain: Every gluing step becomes a new entry in the catalogue, and the order of the steps is saved because the number
+      translator will need it.
+  vocabulary->encoder:
+    payload: catalogue and gluing order
+    explain: The number translator needs the catalogue's numbers and the saved gluing order, to rebuild any new text in exactly
+      the same way.
+  input_text->encoder:
+    payload: new sentence
+    explain: The sentence you want to turn into numbers enters here. It is the new text that the number translator works on.
+  encoder->decoder:
+    payload: piece numbers
+    explain: The piece numbers go to the back-translator, which turns them back into text. Here we also compare that text
+      with the original, to check that nothing was lost.
+big_picture:
+  story: 'A computer cannot read letters. It reads numbers. A tokenizer is the translator between the two: it cuts text into
+    small pieces, called tokens, and gives every piece a number. This lesson builds a tokenizer from scratch, in two halves.
+    First it learns, once, from a pile of example text (the first five stages). Then it translates every new sentence it is
+    given (the last three stages).'
+  analogy:
+    title: Building words from bricks that get glued together
+    mapping:
+    - part: Practice text
+      becomes: the pile of text we study to see which bricks stick together most often
+    - part: Word splitter
+      becomes: cutting the pile into words, so bricks are never glued across two words
+    - part: Starting symbols
+      becomes: the smallest single bricks (there are 256 of them)
+    - part: Pair gluer
+      becomes: the habit of gluing the most common neighbouring pair into a bigger brick
+    - part: Piece catalogue
+      becomes: the catalogue of every brick, each with its own item number
+    - part: Your sentence
+      becomes: the new sentence we want to build
+    - part: Number translator
+      becomes: building the sentence by repeating the gluing in the order we learned it
+    - part: Back-translator
+      becomes: looking up what each brick stands for and reading the sentence back
+    breaks: Real tokenizers, such as GPT-2's with 50,257 pieces, have far bigger catalogues. This one is tiny and learns from
+      a made-up lighthouse diary, so its piece counts are not theirs.
+  example:
+    title: The sentence we will follow
+    input: The keeper lit the lantern at dusk.
+    note: One sentence travels through the stages. It starts as 35 tiny symbols and ends as 8 pieces.
+experiment:
+  corpus_note: Made-up sample data. Nothing in it is a claim about the world. The tokenizer is ExplodeAI's teaching version,
+    not any company's.
+  labels:
+    Text to tokenize: Your sentence
+    Merges learned: How many pairs to glue
+    Base alphabet: Starting symbols
+    256 bytes: All 256 basic symbols
+    Training characters: Only letters seen in practice
+    Pre-tokenizer: Word splitter
+    Words: Split into words
+    None: Don't split
+    Merge order when encoding: Order of gluing when translating
+    Learned order: Same order as learned
+    Reversed: Backwards
+    Tokens: Pieces
+    Replay: Replay the gluing
+    Merges: Gluing steps
+    Trade-off: Trade-off
+    Merges applied: Gluing steps done
+    Corpus bytes/token (in-sample): Practice-text bytes per piece (in-sample)
+    New token: New piece
+    Vocabulary: Catalogue size
+    Your text · tokens: Your sentence · pieces
+    Tokens your text needs, by vocabulary size: Pieces your sentence needs, by catalogue size
+  guide:
+    intro: Every run here is a real tokenizer. Start by dragging the "How many pairs to glue" slider. It is the most useful
+      control.
+    presets:
+      Familiar sentence:
+        try: Drag the "How many pairs to glue" slider from 0 up to 100, then to 300.
+        notice: The sentence needs 35 pieces at 0 gluing steps, 15 at 25, 8 at 100, and still 8 at 300. At 100, every word
+          is a single piece. After that, more gluing does not help this sentence, but the catalogue keeps growing (257, 282,
+          357, 473). At 300 only 216 steps are learned, because the learner runs out of pairs to glue, so the catalogue is
+          257 + 216 = 473 entries.
+      Unseen words:
+        try: Click it, then set "How many pairs to glue" to 100.
+        notice: '18 pieces. Parts the tokenizer learned come out as single pieces (" lantern", " clock"), and the rest of
+          each new word is spelled out in small pieces: "ke", "ep", "er", "s" finish "lanternkeepers", "w", "or", "k" finish
+          "clockwork", and "rewound" breaks into 7 pieces (a space, r, e, w, o, un, d). At 0 gluing steps it is 37 pieces,
+          at 25 it is 23 and at 300 it is 16.'
+      Accents and emoji:
+        try: Click it, set "Starting symbols" to "Only letters seen in practice", then to "All 256 basic symbols".
+        notice: 'With only practice letters, 4 pieces come out as unknown: the capital C (the practice text has none), é,
+          è and ☕, and the text can no longer be decoded. With all 256 basic symbols nothing is unknown (17 pieces) and the
+          text comes back exactly. é, è and ☕ show up as PARTIAL pieces, because each is spelled with 2 or 3 bytes. A byte
+          alphabet can spell anything.'
+      Numbers (none in the corpus):
+        try: Click it, then set "Starting symbols" to "Only letters seen in practice".
+        notice: 'The practice text has no digits, so every digit stays a separate symbol: 28 pieces. With only practice letters,
+          six of them come out as unknown. A tokenizer can only be as good as the text it learned from.'
+    ideas:
+    - do: Open the "Gluing steps" tab and find " keeper" under "How the most frequent words were built".
+      see: Seven starting symbols become one piece in six gluing steps (er, ep, ke, " ke", " keep", " keeper"). In the "Replay
+        the gluing" tab you can watch the same six steps, mixed in with the other words' steps.
+    - do: Set "Order of gluing when translating" to "Backwards" (try 200 steps on "The keeper trimmed the lantern wick.").
+      see: '" keeper" and " lantern" are no longer single pieces. Later recipes need pieces that earlier recipes made, so
+        when the order is backwards they cannot be used.'
+    - do: Set "Word splitter" to "Don't split" with 150 steps.
+      see: 84 learned pieces now stretch across the edge of a word, such as "e " (the end of one word glued to a space). The
+        word splitter is what stops that.
+    - do: Open the "Trade-off" tab.
+      see: The chart shows the size of the catalogue against the number of pieces your sentence needs, with your setting marked.
+        More gluing means fewer pieces, but each extra step helps less.
+    tabs:
+      tokens: Your sentence cut into pieces, the way this tokenizer sees it. The count at the top is how many pieces this
+        small tokenizer needs. Real AI models use their own tokenizers, so their counts differ.
+      replay: Step through the gluing that was done to your sentence, one step at a time, using the Previous and Next buttons
+        or the "Merges applied" slider. The piece that just changed is highlighted.
+      merges: The gluing steps in the order they were learned. The earliest steps are the most common pairs in the practice
+        text.
+      tradeoff: Catalogue size against the number of pieces your sentence needs, with your current setting marked. Designers
+        of tokenizers have to balance these two.
+challenges:
+  unknown-characters:
+    title: The letters that vanished
+    brief: The capital C, the accented letters and the emoji come out as unknown, so the text cannot be turned back. Fix it
+      without changing the text, the gluing steps or the word splitter.
+    hint: Which symbols can the tokenizer spell with before it has learned anything? Does the practice text contain "é", or
+      a capital C?
+    explanation: A set of starting symbols made only from the practice letters has no way to spell a character it never saw.
+      The 256 bytes include every possible value, so any character can be spelled, even if it takes several single-byte pieces.
+  too-many-tokens:
+    title: Over the piece budget
+    brief: This sentence needs far more pieces than the budget allows. Get it down to 12 pieces or fewer without changing
+      the text or how it is cut into words.
+    hint: With no gluing, how many bytes does each piece hold? Open the Trade-off tab.
+    explanation: Every gluing step adds one entry to the catalogue and lets a common sequence travel as a single piece. More
+      steps mean a bigger catalogue and shorter sequences, until every word in the practice text is a single piece and there
+      is nothing left to glue.
+  merges-out-of-order:
+    title: Gluing done backwards
+    brief: The translator repeats the gluing with the last-learned step first, so words the tokenizer learned as single pieces
+      come out in fragments. Make " keeper" and " lantern" single pieces again, using only the translating settings.
+    hint: The step that builds " keeper" joins symbols that earlier steps made. What if those earlier steps have not happened
+      yet?
+    explanation: Later gluing steps are built from the results of earlier ones. In reverse order, a step always runs before
+      the steps that would make its ingredients, so only steps that join two single bytes can work. The learned order is part
+      of the tokenizer.
+  merging-across-words:
+    title: Pieces that swallowed the spaces
+    brief: With no word splitter, the learner glued across spaces and made pieces like " the " and "d the ". Stop any learned
+      piece from stretching across two words, without changing how many steps are learned.
+    hint: Where does the learner get the edges it must not glue across?
+    explanation: Pairs are only counted inside each cut piece, so a word splitter that cuts at spaces keeps every glued piece
+      inside a single word. GPT-2's version also keeps punctuation apart from words.
+tour:
+  corpus:
+    title: A tokenizer learns from text
+    body: It finds out which groups of letters are common. Change the practice text and you change the pieces it learns.
+  pre_tokenizer:
+    title: Cut the text into word pieces
+    body: Gluing never crosses these cuts, and a space stays stuck to the front of its word.
+  base_alphabet:
+    title: Start from bytes
+    body: 256 basic symbols can spell any text, so nothing is ever unknown.
+  merge_learner:
+    title: Glue the most common pair, again and again
+    body: Each step glues the commonest neighbouring pair into a new symbol. Drag the slider in the experiment to watch it
+      happen.
+  vocabulary:
+    title: More gluing, a bigger catalogue
+    body: Every step adds one entry. A bigger catalogue means shorter sequences, but more entries to keep.
+  input_text:
+    title: New text, including words never seen
+    body: Words the tokenizer has never seen still get pieces. They are spelled out from smaller pieces it already knows.
+  encoder:
+    title: Repeat the gluing in order
+    body: Turning text into numbers repeats the learned gluing in the order it was learned. The piece count only holds for
+      this tokenizer.
+  decoder:
+    title: Turn it back and compare
+    body: Joining the bytes of the pieces gives back your exact text. Reading only some of the pieces can break a character
+      in half.
+reconstruction:
+  prompt: Put the stages in an order that could really work. Each stage must come after everything it needs.
+visuals:
+  ablation:
+    label: Real run, one stage removed
+    description: The tokenizer really runs with the chosen stage taken out, side by side with the full one.
+  exploded-view:
+    label: Picture of the idea
+    description: The positions and shapes are a visual way of explaining. The order of the steps follows the real order.
+  data-flow:
+    label: Animated picture of the idea
+    description: The moving dots show which stage feeds which. The speed means nothing.
+  experiment:
+    label: Real run, teaching version
+    description: A real tokenizer that learns by gluing common pairs (byte-pair encoding), written for teaching. It is not
+      any company's tokenizer.
+  merge-replay:
+    label: Real run, replayed
+    description: The real gluing steps that were applied to your sentence, replayed one at a time.
+  tradeoff:
+    label: Real numbers, tiny practice text
+    description: Real counts from this small practice text. Bigger real tokenizers behave in the same way, but with different
+      numbers.

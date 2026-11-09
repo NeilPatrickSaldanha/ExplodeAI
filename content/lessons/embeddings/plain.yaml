@@ -339,6 +339,8 @@ experiment:
     Tokens: Pieces
     Vector: The numbers
     Tokens the model reads: Pieces the model reads
+    Library vectors: Example lists of numbers
+    Your vector: Your list of numbers
   presets:
     Where it goes wrong:
       note: The train sentence never says "rails", and this small model puts it only 14th out of 24, below a truck, a horse and a plane. Being close in meaning is not the same as being correct.

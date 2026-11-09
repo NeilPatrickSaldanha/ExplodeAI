@@ -1,14 +1,15 @@
 import { CheckCircle, XCircle } from '@phosphor-icons/react'
 import type { AblationOutcome } from '../../api/types'
+import { Named } from '../../voice'
 
 /** One side of the RAG "what breaks if removed?" comparison. */
 export function ragOutcome(o: AblationOutcome) {
   return (
     <>
       <dl className="outcome__stats">
-        <div><dt>Chunks</dt><dd>{o.chunks}</dd></div>
-        <div><dt>Retrieved</dt><dd>{o.retrieved.length}</dd></div>
-        <div><dt>In prompt</dt><dd>{o.prompt.included.length}</dd></div>
+        <div><dt><Named label="Chunks" /></dt><dd>{o.chunks}</dd></div>
+        <div><dt><Named label="Retrieved" /></dt><dd>{o.retrieved.length}</dd></div>
+        <div><dt><Named label="In prompt" /></dt><dd>{o.prompt.included.length}</dd></div>
       </dl>
       <p className="outcome__answer">
         {o.answer.has_answer ? <CheckCircle weight="fill" aria-hidden className="is-pass" /> : <XCircle weight="fill" aria-hidden className="is-fail" />}

@@ -1,3 +1,4 @@
+import { Named } from '../../voice'
 import { CheckCircle, Pause, Play, SkipBack, SkipForward, XCircle } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import type { TokenizeResult } from '../../api/types'
@@ -81,10 +82,10 @@ export function MergeTable({ result }: { result: TokenizeResult }) {
           <caption className="visually-hidden">Every merge in the order training learned it, with the pair count at that step.</caption>
           <thead>
             <tr>
-              <th scope="col">Rank</th>
-              <th scope="col">Pair</th>
-              <th scope="col">New token</th>
-              <th scope="col">Pair count</th>
+              <th scope="col"><Named label="Rank" /></th>
+              <th scope="col"><Named label="Pair" /></th>
+              <th scope="col"><Named label="New token" /></th>
+              <th scope="col"><Named label="Pair count" /></th>
             </tr>
           </thead>
           <tbody>
@@ -214,7 +215,7 @@ export function TradeoffChart({ result }: { result: TokenizeResult }) {
 
   return (
     <figure className="tradeoff">
-      <figcaption className="tradeoff__title">Tokens your text needs, by vocabulary size</figcaption>
+      <figcaption className="tradeoff__title"><Named label="Tokens your text needs, by vocabulary size" /></figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} className="tradeoff__svg" role="img" aria-label={`Line chart: as the vocabulary grows from ${x0} to ${x1} entries, your text needs ${ys[0]} down to ${ys[ys.length - 1]} tokens.`} onMouseLeave={() => setHover(null)}>
         {yTicks.map((t) => (
           <g key={t}>
@@ -257,10 +258,10 @@ export function TradeoffChart({ result }: { result: TokenizeResult }) {
           <caption className="visually-hidden">The same data as the chart, plus how many corpus bytes each token covers.</caption>
           <thead>
             <tr>
-              <th scope="col">Merges</th>
-              <th scope="col">Vocabulary</th>
-              <th scope="col">Your text · tokens</th>
-              <th scope="col">Corpus bytes/token (in-sample)</th>
+              <th scope="col"><Named label="Merges" /></th>
+              <th scope="col"><Named label="Vocabulary" /></th>
+              <th scope="col"><Named label="Your text · tokens" /></th>
+              <th scope="col"><Named label="Corpus bytes/token (in-sample)" /></th>
             </tr>
           </thead>
           <tbody>

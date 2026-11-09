@@ -22,7 +22,53 @@ const LESSONS = [
     term: 'Token',
     banned: /\b(cosine|PCA|pooling|vectors?)\b/i,
   },
+  {
+    path: '/lessons/tokenization',
+    stage: /Number translator/,
+    everyday: 'Number translator',
+    technical: 'Encoder',
+    control: 'Starting symbols',
+    controlTech: 'Base alphabet',
+    tab: 'Replay the gluing',
+    term: 'Encoding',
+    banned: /\b(corpus|BPE|bytes?|vocabulary|alphabet)\b/i,
+  },
+  {
+    path: '/lessons/rag-pipeline',
+    stage: /Card cutter/,
+    everyday: 'Card cutter',
+    technical: 'Chunker',
+    control: 'How to search',
+    controlTech: 'Retrieval',
+    tab: 'Cards',
+    term: 'Chunk',
+    banned: /\b(chunks?|retrieval|vectors?|embedd\w+)\b/i,
+  },
+  {
+    path: '/lessons/attention',
+    stage: /Match grid/,
+    everyday: 'Match grid',
+    technical: 'Score grid',
+    control: 'Hide the words that come later',
+    controlTech: 'Causal mask (hide later words)',
+    tab: 'Who looks at whom',
+    term: 'Score',
+    banned: /\b(softmax|queries|vectors?|heads?)\b/i,
+  },
+  {
+    path: '/lessons/agents',
+    stage: /Check the form/,
+    everyday: 'Check the form',
+    technical: 'Check',
+    control: 'Limit on number of steps',
+    controlTech: 'Step limit',
+    tab: 'Step by step',
+    term: 'Validation',
+    banned: /\b(schema|JSON|tokens?|context)\b/i,
+  },
 ]
+
+const escape = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 for (const l of LESSONS) {
   test(`${l.path}: plain words first, the technical name beside them`, async ({ page }) => {
@@ -37,7 +83,7 @@ for (const l of LESSONS) {
     await expect(terms).toContainText(l.term)
     // The experiment's controls and tabs use everyday names and keep the technical one small beside them.
     await page.getByRole('tab', { name: 'Experiment', exact: true }).click()
-    await expect(page.getByRole('group', { name: new RegExp(`${l.control} \\(${l.controlTech}\\)`) })).toBeVisible()
+    await expect(page.getByRole('group', { name: new RegExp(`${escape(l.control)} \\(${escape(l.controlTech)}\\)`) })).toBeVisible()
     await expect(page.getByRole('tab', { name: new RegExp(l.tab) })).toBeVisible()
   })
 

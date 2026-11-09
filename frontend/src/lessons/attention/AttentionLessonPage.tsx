@@ -38,15 +38,19 @@ export function AttentionLessonPage({ lesson }: { lesson: Lesson }) {
       spec={spec}
       readouts={readoutsFromResult(exp.result)}
       live={!!exp.result}
-      eyebrow={`LESSON 04 · WORDS → QUERIES, KEYS, VALUES → MIXED MEANING · ${lesson.estimated_minutes} MIN`}
+      eyebrow={`LESSON 04 · ${lesson.ui?.eyebrow ?? 'WORDS → QUERIES, KEYS, VALUES → MIXED MEANING'} · ${lesson.estimated_minutes} MIN`}
       title={
         <>
           attention,&nbsp;<em>exploded</em>
         </>
       }
-      summary="Watch every word decide which other words to look at, then blend what it finds. Click any part to see what goes in, what comes out, and what breaks without it."
-      sceneTitle="Exploded view of one self-attention layer"
-      flowLabels={FLOW_LABELS}
+      summary={lesson.ui?.summary ?? 'Watch every word decide which other words to look at, then blend what it finds. Click any part to see what goes in, what comes out, and what breaks without it.'}
+      sceneTitle={lesson.ui?.scene_title ?? 'Exploded view of one self-attention layer'}
+      flowLabels={{
+        document: lesson.ui?.flow_document ?? FLOW_LABELS.document,
+        vector: lesson.ui?.flow_vector ?? FLOW_LABELS.vector,
+        query: lesson.ui?.flow_query ?? FLOW_LABELS.query,
+      }}
       renderIO={(c) => <AttendStageIO component={c} result={exp.result} />}
       renderBreaks={(c) => (
         <BreaksCard
@@ -69,7 +73,7 @@ export function AttentionLessonPage({ lesson }: { lesson: Lesson }) {
               challenges={challenges}
               active={challenge}
               solved={progress.solved}
-              intro="Each setup below makes attention misbehave for one specific reason. Find it in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result."
+              intro={lesson.ui?.challenges_intro ?? 'Each setup below makes attention misbehave for one specific reason. Find it in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result.'}
               onCheck={(c) => api.checkAttendChallenge(lesson.id, c.id, exp.params)}
               onStart={startChallenge}
               onExit={exitChallenge}

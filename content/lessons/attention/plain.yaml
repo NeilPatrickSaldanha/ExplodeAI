@@ -1,0 +1,569 @@
+# Plain-words voice for Lesson 04. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
+# nothing about AI yet. Same facts and numbers; see docs/PLAIN_WORDS.md for the rules.
+title: Attention, exploded
+summary: Watch every word in a sentence decide which other words to look at, then blend what it finds. Run a real (toy) layer
+  of attention step by step, break it on purpose, and rebuild it.
+objectives:
+- Follow one group of questions, tags and messages from the words to the final blended lists.
+- Explain why the scores are kept a sensible size, why a rule hides later words, and why words need seat numbers.
+- Read an attention grid without mistaking it for a complete explanation of a model.
+- 'Spot broken setups: peeking ahead, one word taking everything, and attention that ignores word order.'
+ui:
+  eyebrow: WORDS → QUESTIONS, TAGS, MESSAGES → BLENDED MEANING
+  scene_title: Exploded view of one layer of attention
+  flow_document: Words
+  flow_vector: Lists of numbers
+  flow_query: Scores and shares
+  summary: Watch every word decide which other words to look at, then blend what it finds. Click any part to see what goes
+    in, what comes out, and what breaks without it.
+  challenges_intro: Each puzzle below makes attention misbehave for one specific reason. Find the reason in the experiment,
+    then fix it using the controls that are left unlocked. The server runs your settings again and checks the result.
+components:
+  tokens:
+    label: Word cards
+    subtitle: Sentence into words
+    short: Your sentence, cut into separate words.
+    detail: Attention works on a list of items. This toy splits your sentence into words and punctuation marks, up to 12 of
+      them.
+    inputs:
+    - Your sentence
+    outputs:
+    - Words
+    breaks_if_removed: There are no words, so there is nothing for the words to look at.
+    explain:
+      what: Your sentence, cut into separate words and punctuation marks. Each word will get its own turn to decide which
+        other words to look at.
+      why: The machine works on a list of items, one for each word. So the sentence has to become a list first.
+      analogy: Dealing the words of a sentence out as cards, in order. Each card will get a turn to ask a question of the
+        others.
+      happens:
+      - Your sentence is split into words and punctuation marks.
+      - At most 12 are kept here so the grid stays easy to read.
+      - Each word keeps its place in the sentence.
+      goes_to: The next stage, which gives every word a list of numbers and a seat number.
+      example:
+        input: the cat sat on the mat
+        steps:
+        - Split at word edges
+        - Six words, numbered 0 to 5
+        output: 6 words (an illustration)
+      misconfigured: A real system cuts text into smaller pieces than words, as in Lesson 2. This toy keeps whole words so
+        the grid stays readable.
+      story: The machine works on a list of items, so the sentence is first cut into words. Every word will get a turn to
+        look at all the others. A real model cuts text into smaller pieces, as in Lesson 2, but this toy uses whole words
+        to keep the grid easy to read.
+      thread: '"the cat sat on the mat" becomes 6 words, numbered 0 to 5. The word "the" appears twice, at places 0 and 4.'
+      check:
+        question: Why does the toy keep each word's place number?
+        answer: The next stage adds a pattern for the place to each word's numbers, so it needs to know each word's place.
+      terms:
+      - word: Attention
+        meaning: A way of letting every word in a sentence look at the other words and decide which ones matter most for it.
+      - word: Self-attention
+        meaning: 'Attention where the sentence looks at itself: every word looks at the other words in the same sentence.'
+  embed_pos:
+    label: Numbers and seat number
+    subtitle: Meaning plus place
+    short: Each word becomes a list of numbers, plus a pattern that says where it sits.
+    detail: Each word gets a fixed list of 64 random numbers, and a pattern for its place in the sentence is added to it.
+      Without the place, attention cannot tell what order the words came in.
+    inputs:
+    - Words
+    outputs:
+    - Lists of numbers, one per word
+    breaks_if_removed: Without seat numbers, and with nothing hiding later words, each word comes out the same whatever order
+      the words arrive in, so the sentence is treated as a bag of words.
+    explain:
+      what: Each word becomes a list of 64 numbers, and a pattern is added so the layer knows where each word sits.
+      why: Attention only compares lists of numbers, so by itself it cannot tell which word came first. The place has to be
+        added in.
+      analogy: Writing each word on a card and stamping its seat number on it.
+      happens:
+      - Each word gets a fixed list of random numbers. The same word always gets the same list.
+      - A pattern for its place is added, and the result is scaled so the numbers keep a steady size.
+      - The result goes on to the next stage.
+      goes_to: The question, tag and message stage.
+      example:
+        input: '"dog" at place 0'
+        steps:
+        - Look up the fixed list for "dog"
+        - Add the pattern for place 0
+        output: One list of 64 numbers (an illustration)
+      misconfigured: Without the place pattern, and with nothing hiding later words, "dog bites man" and "man bites dog" look
+        exactly the same to the layer.
+      story: Each word becomes a list of numbers, called a vector (64 numbers here). On its own, attention has no sense of
+        order, so a pattern that says where each word sits is added to the vector. Without it, and with nothing hiding later
+        words, each word gets exactly the same result whatever order the words arrive in, so "dog bites man" and "man bites
+        dog" cannot be told apart.
+      thread: Each of our 6 words becomes 64 numbers. The two "the" words start with the same numbers, but they differ once
+        their places are added.
+      check:
+        question: Why does the layer need to know where each word sits?
+        answer: Attention alone does not know word order. Without place information (and with nothing hiding later words),
+          each word gets the same result however the words are arranged.
+      terms:
+      - word: Vector
+        meaning: A list of numbers in a fixed order. Here each word gets one with 64 numbers.
+      - word: Position pattern
+        meaning: A pattern of numbers added to a word's vector to say where the word sits in the sentence.
+  qkv:
+    label: Question, tag and message
+    subtitle: Three jobs per word
+    short: Every word makes a question, a name tag and a message.
+    detail: Three tables of numbers turn each word's list into a query (what it is looking for), a key (what it offers) and
+      a value (what it passes on). Several groups, called heads, do this side by side.
+    inputs:
+    - Lists of numbers, one per word
+    outputs:
+    - Questions
+    - Tags
+    - Messages
+    breaks_if_removed: Words are compared directly with themselves, so each word's strongest match is simply itself.
+    explain:
+      what: 'Every word makes three new lists of numbers: a query (what it is looking for), a key (what it offers) and a value
+        (what it hands over).'
+      why: Splitting a word into three jobs lets the layer decide who to look at (questions matched against tags) separately
+        from what to take (the messages).
+      analogy: 'At a library: your question is the query, the labels on the shelves are the keys, and the books are the values.
+        You do not take one book. You get a blend of every book, weighted by how well its label matched your question.'
+      happens:
+      - Each word's list is multiplied by three different tables of numbers.
+      - That gives its query, its key and its value.
+      - With several heads, each head makes its own set.
+      goes_to: The match grid (questions and tags) and the blender (messages).
+      example:
+        input: The numbers for "cat"
+        steps:
+        - 'Multiplied by the first table: its question'
+        - 'Multiplied by the second: its tag'
+        - 'Multiplied by the third: its message'
+        output: Three lists per word per head (an illustration)
+      misconfigured: In this toy the tables are fixed and random, so what the questions look for means nothing. In a trained
+        model they are learned.
+      story: Each word's numbers are turned into three new lists. The query says what this word is looking for. The key says
+        what this word offers, so others can find it. The value is what it hands over if someone picks it. They are made by
+        multiplying by three different tables of numbers. With 2 heads, each head reads all 64 numbers and makes its own 32-number
+        query, key and value. A head is one separate set of questions, tags and messages.
+      thread: For the word "sat", the query asks the other words, and each other word's key says what it offers in reply.
+      check:
+        question: What do query, key and value mean in plain words?
+        answer: 'Query: what I am looking for. Key: what I offer, so others can find me. Value: what I hand over if you pick
+          me.'
+      terms:
+      - word: Query
+        meaning: What a word is looking for.
+      - word: Key
+        meaning: What a word offers, so that others can find it.
+      - word: Value
+        meaning: What a word hands over when another word picks it.
+      - word: Head
+        meaning: One separate set of queries, keys and values. A layer can have several heads, working side by side.
+  scores:
+    label: Match grid
+    subtitle: Who matches whom
+    short: Every question is held up against every tag.
+    detail: Each word's query is compared with every word's key to fill a grid, then divided by a number so the scores stay
+      a sensible size.
+    inputs:
+    - Questions
+    - Tags
+    outputs:
+    - Match scores
+    breaks_if_removed: Every visible word gets the same share, so each result is just an average.
+    explain:
+      what: Every word's query is held up against every word's key, filling a grid of scores. The scores are then divided
+        by a number that keeps them from growing too large.
+      why: A high score means this word's question matches that word's tag, so it should pay more attention to it.
+      analogy: Holding your question next to every shelf label and noting how well each one matches.
+      happens:
+      - Every query is compared with every key by multiplying them together and adding up (a dot product).
+      - The result is divided by the square root of the head size. In this lesson you can turn that off to see why it is there.
+      - The result is a grid, one for each head.
+      goes_to: The no-peeking rule, which can hide some of the scores.
+      example:
+        input: 6 questions and 6 tags
+        steps:
+        - 36 comparisons
+        - Each divided by the same number
+        output: A 6 × 6 grid of scores (an illustration)
+      misconfigured: Without the division, a wide head gives scores that are far apart, and the next stage then gives almost
+        all the attention to one word. The grid also grows with the square of the sentence length.
+      story: 'Every word''s query is compared with every word''s key. A high score means a good match. The result is a grid:
+        each row is a word that is asking, each column is a word that is being looked at. The scores are divided by the square
+        root of the head size to keep them in a sensible range.'
+      thread: 6 words give a 6 × 6 grid, 36 scores, for each head.
+      check:
+        question: Why are the scores divided by the square root of the head size?
+        answer: Without it, the scores spread further apart as the head gets bigger, and the next stage can pile almost everything
+          onto one word. Dividing keeps the spread steady.
+      terms:
+      - word: Score
+        meaning: A number that says how well one word's query matches another word's key.
+      - word: Dot product
+        meaning: A way to compare two lists of numbers by multiplying them number by number and adding up the results.
+  mask:
+    label: No-peeking rule
+    subtitle: Hide what comes later
+    short: Hides the words a word is not allowed to see.
+    detail: A causal mask sets the scores of later words to the lowest possible number, so they end up with no attention at
+      all. Padding masks are a different thing.
+    inputs:
+    - Match scores
+    outputs:
+    - Match scores, with some hidden
+    breaks_if_removed: Every word can look at the words after it, so it can peek at the future.
+    explain:
+      what: Hides the words a word is not allowed to see. A causal mask hides every word that comes later in the sentence.
+      why: A model that writes text one word at a time must not look at words it has not written yet.
+      analogy: Covering the rest of the page with a card, so you can only read what is already written.
+      happens:
+      - Scores for later words are set to the lowest possible number.
+      - The next stage turns those into exactly zero attention.
+      - A word can still look at itself.
+      goes_to: The attention shares stage.
+      example:
+        input: Scores for "sat" in "the cat sat on the mat"
+        steps:
+        - Keep "the", "cat" and "sat"
+        - Hide "on", "the" and "mat"
+        output: Only three scores remain (an illustration)
+      misconfigured: Without the rule, a text-writing model could see words that will not exist yet when it is writing. Do
+        not mix it up with a padding mask, which is a different thing.
+      story: Sometimes a word must not see the words after it, for example when a model writes text one word at a time. The
+        causal mask hides them by setting their scores to the lowest possible number, so they end up with exactly zero attention.
+        A mask is a rule that hides some scores. In this lesson the mask is off until you switch it on.
+      thread: 'With the mask on, the upper-right corner of our grid is hidden: 15 of the 36 squares.'
+      check:
+        question: What does a causal mask stop a word from doing?
+        answer: Looking at the words that come after it.
+      terms:
+      - word: Mask
+        meaning: A rule that hides some of the scores, so those words cannot be looked at.
+      - word: Causal mask
+        meaning: A mask that hides every word that comes later, so a word can only look at words before it (and itself).
+  softmax:
+    label: Attention shares
+    subtitle: Scores become shares
+    short: Turns each row of scores into shares that add up to 100%.
+    detail: A step called softmax turns each row of scores into positive weights that add up to 1. Very big scores make it
+      give nearly everything to one word, which is why keeping the scores a sensible size matters.
+    inputs:
+    - Match scores, some hidden
+    outputs:
+    - Attention shares
+    breaks_if_removed: The raw scores are used as they are, so rows do not add up to 100% and some can be negative.
+    explain:
+      what: Turns each row of scores into shares that add up to 100%.
+      why: Raw scores can be any size and can be negative. Shares that add up to 100% tell each word how to split its attention.
+      analogy: Handing out 100 attention points among the words, with the best matches getting the biggest shares.
+      happens:
+      - Subtract the row's biggest score, so nothing gets too large.
+      - Raise every score to a power, so they are all positive.
+      - Divide each by the row total.
+      goes_to: The blender.
+      example:
+        input: Scores 2.0, 1.0 and 0.0
+        steps:
+        - Raise each to a power
+        - Divide by the total
+        output: About 67%, 24% and 9% (an illustration)
+      misconfigured: When one score is much bigger than the others, almost all the attention goes to that one word. In this
+        toy, an unscaled head that is 64 wide gives almost all its attention to a single word.
+      story: Scores can be any numbers, but we need shares. This step, called softmax, turns each row of scores into positive
+        weights that add up to 100%, giving the biggest share to the biggest scores. These weights are the attention. If one
+        score is far bigger than the rest, softmax gives it almost everything.
+      thread: Averaged over both heads, "sat" gives about 30% of its attention to "on" and splits the rest among the other
+        words and itself. The numbers are random in this toy, so this says nothing about meaning.
+      check:
+        question: Why does each row's attention add up to 100%?
+        answer: Softmax turns the scores into shares of one whole, so each word divides its attention among the words it can
+          see.
+      terms:
+      - word: Softmax
+        meaning: A step that turns a row of scores into shares that add up to 100%.
+      - word: Attention weights
+        meaning: The shares of attention each word gives to every word. They are the output of softmax.
+  mix:
+    label: Message blender
+    subtitle: Blend what it finds
+    short: Blends the messages, using the shares.
+    detail: Each word's new list of numbers is the messages blended using the shares, so it leans towards the words it gives
+      the most attention to.
+    inputs:
+    - Attention shares
+    - Messages
+    outputs:
+    - Blended messages
+    breaks_if_removed: There is a table of shares but nothing is blended, so no new word lists are made.
+    explain:
+      what: Each word's new list of numbers is a blend of the messages, using that word's attention shares.
+      why: 'This is where information actually moves between words: each word takes in a blend of what the others hand over.'
+      analogy: Mixing paints. Each word's colour is a blend of the others, in proportion to its shares.
+      happens:
+      - Each message is multiplied by its share.
+      - The results are added together.
+      - This is done separately for every word and every head.
+      goes_to: The step that joins the heads together.
+      example:
+        input: Shares 70% and 30%, and messages V1 and V2
+        steps:
+        - 70% of V1
+        - 30% of V2
+        - Add them
+        output: One blended list (an illustration)
+      misconfigured: Do not treat the shares as a full explanation of how a model works. Researchers disagree about what counts
+        as an explanation. The table also grows with the square of the sentence length.
+      story: Now each word builds its new list of numbers by blending the messages of the words it looked at, in proportion
+        to the shares. A word that gives the biggest share of its attention to "on" gets the biggest share of its new list
+        from "on"'s message. This weighted sum is the stage where information actually moves between words.
+      thread: '"sat"''s new list is a blend: about 30% from "on", plus smaller shares from the other words and from itself.'
+      check:
+        question: What does the blender produce?
+        answer: A new list of numbers for every word, made by blending the messages of the words (its own included) using
+          the attention shares.
+      terms:
+      - word: Weighted sum
+        meaning: Adding things up after multiplying each by its own share, so bigger shares count for more.
+  output:
+    label: Combine the groups
+    subtitle: One list per word
+    short: The heads' results are joined and shaped back into one list per word.
+    detail: The results of all the heads are joined side by side and multiplied by one more table of numbers, giving a new
+      list for each word.
+    inputs:
+    - Blended messages from each head
+    outputs:
+    - New lists of numbers for the words
+    breaks_if_removed: Each head's result stays separate, so there is no single list for each word.
+    explain:
+      what: The heads' results are joined together and multiplied by one more table of numbers, giving one new list per word.
+      why: Several heads let the layer look for different things at once. One single averaged head could not pay attention
+        to different kinds of information in different places.
+      analogy: Several people each read the same page for a different reason, then put their notes together into one summary.
+      happens:
+      - Each head gives a small result for each word.
+      - The results are joined side by side into a list 64 numbers wide.
+      - One more table of numbers mixes them into the final list.
+      goes_to: In a full model, extra steps and then the next layer.
+      example:
+        input: 2 heads of 32 numbers
+        steps:
+        - Join them into 64 numbers
+        - Multiply by one more table
+        output: One list of 64 numbers per word (an illustration)
+      misconfigured: 'Real models differ in how many heads they have and how wide each is. More heads is not automatically
+        better: in the original tests, too many heads also made things worse.'
+      story: Each head did all of this separately, with its own questions and its own way of matching. The heads' results
+        are joined side by side and passed through one more table of numbers, giving one list per word, the same size as the
+        one that went in. In a real model there are extra steps after this before the next layer.
+      thread: Two heads of 32 numbers are joined into 64 numbers per word, which is a table with 6 rows and 64 columns.
+      check:
+        question: Why use more than one head?
+        answer: The authors' reason is that each head can pay attention to different kinds of information at once, and then
+          the results are combined. In this toy the heads are random, so they do not learn anything.
+      terms:
+      - word: Multi-head attention
+        meaning: Using several heads at once and then combining their results.
+connections:
+  tokens->embed_pos:
+    payload: words
+    explain: Each word needs a list of numbers before any maths can happen, and a seat number so the layer knows where it
+      sits.
+  embed_pos->qkv:
+    payload: lists of numbers
+    explain: From each word's list, the layer makes its question, its name tag and its message. Those three are what attention
+      works with.
+  qkv->scores:
+    payload: questions and tags
+    explain: Questions and tags are compared with each other to find which words match. The messages are not needed yet.
+  scores->mask:
+    payload: match scores
+    explain: The grid of scores passes through the no-peeking rule, which can hide the scores of words that must not be seen.
+  mask->softmax:
+    payload: scores, some hidden
+    explain: The next stage needs the (possibly hidden) scores to turn into shares. A hidden score becomes a share of exactly
+      zero.
+  softmax->mix:
+    payload: shares
+    explain: The shares tell the blender how much of each word's message to take.
+  qkv->mix:
+    payload: messages
+    explain: The things being blended are the messages made earlier, so the blender needs them as well as the shares.
+  mix->output:
+    payload: blended messages
+    explain: Each head produced its own blended lists. The last stage joins them into one list per word.
+big_picture:
+  story: When you read "the cat sat on the mat", the meaning of each word depends on the others. Attention is how a computer
+    model lets every word look at every other word and decide which ones matter to it. Each word asks a question, every word
+    offers something in reply, the best matches get the biggest share of attention, and each word ends up as a blend of what
+    it paid attention to. This lesson runs one real layer of attention, step by step. It is a toy that uses random numbers,
+    so it shows how the idea works, not what a trained model has learned.
+  analogy:
+    title: A classroom where every student can listen to everyone
+    mapping:
+    - part: Word cards
+      becomes: students lining up, one for each word
+    - part: Numbers and seat number
+      becomes: each student's profile, plus a seat number
+    - part: Question, tag and message
+      becomes: each student's question, name tag, and what they would say if called on
+    - part: Match grid
+      becomes: every student holding their question up against everyone's name tag
+    - part: No-peeking rule
+      becomes: a rule that you cannot listen to students who have not spoken yet
+    - part: Attention shares
+      becomes: turning the scores into shares of attention that add up to 100%
+    - part: Message blender
+      becomes: each student mixing together what the others said, in proportion to those shares
+    - part: Combine the groups
+      becomes: several small discussion groups at once, whose notes are then put together
+    breaks: Real models learn what to ask and what to offer by practising on huge amounts of text. In this toy the numbers
+      are random, so who listens to whom is arbitrary. The grid shows how the idea works, not what a trained model understands.
+  example:
+    title: The sentence we will follow
+    input: the cat sat on the mat
+    note: Six words. Each becomes 64 numbers. Each of the two groups reads all 64 and makes its own 32-number question, tag
+      and message.
+experiment:
+  corpus_note: 'A toy layer: every word gets a fixed list of random numbers, and the tables that make questions, tags and
+    messages are fixed and random too. Nothing is trained, so the patterns show how attention works, not what a trained model
+    pays attention to.'
+  labels:
+    Heads: Groups looking at once
+    Scale scores by 1/√d_k: Keep the scores a sensible size
+    Causal mask (hide later words): Hide the words that come later
+    Position vectors: Seat numbers
+    Head to show: Which group to show
+    Average: All groups averaged
+    Head 1: Group 1
+    Head 2: Group 2
+    Head 3: Group 3
+    Head 4: Group 4
+    Head 5: Group 5
+    Head 6: Group 6
+    Head 7: Group 7
+    Head 8: Group 8
+    Attention grid: Who looks at whom
+    One word: One word
+    Q · K · V: Question, tag, message
+    Output: New numbers for each word
+    Score spread before scaling: How spread out the scores were
+    Score spread used: How spread out the scores are now
+    Strongest weight (average): Biggest share (average)
+    Attention on later words: Attention on later words
+    Tokens: Words
+    Weights: Shares
+    Row sums: Row totals
+  guide:
+    intro: This is a toy layer with random numbers, so the patterns show how attention works, not what a trained model has
+      learned. Read the grid one row at a time.
+    presets:
+      Cat:
+        try: Click it and open the "Who looks at whom" tab. Click a row label such as "sat".
+        notice: Each row is a word that is asking, and the numbers in a row add up to about 100%. The biggest share (the average
+          of each row's largest share, over both groups) is about 35%. For "sat", about 30% goes to "on" (averaged over the
+          two groups). Then switch "Hide the words that come later" on, and 15 of the 36 squares are hatched out.
+      Pronoun:
+        try: Click it, open the "One word" tab and pick "it".
+        notice: 'In a trained model, "it" might pay attention to "animal". In this toy "it" gives its biggest share (about
+          28%) to "too", and only about 9% to "animal". That 28% comes mostly from the second group, so use "Which group to
+          show" to compare: the first group looks most at "tired". The numbers are random, so they carry no meaning. That
+          is the point of the warning on this lesson.'
+      Order:
+        try: Click it, turn "Seat numbers" Off, then On, and press "Check my fix" in "Break & fix", under "Order-blind attention".
+        notice: 'With seat numbers off (and the no-peeking rule off) the layer cannot tell "dog bites man" from "man bites
+          dog", and the check shows "Order matters: no". With seat numbers on, it shows "yes". (The size of the difference
+          is exactly 0 in one case and about 0.45 in the other.) You can also see it in the Break & fix check, and in the
+          "What breaks if removed?" card on "Numbers and seat number".'
+    ideas:
+    - do: Set "Groups looking at once" to 1 and "Keep the scores a sensible size" to Off.
+      see: 'The biggest share averages about 94% for "the cat sat on the mat": with big scores, almost all the attention piles
+        onto one word. Turn the size-keeping on and it falls to about 42%. (With 8 groups the effect is smaller: about 63%
+        without it and 37% with it.)'
+    - do: Use "Which group to show" to switch between all groups averaged, Group 1 and Group 2.
+      see: The groups have different patterns because each uses its own random tables of numbers. In a trained model, groups
+        can end up doing different jobs, though not every group is equally useful.
+    - do: Turn "Hide the words that come later" on and read the later-words figure under the grid.
+      see: It drops to 0%. Words can no longer look ahead.
+    - do: Open the "One word" tab and pick different words.
+      see: 'You can see exactly where each word looks: the shares it gives to every word. Its new list is a blend of the words''
+        messages using those shares.'
+    tabs:
+      grid: Rows are words that ask, columns are the words they look at. The numbers in each row add up to about 100%. Click
+        a row label to pick a word. Hatched squares are hidden by the no-peeking rule. (For sentences longer than 8 words
+        the squares show bars only. Hover over a square to read its number.)
+      word: Pick one word to see the shares it gives to every word. Its new list is a blend of the words' messages using those
+        shares.
+      qkv: 'The three lists each word makes (the first few of their numbers): a question, a tag and a message, for the group
+        you chose.'
+      out: The final list of numbers for each word after the groups are combined. In a real model these would go through extra
+        steps before the next layer.
+challenges:
+  peeking:
+    title: The model that cheats
+    brief: This layer is meant to write text from left to right, so each word may only see the words before it. Right now
+      the words look ahead. Fix it without changing the sentence.
+    hint: Which control hides the later words?
+    explanation: A causal mask sets the scores of later words to the lowest possible number before the shares are worked out,
+      so they get exactly zero attention. Without it, every word can look at words that would not exist yet when the model
+      is writing.
+  one-word-takes-all:
+    title: One word takes everything
+    brief: With a wide group and no size-keeping, almost every word pays attention to a single word. Spread the attention
+      out without changing the sentence.
+    hint: Scores grow with the width of the group. What did the original paper divide them by?
+    explanation: Unscaled scores spread out by about the square root of the head width, so a 64-wide head gives scores far
+      apart and the shares become almost all-or-nothing. Dividing by that square root, or splitting into four or more narrower
+      heads, keeps the attention spread out. Two heads are not enough on their own without the division.
+  bag-of-words:
+    title: Attention that ignores order
+    brief: This layer gives each word the same result for "dog bites man" and "man bites dog", whichever order the words come
+      in. Make it sensitive to word order without changing the sentence.
+    hint: What tells attention where each word sits?
+    explanation: Attention only compares lists of numbers, so without place information it treats the sentence as a pile of
+      words. Adding seat numbers makes each word's result depend on the order. (A rule hiding later words would also do it,
+      but that rule is locked in this puzzle.)
+tour:
+  tokens:
+    title: Start with the words
+    body: The sentence is cut into words, and every word will get its own turn to decide what to look at.
+  embed_pos:
+    title: Numbers plus a seat number
+    body: Each word becomes a list of numbers, and a pattern for its place is added, because attention alone cannot tell word
+      order.
+  qkv:
+    title: Question, tag, message
+    body: Every word makes a question (what it looks for), a tag (what it offers) and a message (what it hands over).
+  scores:
+    title: Compare everything
+    body: Each question is held up against every tag. The scores are divided by a number so they do not grow too large.
+  mask:
+    title: No peeking
+    body: When writing text, later words are hidden so a word cannot see the future.
+  softmax:
+    title: Scores become shares
+    body: Each row of scores is turned into shares that add up to 100%.
+  mix:
+    title: Blend the messages
+    body: Each word's new list leans towards the words it pays most attention to. A picture of these shares is not a full
+      explanation of a model.
+  output:
+    title: Combine the groups
+    body: Several groups (heads) work side by side. Their results are joined and shaped back into one list per word.
+reconstruction:
+  prompt: Put the stages in an order that could really work. Each stage must come after everything it needs.
+visuals:
+  ablation:
+    label: Real run, one step removed
+    description: The toy layer really runs with the chosen step taken out, side by side with the full layer.
+  exploded-view:
+    label: Picture of the idea
+    description: The positions and shapes are a visual way of explaining. The order of the steps follows the real order.
+  data-flow:
+    label: Animated picture of the idea
+    description: The moving dots show which step feeds which. Solid lines carry words, dashed lines carry lists of numbers,
+      and dotted lines carry scores and shares. The speed means nothing.
+  experiment:
+    label: Real run, toy layer
+    description: A real layer of attention with fixed random numbers runs on your sentence. It shows how the idea works, not
+      what a trained model pays attention to.

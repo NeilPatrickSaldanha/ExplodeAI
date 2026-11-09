@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { AttendResult } from '../../api/types'
 import { TokenHeat } from '../embeddings/EmbedViews'
+import { Named } from '../../voice'
 
 const pct = (w: number) => `${Math.round(w * 100)}%`
 
@@ -168,21 +169,21 @@ export function StatsStrip({ result }: { result: AttendResult }) {
   return (
     <dl className="outcome__stats" aria-label="Numbers from this run">
       <div>
-        <dt>Score spread before scaling</dt>
+        <dt><Named label="Score spread before scaling" /></dt>
         <dd>
           {s.score_std_raw.toFixed(1)} <span className="label">EXPECTED ≈ √{s.head_dim} = {s.expected_raw_std.toFixed(1)}</span>
         </dd>
       </div>
       <div>
-        <dt>Score spread used</dt>
+        <dt><Named label="Score spread used" /></dt>
         <dd>{s.score_std_used.toFixed(1)}</dd>
       </div>
       <div>
-        <dt>Strongest weight (average)</dt>
+        <dt><Named label="Strongest weight (average)" /></dt>
         <dd>{pct(s.mean_max_weight)}</dd>
       </div>
       <div>
-        <dt>Attention on later words</dt>
+        <dt><Named label="Attention on later words" /></dt>
         <dd>{pct(s.future_mass)}</dd>
       </div>
     </dl>

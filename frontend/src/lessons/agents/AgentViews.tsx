@@ -2,6 +2,7 @@ import { CheckCircle, HandPalm, Prohibit, Warning, XCircle } from '@phosphor-ico
 import type { ReactNode } from 'react'
 import { STATUS_TEXT, fmt } from './agentText'
 import type { AgentDecision, AgentMessage, AgentResult, AgentStep, AgentToolDef } from '../../api/types'
+import { Named } from '../../voice'
 
 /** Arguments as `name: "value"` pairs on one line. */
 export function Args({ args }: { args: Record<string, unknown> }) {
@@ -253,12 +254,12 @@ export function StatsStrip({ result }: { result: AgentResult }) {
   const s = result.stats
   return (
     <dl className="outcome__stats" aria-label="Numbers from this run">
-      <div><dt>Steps</dt><dd>{s.steps}</dd></div>
-      <div><dt>Tools run</dt><dd>{s.tool_runs}</dd></div>
-      <div><dt>Bad calls caught</dt><dd>{s.invalid_calls}</dd></div>
-      <div><dt>Tokens read, total</dt><dd>{s.tokens_total.toLocaleString()}</dd></div>
-      <div><dt>Refunds issued</dt><dd>{result.refunds.length}</dd></div>
-      <div><dt>Without approval</dt><dd>{s.unapproved_side_effects}</dd></div>
+      <div><dt><Named label="Steps" /></dt><dd>{s.steps}</dd></div>
+      <div><dt><Named label="Tools run" /></dt><dd>{s.tool_runs}</dd></div>
+      <div><dt><Named label="Bad calls caught" /></dt><dd>{s.invalid_calls}</dd></div>
+      <div><dt><Named label="Tokens read, total" /></dt><dd>{s.tokens_total.toLocaleString()}</dd></div>
+      <div><dt><Named label="Refunds issued" /></dt><dd>{result.refunds.length}</dd></div>
+      <div><dt><Named label="Without approval" /></dt><dd>{s.unapproved_side_effects}</dd></div>
     </dl>
   )
 }

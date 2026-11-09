@@ -1,0 +1,571 @@
+# Plain-words voice for Lesson 05. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
+# nothing about AI yet. Same facts and numbers; see docs/PLAIN_WORDS.md for the rules.
+title: Tool-using agents, exploded
+summary: 'See an AI model work in a loop: it decides, the program acts, and the result goes back in. Run a real loop with
+  real tools (the decisions come from a clearly labelled stand-in), break it on purpose, and rebuild it.'
+objectives:
+- 'Follow one trip round the loop: the request, the tool list, the decision, the check, the work, the result, the case file
+  and the stop.'
+- Explain why the model only asks for a tool while the program runs it, and why the program must check each request first.
+- 'Understand what a loop costs: the whole conversation is read again at every step.'
+- 'Spot broken setups: a loop that never stops, vague tool descriptions, and an instruction hidden in a result.'
+ui:
+  eyebrow: REQUEST → DECIDE → ACT → RESULT → REPEAT
+  scene_title: Exploded view of one loop of an assistant using tools
+  flow_document: Messages
+  flow_vector: Requests and results
+  flow_query: The request
+  summary: 'See an AI model work in a loop: it decides, the program acts, the result goes back in. Click any part to see what
+    goes in, what comes out, and what breaks without it.'
+  challenges_intro: Each puzzle below makes the assistant misbehave for one specific reason. Find the reason in the experiment,
+    then fix it using the controls that are left unlocked. The server runs your settings again and checks the result.
+components:
+  goal:
+    label: The request
+    subtitle: What the customer asked for
+    short: What the customer asked for.
+    detail: The request arrives as plain text. It is the first message in the conversation, and everything that follows works
+      towards it. Here the customer writes to a made-up bike shop.
+    inputs:
+    - Customer message
+    outputs:
+    - First message
+    breaks_if_removed: Nothing tells the assistant what to do, so it does nothing.
+    explain:
+      what: The customer's request, as plain text. It becomes the first message in the conversation.
+      why: An assistant needs something to work towards. Without a request there is nothing to decide and nothing to stop
+        for.
+      analogy: A ticket handed to a support worker at the start of a shift.
+      happens:
+      - The customer's message arrives as text.
+      - It becomes the first message in the conversation.
+      - Every later step reads it again.
+      goes_to: Decide, which reads it together with the tool list.
+      example:
+        input: Hi! I'd like to return my E-Trail from order 1001.
+        steps:
+        - Keep the text exactly as written
+        - Add it as the first message
+        output: 1 customer message (an illustration)
+      misconfigured: In a real product the request can be vague, rude or missing details, and the assistant has to cope. This
+        lesson's stand-in rule only recognises a few kinds of request.
+      story: An agent starts with a request. It is the first message in the conversation, and everything that follows is the
+        agent working towards it, one step at a time. Some requests need one lookup, others need several steps.
+      thread: 'Our customer writes: "Hi! I''d like to return my E-Trail from order 1001. Can I get a refund?" That needs the
+        returns policy, the order itself and the delivery date.'
+      check:
+        question: What makes this an agent rather than a single question and answer?
+        answer: It can take several steps, choosing tools and using what they return, in a loop, until the job is done.
+      terms:
+      - word: Agent
+        meaning: An AI model that can ask for actions to be taken, and works in a loop until a job is done.
+  tools:
+    label: Tool list
+    subtitle: What it is allowed to do
+    short: The menu of things the assistant may ask for.
+    detail: Each tool has a name, a description in plain words, and rules for the information it accepts. The model never
+      sees the code behind a tool, only this description of it.
+    inputs:
+    - Tool descriptions
+    outputs:
+    - The list of tools for the model
+    breaks_if_removed: The assistant cannot look anything up, so it answers without checking the order or the policy.
+    explain:
+      what: The list of tools the assistant may ask for. Each has a name, a description, and rules for the information it
+        accepts.
+      why: The model can only use what it is told about. It never sees the code behind a tool, so the description is the main
+        thing it has to choose with.
+      analogy: A menu in a restaurant. You order from the descriptions, without seeing the kitchen.
+      happens:
+      - Each tool is written down as a name, a description and a set of rules for its information.
+      - The list is added to every request.
+      - Tools that change things, such as a refund, are marked.
+      goes_to: Decide, which picks one.
+      example:
+        input: search_help_centre, get_order, days_between, issue_refund
+        steps:
+        - Four descriptions
+        - Each with rules for the information it accepts
+        output: 4 tools in the list (an illustration)
+      misconfigured: Vague descriptions leave the assistant guessing. Try setting the descriptions to vague in the experiment
+        and watch which tool it picks. Too many tools, or too much detail, also makes every request longer.
+      story: The assistant can only do what its tools allow. Each tool has a name, a plain-language description and rules
+        for the information it accepts. The model never sees the code behind a tool, only its name, description and rules,
+        and the description is the most important part for choosing the right tool. The stand-in here compares descriptions
+        only. Vague descriptions lead to poor choices.
+      thread: 'Our assistant has four tools: search the help centre, look up an order, count the days between two dates, and
+        issue a refund. The refund tool changes something in the world (here it only adds a line to a pretend list), so by
+        default it needs a person''s approval.'
+      check:
+        question: Why do tool descriptions matter so much?
+        answer: The model sees each tool's name, description and rules, and the description is the most important part for
+          choosing the right tool.
+      terms:
+      - word: Tool
+        meaning: A ready-made action the program offers the assistant, such as looking something up or issuing a refund.
+      - word: Schema
+        meaning: A set of rules for the shape of the information a tool accepts, for example "an A followed by four digits".
+  decide:
+    label: Decide
+    subtitle: Use a tool, or answer
+    short: Picks a tool, or gives the final answer.
+    detail: The model reads the request, the tool list and everything so far. Then it either asks for a tool or writes its
+      final answer. In this lesson a short rule plays the model, and it is labelled as a simulation.
+    inputs:
+    - The request
+    - Tool list
+    - The conversation so far
+    outputs:
+    - A request for a tool, or the final answer
+    breaks_if_removed: Nothing picks an action, so no tool is ever used and no answer comes out.
+    explain:
+      what: 'The model reads everything so far and chooses: ask for one tool, or write the final answer.'
+      why: In this loop, this is the only step that needs an AI model. Everything else is ordinary code.
+      analogy: A support worker reading the ticket and the notes so far, then deciding what to do next.
+      happens:
+      - The model reads the request, the tool list and the conversation.
+      - It either names a tool and the details it needs, or answers.
+      - In this lesson a short rule stands in for the model.
+      goes_to: Check the form, if it asked for a tool. Stop, if it answered.
+      example:
+        input: Return order 1001
+        steps:
+        - Need the policy → search the help centre
+        - Need the order → look up the order
+        - Have everything → answer
+        output: A request for a tool, or an answer (an illustration)
+      misconfigured: A real model can pick the wrong tool, give the wrong details or answer too early. The stand-in here is
+        simple and repeatable on purpose, so the loop around it is what you learn from, not how a real model behaves.
+      story: 'At every step the model looks at the request, the tool list and everything so far. Then, in this lesson, it
+        either asks for one tool (with the details it needs) or gives the final answer. Real systems may allow several requests
+        at once. A short rule plays the model, and the bars count the words each tool''s description shares with what it needs:
+        a simple match, not understanding.'
+      thread: 'Step 1: it needs the returns policy, so it picks the help-centre search. Later steps look up the order, count
+        the days and ask for the refund.'
+      check:
+        question: In this lesson, what are the two things the model can do at each step?
+        answer: Ask for one tool, with the details it needs, or give the final answer.
+      terms:
+      - word: Language model
+        meaning: A computer program that writes text. It learned patterns from reading huge amounts of text.
+      - word: Tool call
+        meaning: A request from the model to use one tool, with the details the tool needs.
+  validate:
+    label: Check the form
+    subtitle: Is the request in the right shape?
+    short: Checks that the request is filled in correctly.
+    detail: Before anything runs, the program checks the details against the tool's rules. A request that is not in the right
+      shape is turned into an error message instead of being run.
+    inputs:
+    - The request for a tool
+    outputs:
+    - A checked request, or an error
+    breaks_if_removed: A badly written order number goes straight to the tool, which finds no such order, so the assistant
+      tells the customer their order does not exist.
+    explain:
+      what: The program checks the request against the tool's rules before running it.
+      why: A model's request is not a guarantee. It can be written in the wrong shape, and a wrong request that runs can do
+        real harm.
+      analogy: A clerk checking that every box on a form is filled in the right way before it is accepted. The clerk does
+        not judge whether the request is a good idea.
+      happens:
+      - Compare each detail with the tool's rules.
+      - If something is wrong, turn it into an error message.
+      - Send requests that pass on to the next step.
+      goes_to: Do the work, if the request is fine. Back to the assistant as an error, if not.
+      example:
+        input: Look up order 1001
+        steps:
+        - 'Rule: the letter A and four digits'
+        - 1001 does not match
+        - Send back an error instead of running it
+        output: 'Rejected: it must look like A1001 (an illustration)'
+      misconfigured: Turn the check off in the experiment and 1001 goes straight to the tool. It finds no such order, and
+        the assistant tells the customer their order does not exist, which is wrong.
+      story: 'Before anything runs, the program checks the request against the tool''s rules: the right kind of information,
+        in the right shape. A model''s request is not a guarantee. If the check fails, the problem goes back as an error and
+        the request is not run. This kind of check is called validation.'
+      thread: In our run the assistant first writes the order as "1001", but the tool needs an A followed by four digits.
+        The check rejects it with a message, and the assistant tries again with "A1001".
+      check:
+        question: What happens when a request fails the check?
+        answer: It is not run. An error message goes back to the assistant so it can correct the request.
+      terms:
+      - word: Validation
+        meaning: Checking that a request is in the right shape before doing it.
+  execute:
+    label: Do the work
+    subtitle: Your program does the work
+    short: The program runs the tool.
+    detail: The model only asked. Ordinary code in the program does the work, and anything that changes something real, such
+      as a refund, can wait here for a person to approve it.
+    inputs:
+    - The checked request
+    outputs:
+    - The tool's raw output
+    breaks_if_removed: Requests are made but nothing runs them, so no result ever comes back and the assistant keeps repeating
+      itself until it runs out of steps.
+    explain:
+      what: The program runs the tool. The model only asked.
+      why: Models write text. Only code can look up an order or move money, so something outside the model has to do the work.
+      analogy: A manager who carries out what the worker asks for, and who can say no.
+      happens:
+      - The program finds the tool by name.
+      - It runs ordinary code with the checked details.
+      - A tool that changes something can wait for a person to approve it.
+      goes_to: The result, with whatever the tool gave back.
+      example:
+        input: get_order(order_id=A1001)
+        steps:
+        - Look the order up
+        - Return the record
+        output: '{item, price, status, delivered} (an illustration)'
+      misconfigured: An assistant with a refund tool and no approval can move money by itself. Anything that changes the real
+        world is a place for a person to say yes first, and an assistant should only have the tools it needs.
+      story: 'For tools you define yourself, the model only asks. Your program runs the tool, with ordinary code. This is
+        also the place to put a person in the loop for anything risky: the refund waits until a person approves it.'
+      thread: The help search, the order lookup and the date count run straight away. The refund is held with the message
+        "waiting for a person to approve".
+      check:
+        question: Who actually runs a tool, the model or the program?
+        answer: For tools you define yourself, the program. The model only asks for it. (Some companies also offer tools that
+          they run for you.)
+      terms:
+      - word: Human in the loop
+        meaning: A person who has to say yes before something risky happens.
+  observe:
+    label: Result comes back
+    subtitle: The output goes back in
+    short: What the tool sent back.
+    detail: The output, or the error, goes back to the model as a message that points at the request it answers. Whatever
+      a tool returns is just information, but the model reads it like everything else.
+    inputs:
+    - The tool's raw output
+    outputs:
+    - A result message
+    breaks_if_removed: Tools run, but their results never reach the assistant, so it repeats the same request until it runs
+      out of steps.
+    explain:
+      what: The tool's output goes back to the model as a message that points at the request it answers.
+      why: The model cannot see what happened outside it. This message is the only way it learns the result.
+      analogy: A note slipped back across the desk saying what the lookup found.
+      happens:
+      - The output is wrapped in a result message.
+      - The message names the request it answers.
+      - An error goes back the same way, so the model can try again.
+      goes_to: The case file, which keeps it.
+      example:
+        input: get_order → A1001 found
+        steps:
+        - Wrap the record in a result
+        - Link it to request 3
+        output: A tool result (an illustration)
+      misconfigured: 'Whatever a tool returns is just information, but the model reads it like any other text. Turn on the
+        forum post in the experiment: it hides an instruction, and this stand-in follows it. A well-known security group says
+        it is unclear whether any foolproof way to prevent this exists.'
+      story: 'Whatever the tool returns goes back to the model as a message that points at the request it answers. The model
+        reads that result like any other text. That is powerful but risky: if a result contains hidden instructions, the model
+        may treat them as commands.'
+      thread: 'The order lookup returns: E-Trail electric bike, price 2899 (shown as 2,899 CAD in the step-by-step view),
+        delivered on 2026-10-05.'
+      check:
+        question: Why is it risky that the model reads tool results like ordinary text?
+        answer: A web page or document can hide instructions in its text and steer the assistant. This is called prompt injection.
+      terms:
+      - word: Prompt injection
+        meaning: Hiding instructions inside text that an AI model will read, to steer what it does.
+  context:
+    label: Case file
+    subtitle: Read again at every step
+    short: The conversation, read again at every step.
+    detail: 'In a plain loop, each step sends the whole conversation to the model again: the instructions, the tool list,
+      every request and every result. The pile grows with each step, and every part of it is read again.'
+    inputs:
+    - A result message
+    outputs:
+    - A longer conversation
+    breaks_if_removed: The assistant only remembers the request and the latest result, so it forgets what it found and goes
+      round in circles.
+    explain:
+      what: 'The whole conversation so far: the instructions, the tool list, every request and every result.'
+      why: In a plain loop the model keeps nothing between steps. Each step it is sent everything again, and that is how it
+        remembers.
+      analogy: Handing the next shift the entire case file every time, instead of a summary.
+      happens:
+      - The new result is added to the conversation.
+      - The next step carries all of it.
+      - The amount the model reads grows with every step.
+      goes_to: Decide, for the next trip round the loop.
+      example:
+        input: After step 3
+        steps:
+        - The request + the tools + 3 requests + 3 results
+        - Counted in tokens
+        output: a few thousand tokens, read again (an illustration)
+      misconfigured: Take the memory away in the experiment and the assistant repeats itself. Keep too much and every step
+        gets slower and costs more, until a request no longer fits.
+      story: 'The model remembers nothing between steps by itself. At every step the whole conversation so far is sent again:
+        the instructions, the tool list, every request and every result. This is the context. That is how it "remembers",
+        and it is also why, in a plain loop like this one, each step reads more than the one before.'
+      thread: Step 1 reads about 1,475 tokens and by step 5 it reads 2,799, about 11,000 across the five steps. A token is
+        a small piece of text. These are counted with this site's small teaching tokenizer, so a real model's counts would
+        be lower, but each step still reads more than the one before.
+      check:
+        question: Why does each step cost more than the one before?
+        answer: The conversation keeps growing, and the whole thing is read again at every step.
+      terms:
+      - word: Context
+        meaning: 'Everything the model is sent to read at a step: the instructions, the tools and the conversation so far.'
+      - word: Token
+        meaning: A small piece of text that a model reads, often a whole word or part of one.
+  stop:
+    label: Stop
+    subtitle: Finished, or cut off
+    short: An answer, or the steps run out.
+    detail: The loop ends when the model gives a final answer. A step limit is a second way out, for the day it never does.
+      The loop can also pause while it waits for a person to approve something.
+    inputs:
+    - Decision
+    outputs:
+    - An answer, or a stopped run
+    breaks_if_removed: Nothing ends the loop, not even the assistant's own answer, so it keeps running until the experiment's
+      hard limit cuts it off.
+    explain:
+      what: The loop ends when the model answers. A step limit is a second way out.
+      why: A loop with no way out can run forever, and in this loop every extra step costs more than the one before.
+      analogy: A timer on a task, so a stuck worker gets stopped and asked what is wrong.
+      happens:
+      - If the model answered, give its answer.
+      - If the step limit is reached, stop without one.
+      - If something needs a person's approval, pause until they decide.
+      - Otherwise go round again.
+      goes_to: 'The customer: an answer, or a stopped run.'
+      example:
+        input: After 8 steps with no answer
+        steps:
+        - Count the steps
+        - Limit reached → stop
+        output: Stopped by the step limit (an illustration)
+      misconfigured: A step limit does not make the assistant right. It only stops the damage. With no limit, only this experiment's
+        own hard limit of 30 steps cuts a stuck loop off.
+      story: The loop ends when the model gives a final answer. A step limit is a second way out, in case it never does. Without
+        a limit, a confused assistant can go round and round, spending more each time.
+      thread: 'After you approve the refund, the assistant answers: the bike was delivered 16 days ago, which is within the
+        30-day window, and refund R-001 was issued. That took 6 steps in all.'
+      check:
+        question: Why have a step limit?
+        answer: So a confused assistant cannot loop forever. It stops, and you can see that something went wrong instead of
+          paying for endless steps.
+      terms:
+      - word: Step limit
+        meaning: A cap on how many times the loop may go round.
+connections:
+  goal->decide:
+    payload: the request
+    explain: The request is the first thing the model reads at every step. It is what all the steps are working towards.
+  tools->decide:
+    payload: the tool list
+    explain: The tool list tells the model what it may ask for. It is meant to choose only from what it has been shown, and
+      the program should refuse any other name.
+  decide->validate:
+    payload: a request for a tool
+    explain: Every request the model writes is checked before it can run, because a model's request can be badly formed.
+  validate->execute:
+    payload: a checked request
+    explain: Only requests that pass the check are run, by the program.
+  execute->observe:
+    payload: raw output
+    explain: The tool's raw output is sent back so the model can see what happened.
+  observe->context:
+    payload: a result message
+    explain: The result is added to the conversation so that later steps can use it.
+  context->decide:
+    payload: the whole conversation
+    explain: The whole conversation, including every result so far, is sent to the model again for its next decision.
+  decide->stop:
+    payload: the final answer
+    explain: When the model gives a final answer instead of asking for a tool, the loop ends.
+big_picture:
+  story: 'An agent is an AI model that can ask for actions to be taken. Instead of answering straight away, it works in a
+    loop: it decides what to do next, asks for a tool, your program runs that tool, the result goes back to the model, and
+    the model decides again, until it has an answer. The important part is who does what. For tools you define yourself, the
+    model only asks. Your program runs the tools, checks the requests and decides what is allowed. In this lesson a short
+    rule plays the model, so every run is free and repeatable, but the loop around it is real.'
+  analogy:
+    title: A new assistant at a shop's help desk
+    mapping:
+    - part: The request
+      becomes: the customer's note on the desk
+    - part: Tool list
+      becomes: the list of things the assistant is allowed to do
+    - part: Decide
+      becomes: the assistant thinking about what to do next
+    - part: Check the form
+      becomes: a clerk who checks that every box on the form is filled in the right way, without judging whether the request
+        is a good idea
+    - part: Do the work
+      becomes: the back office actually doing the task
+    - part: Result comes back
+      becomes: the answer note coming back from the back office
+    - part: Case file
+      becomes: the file the assistant re-reads before every decision
+    - part: Stop
+      becomes: handing over the answer, or giving up after too many tries
+    breaks: A person understands the note. A real AI model can be fooled by text it reads, such as an instruction hidden in
+      a document, and here a simple stand-in rule plays the model, so it shows the loop and not how a real model behaves.
+  example:
+    title: The request we will follow
+    input: Hi! I'd like to return my E-Trail from order 1001. Can I get a refund?
+    note: To answer, the assistant needs the returns policy, the order and the delivery date, and it must ask a person before
+      moving money.
+experiment:
+  corpus_note: The shop is Ridgeline Bikes, the made-up shop from Lesson 01. The tools search its help centre, look up four
+    fake orders and count days (today's date is fixed at 2026-10-21). A refund only writes a line in this run's own list;
+    no money moves. A stand-in rule, not a real AI model, makes the decisions, so every run is free and repeatable.
+  labels:
+    Tool descriptions: How the tools are described
+    Detailed: Clear
+    Vague: Vague
+    Check arguments before running: Check the form before doing the work
+    Step limit: Limit on number of steps
+    None: None
+    Person approves refunds: A person must approve refunds
+    Refund tool available: The refund tool is available
+    Forum post in the help centre: A tricky forum post in the help centre
+    The loop: Step by step
+    What the model reads: What the model reads
+    Tools: Tools
+    Token cost: Reading cost
+    Tokens read, total: Total read
+    Tokens read: Total read
+    Tools run: Tools used
+    Bad calls caught: Bad requests caught
+    Without approval: Done without approval
+  guide:
+    intro: The loop, the tools and the checks are real. The decisions come from a short stand-in rule, not a real AI model.
+      Watch the "Step by step" tab to see every step.
+    presets:
+      Return:
+        try: Click it and read the "Step by step" tab, then press "Approve this refund".
+        notice: 'Five steps are shown: the assistant first searches the help centre for the policy, then writes the order
+          as "1001" and the check rejects it, tries again with "A1001", counts 16 days, and asks for the refund, which waits
+          for you. After you approve, it is 6 steps and the assistant answers. Notice the bars under each decision: they count
+          shared words, a simple match.'
+      Too late:
+        try: Click it and read the last step's answer.
+        notice: 'Four steps: policy, order, days, answer. The order was delivered 50 days ago, past the 30-day window, so
+          the assistant says it can no longer be returned, and no refund is asked for.'
+      Custom:
+        try: Click it and read the answer.
+        notice: Four steps. The order says the bike is custom-built, so the stand-in's rule refuses. (The help-centre article
+          says the same, but this simple rule only reads the order's custom-built flag. A real AI model would read the policy
+          text.)
+      Status:
+        try: Click it and count the steps.
+        notice: 'Only two steps: one order lookup, then the answer. Not every request needs the whole loop.'
+      Policy:
+        try: Click it and count the steps.
+        notice: 'Two steps: one help-centre search, then an answer that says refunds go to the original payment method within
+          5 business days.'
+    ideas:
+    - do: Set "How the tools are described" to "Vague" and "Limit on number of steps" to "None".
+      see: 'The stand-in keeps searching the help centre until the experiment''s own safety limit of 30 steps, and the reading
+        cost balloons. Set the limit back to 8: it stops at 8 with no answer.'
+    - do: Set "Check the form before doing the work" to Off.
+      see: '"1001" goes straight to the tool, which finds no such order, so the assistant tells the customer there is none
+        ("I couldn''t find an order called 1001.").'
+    - do: Type the request "What is your returns policy?", set "A tricky forum post in the help centre" to On and "A person
+        must approve refunds" to Off.
+      see: The stand-in obeys an instruction hidden in the page it found, and issues a refund nobody approved. With approval
+        on, the refund waits for you. With the refund tool off, no refund can be issued, but the stand-in gets stuck looking
+        up the order again and again until the step limit.
+    - do: Open the "Reading cost" tab.
+      see: 'Each bar is one step. They grow because the whole conversation is read again at every step: about 1,475 tokens
+        at step 1 and 2,799 by step 5, counted with this site''s small teaching tokenizer (a real model''s counts would be
+        lower, but each step still reads more than the one before).'
+    tabs:
+      loop: 'Every step the assistant took: what it decided, whether the request passed the check, whether it ran, and what
+        came back. The bars count the words each tool''s description shares with what it needs.'
+      conversation: The conversation the model reads on its last step. Tools are listed here by name only (their full descriptions
+        are on the Tools tab) but they are included in the amount read. All of it is sent again at every step, which is how
+        the model "remembers".
+      tools: 'The tools as the model is given them: a name, a description and rules for the information they accept. The orange
+        label is added by this site to mark tools that change things.'
+      context: How much is read at each step. Each bar's height matches the number above it. They grow because each step reads
+        everything that came before it again.
+challenges:
+  runaway-loop:
+    title: The assistant that never stops
+    brief: The tool descriptions are so vague that the assistant keeps searching for the same thing, and nothing ends the
+      loop. Make it stop within 10 steps without touching the descriptions.
+    hint: Which control limits how many times round the loop the assistant may go?
+    explanation: A step limit does not make the assistant right. It only stops the damage. Without one, a stuck loop keeps
+      using tools and re-reading a longer and longer conversation. The limit is a safety net, not a fix.
+  vague-tools:
+    title: The tool that was never chosen
+    brief: Every tool is described in a few empty words, like "gets information" or "does an action". The stand-in keeps picking
+      the wrong one and runs out of steps. Get it to answer, without changing the question or the step limit.
+    hint: What does the assistant compare when it chooses a tool?
+    explanation: The assistant chooses a tool by comparing what it needs with the tool descriptions. When every description
+      says almost nothing, every tool scores the same and it just takes the first one. Anthropic calls detailed descriptions
+      by far the most important factor in how well tools work. (This lesson's stand-in rule shows the idea. It does not measure
+      a real model.)
+  injected-refund:
+    title: The refund nobody approved
+    brief: Someone posted a forum answer into the help centre with instructions hidden in it. The assistant reads it and refunds
+      an order the customer never mentioned. Stop money moving without a person approving it.
+    hint: 'Two controls would each stop it: one limits what the assistant can do, the other adds a person.'
+    explanation: 'A tool result is just information, but a model reads it like any other text, so instructions planted in
+      it can be treated as commands. A well-known security group says it is unclear whether any foolproof prevention exists.
+      What you can do is limit the damage: give the assistant only the tools it needs, and make a person approve actions that
+      move money.'
+tour:
+  goal:
+    title: Start with the request
+    body: An assistant starts with something a person wants. Everything after this is the assistant working towards it, one
+      step at a time.
+  tools:
+    title: Show it what it can use
+    body: The model is told what tools exist, but only as names, descriptions and rules. It never sees the code.
+  decide:
+    title: Choose the next move
+    body: With the request and the tool list in front of it, the model either asks for a tool or writes its final answer.
+  validate:
+    title: Check before doing
+    body: A model can write a request that does not fit the rules. The program checks it first and sends an error back instead
+      of running it.
+  execute:
+    title: The program does the work
+    body: The model only asks. The program runs the tool, and can hold anything risky for a person to approve.
+  observe:
+    title: Read what came back
+    body: The result goes back to the model as a message. It is just information, but the model reads it like any other text.
+  context:
+    title: Everything is read again
+    body: In a plain loop the model keeps nothing between steps. Each step sends the whole conversation again, so the cost
+      grows with every step.
+  stop:
+    title: Know when to stop
+    body: The loop ends when the model answers. A step limit is the second way out, for when it never does.
+reconstruction:
+  prompt: Put the stages in an order that could really work. Each stage must come after everything it needs.
+visuals:
+  ablation:
+    label: Real run, one part removed
+    description: The loop really runs with the chosen part taken out, side by side with the full loop.
+  exploded-view:
+    label: Picture of the idea
+    description: The positions and shapes are a visual way of explaining. The arrows follow the real order of one trip round
+      the loop.
+  data-flow:
+    label: Animated picture of the idea
+    description: The moving dots show which step feeds which. Dotted lines carry the request, dashed lines carry tool requests,
+      the tool list and tool output, and solid lines carry messages. The speed means nothing.
+  experiment:
+    label: 'Real run: the loop and its tools'
+    description: The loop, the checks, the tools and the counts really run. The shop, its orders and its help-centre articles
+      are made up.
+  decider:
+    label: 'Simulation: stand-in for the AI model'
+    description: A short rule plays the AI model. It picks tools by comparing descriptions, and follows instructions it reads
+      in results. It is not a real AI model, so it shows the loop, not how a real model behaves.

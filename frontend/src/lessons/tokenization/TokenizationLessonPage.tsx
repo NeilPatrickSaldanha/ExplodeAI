@@ -45,15 +45,19 @@ export function TokenizationLessonPage({ lesson }: { lesson: Lesson }) {
       spec={spec}
       readouts={readoutsFromResult(exp.result)}
       live={!!exp.result}
-      eyebrow={`LESSON 02 · TRAINING → ENCODING → DECODING · ${lesson.estimated_minutes} MIN`}
+      eyebrow={`LESSON 02 · ${lesson.ui?.eyebrow ?? 'TRAINING → ENCODING → DECODING'} · ${lesson.estimated_minutes} MIN`}
       title={
         <>
           tokenization,&nbsp;<em>exploded</em>
         </>
       }
-      summary="Watch text become token ids and come back again. Click any part to see what goes in, what comes out, and what breaks without it."
-      sceneTitle="Exploded view of a byte-pair-encoding tokenizer"
-      flowLabels={FLOW_LABELS}
+      summary={lesson.ui?.summary ?? 'Watch text become token ids and come back again. Click any part to see what goes in, what comes out, and what breaks without it.'}
+      sceneTitle={lesson.ui?.scene_title ?? 'Exploded view of a byte-pair-encoding tokenizer'}
+      flowLabels={{
+        document: lesson.ui?.flow_document ?? FLOW_LABELS.document,
+        vector: lesson.ui?.flow_vector ?? FLOW_LABELS.vector,
+        query: lesson.ui?.flow_query ?? FLOW_LABELS.query,
+      }}
       renderIO={(c) => <TokStageIO component={c} result={exp.result} />}
       renderBreaks={(c) => (
         <BreaksCard
@@ -76,7 +80,7 @@ export function TokenizationLessonPage({ lesson }: { lesson: Lesson }) {
               challenges={challenges}
               active={challenge}
               solved={progress.solved}
-              intro="Each tokenizer below is broken in one specific way. Find the cause in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result."
+              intro={lesson.ui?.challenges_intro ?? 'Each tokenizer below is broken in one specific way. Find the cause in the experiment, then fix it with the controls left unlocked. The server re-runs your settings and checks the result.'}
               onCheck={(c) => api.checkTokenizeChallenge(lesson.id, c.id, exp.params)}
               onStart={startChallenge}
               onExit={exitChallenge}

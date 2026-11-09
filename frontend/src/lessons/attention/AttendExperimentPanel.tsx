@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { AttendParams, AttendResult, Lesson, Visual } from '../../api/types'
 import { KindBadge, Segmented } from '../../components/controls'
 import { AttentionGrid, LookFrom, OutputView, QKVView, StatsStrip } from './AttendViews'
+import { Named } from '../../voice'
 
 interface Props {
   lesson: Lesson
@@ -79,10 +80,10 @@ export function AttendExperimentPanel({ lesson, params, update, result, loading,
           </p>
           <Tabs.Root defaultValue="grid" className="rtabs">
             <Tabs.List className="rtabs__list" aria-label="Experiment results">
-              <Tabs.Trigger value="grid" className="rtabs__tab">Attention grid</Tabs.Trigger>
-              <Tabs.Trigger value="word" className="rtabs__tab">One word</Tabs.Trigger>
-              <Tabs.Trigger value="qkv" className="rtabs__tab">Q · K · V</Tabs.Trigger>
-              <Tabs.Trigger value="out" className="rtabs__tab">Output</Tabs.Trigger>
+              <Tabs.Trigger value="grid" className="rtabs__tab"><Named label="Attention grid" /></Tabs.Trigger>
+              <Tabs.Trigger value="word" className="rtabs__tab"><Named label="One word" /></Tabs.Trigger>
+              <Tabs.Trigger value="qkv" className="rtabs__tab"><Named label="Q · K · V" /></Tabs.Trigger>
+              <Tabs.Trigger value="out" className="rtabs__tab"><Named label="Output" /></Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value="grid" className="rtabs__panel">
 <TabHint guide={lesson.experiment.guide} id="grid" />

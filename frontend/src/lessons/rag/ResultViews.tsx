@@ -1,5 +1,6 @@
 import type { ChunkOut, RagResult, RagParams } from '../../api/types'
 import { LLMAnswerPanel } from './LLMAnswerPanel'
+import { Named } from '../../voice'
 
 /** Document text with chunk boundaries, overlaps, and retrieved chunks marked. */
 export function ChunkDocView({ result }: { result: RagResult }) {
@@ -70,11 +71,11 @@ export function RankingTable({ result }: { result: RagResult }) {
         <caption className="visually-hidden">Every chunk with its dense and keyword rank. Retrieved chunks first.</caption>
         <thead>
           <tr>
-            <th scope="col">Kept</th>
-            <th scope="col">Chunk</th>
-            <th scope="col">Dense rank · cosine</th>
-            {showBm25 && <th scope="col">BM25 rank · score</th>}
-            <th scope="col">Text</th>
+            <th scope="col"><Named label="Kept" /></th>
+            <th scope="col"><Named label="Chunk" /></th>
+            <th scope="col"><Named label="Dense rank · cosine" /></th>
+            {showBm25 && <th scope="col"><Named label="BM25 rank · score" /></th>}
+            <th scope="col"><Named label="Text" /></th>
           </tr>
         </thead>
         <tbody>

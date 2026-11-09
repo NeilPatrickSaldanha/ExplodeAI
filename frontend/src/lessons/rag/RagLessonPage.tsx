@@ -39,15 +39,19 @@ export function RagLessonPage({ lesson }: { lesson: Lesson }) {
       spec={spec}
       readouts={readoutsFromResult(exp.result)}
       live={!!exp.result}
-      eyebrow={`LESSON 01 · INGESTION → GENERATION · ${lesson.estimated_minutes} MIN`}
+      eyebrow={`LESSON 01 · ${lesson.ui?.eyebrow ?? 'INGESTION → GENERATION'} · ${lesson.estimated_minutes} MIN`}
       title={
         <>
           retrieval-augmented generation,&nbsp;<em>exploded</em>
         </>
       }
-      summary="Follow a real RAG pipeline through the machine. Click any part to see what goes in, what comes out, and what breaks without it."
-      sceneTitle="Exploded view of a retrieval-augmented generation pipeline"
-      flowLabels={FLOW_LABELS}
+      summary={lesson.ui?.summary ?? 'Follow a real RAG pipeline through the machine. Click any part to see what goes in, what comes out, and what breaks without it.'}
+      sceneTitle={lesson.ui?.scene_title ?? 'Exploded view of a retrieval-augmented generation pipeline'}
+      flowLabels={{
+        document: lesson.ui?.flow_document ?? FLOW_LABELS.document,
+        vector: lesson.ui?.flow_vector ?? FLOW_LABELS.vector,
+        query: lesson.ui?.flow_query ?? FLOW_LABELS.query,
+      }}
       renderIO={(c) => <StageIO component={c} result={exp.result} />}
       renderBreaks={(c) => (
         <BreaksCard

@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react'
 import type { Lesson, RagParams, RagResult, Visual } from '../../api/types'
 import { KindBadge, Segmented, Slider } from '../../components/controls'
 import { AnswerView, ChunkDocView, PromptView, RankingTable } from './ResultViews'
+import { Named } from '../../voice'
 
 const VectorSpace = lazy(() => import('./VectorSpace').then((m) => ({ default: m.VectorSpace })))
 
@@ -33,7 +34,7 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
 
       <div className={`field${isLocked('query') ? ' is-locked' : ''}`}>
         <label className="label" htmlFor="q">
-          Question
+          <Named label="Question" />
         </label>
         <input
           id="q"
@@ -94,8 +95,9 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
       </div>
       {params.embedder === 'lexical-hashing' && (
         <p className="notice">
-          The built-in embedder is lexical: it hashes words into {result?.embedding.dim ?? 1024} dimensions, so “refund”
-          and “money back” don't land near each other. A neural embedding model would place them close.
+          {lesson.ui?.lexical_notice
+            ? lesson.ui.lexical_notice.replace('{dim}', String(result?.embedding.dim ?? 1024))
+            : `The built-in embedder is lexical: it hashes words into ${result?.embedding.dim ?? 1024} dimensions, so “refund” and “money back” don't land near each other. A neural embedding model would place them close.`}
         </p>
       )}
 
@@ -108,11 +110,11 @@ export function ExperimentPanel({ lesson, params, update, result, loading, error
       {result && (
         <Tabs.Root defaultValue="chunks" className="rtabs">
           <Tabs.List className="rtabs__list" aria-label="Experiment results">
-            <Tabs.Trigger value="chunks" className="rtabs__tab">Chunks</Tabs.Trigger>
-            <Tabs.Trigger value="space" className="rtabs__tab">Vector space</Tabs.Trigger>
-            <Tabs.Trigger value="ranking" className="rtabs__tab">Ranking</Tabs.Trigger>
-            <Tabs.Trigger value="prompt" className="rtabs__tab">Prompt</Tabs.Trigger>
-            <Tabs.Trigger value="answer" className="rtabs__tab">Answer</Tabs.Trigger>
+            <Tabs.Trigger value="chunks" className="rtabs__tab"><Named label="Chunks" /></Tabs.Trigger>
+            <Tabs.Trigger value="space" className="rtabs__tab"><Named label="Vector space" /></Tabs.Trigger>
+            <Tabs.Trigger value="ranking" className="rtabs__tab"><Named label="Ranking" /></Tabs.Trigger>
+            <Tabs.Trigger value="prompt" className="rtabs__tab"><Named label="Prompt" /></Tabs.Trigger>
+            <Tabs.Trigger value="answer" className="rtabs__tab"><Named label="Answer" /></Tabs.Trigger>
           </Tabs.List>
           <Tabs.Content value="chunks" className="rtabs__panel">
 <TabHint guide={lesson.experiment.guide} id="chunks" />
