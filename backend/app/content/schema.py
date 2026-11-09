@@ -99,7 +99,7 @@ class CheckYourself(BaseModel):
 
 
 class Term(BaseModel):
-    """A word the learner will hear, with its everyday meaning (plain voice, at the stage that introduces it)."""
+    """A word the learner will hear, with its everyday meaning (plain voice; one stage introduces it)."""
 
     word: str
     meaning: str
