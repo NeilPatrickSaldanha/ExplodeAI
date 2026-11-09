@@ -9,7 +9,7 @@ objectives:
 - Read an attention grid without mistaking it for a complete explanation of a model.
 - 'Spot broken setups: peeking ahead, one word taking everything, and attention that ignores word order.'
 ui:
-  eyebrow: WORDS → QUESTIONS, TAGS, MESSAGES → BLENDED MEANING
+  eyebrow: WORDS → QUESTIONS, TAGS, MESSAGES → NEW LISTS OF NUMBERS
   scene_title: Exploded view of one layer of attention
   flow_document: Words
   flow_vector: Lists of numbers
@@ -17,14 +17,14 @@ ui:
   summary: Watch every word decide which other words to look at, then blend what it finds. Click any part to see what goes
     in, what comes out, and what breaks without it.
   challenges_intro: Each puzzle below makes attention misbehave for one specific reason. Find the reason in the experiment,
-    then fix it using the controls that are left unlocked. The server runs your settings again and checks the result.
+    then fix it using the controls that are left unlocked. The site runs your settings again and checks the result.
 components:
   tokens:
     label: Word cards
     subtitle: Sentence into words
     short: Your sentence, cut into separate words.
-    detail: Attention works on a list of items. This toy splits your sentence into words and punctuation marks, up to 12 of
-      them.
+    detail: Attention works on a list of items. This toy splits your sentence into words and punctuation marks, and keeps
+      the first 12. Each one is called a word here, even a full stop.
     inputs:
     - Your sentence
     outputs:
@@ -32,8 +32,8 @@ components:
     breaks_if_removed: There are no words, so there is nothing for the words to look at.
     explain:
       what: Your sentence, cut into separate words and punctuation marks. Each word will get its own turn to decide which
-        other words to look at.
-      why: The machine works on a list of items, one for each word. So the sentence has to become a list first.
+        words to look at.
+      why: Attention needs a list of separate items to work on, one for each word. So the sentence has to become a list first.
       analogy: Dealing the words of a sentence out as cards, in order. Each card will get a turn to ask a question of the
         others.
       happens:
@@ -47,15 +47,16 @@ components:
         - Split at word edges
         - Six words, numbered 0 to 5
         output: 6 words (an illustration)
-      misconfigured: A real system cuts text into smaller pieces than words, as in Lesson 2. This toy keeps whole words so
-        the grid stays readable.
-      story: The machine works on a list of items, so the sentence is first cut into words. Every word will get a turn to
-        look at all the others. A real model cuts text into smaller pieces, as in Lesson 2, but this toy uses whole words
-        to keep the grid easy to read.
+      misconfigured: A real system often cuts longer or rarer words into smaller pieces, as in Lesson 2. This lesson is a
+        deliberately simplified demo, called a toy here, that keeps every word whole so the grid stays easy to read.
+      story: Attention needs a list of separate items to work on, so the sentence is first cut into words. Every word will
+        get a turn to look at all the words, itself included. A real system often cuts longer or rarer words into smaller
+        pieces, as in Lesson 2. This lesson is a deliberately simplified demo, called a toy here, that keeps every word whole
+        so the grid stays easy to read.
       thread: '"the cat sat on the mat" becomes 6 words, numbered 0 to 5. The word "the" appears twice, at places 0 and 4.'
       check:
-        question: Why does the toy keep each word's place number?
-        answer: The next stage adds a pattern for the place to each word's numbers, so it needs to know each word's place.
+        question: Why does the toy keep each word's place?
+        answer: The next stage blends a place pattern into each word's numbers, so it needs to know each word's place.
       terms:
       - word: Attention
         meaning: A way of letting every word in a sentence look at the other words and decide which ones matter most for it.
@@ -138,8 +139,9 @@ components:
         - 'Multiplied by the second: its tag'
         - 'Multiplied by the third: its message'
         output: Three lists per word per head (an illustration)
-      misconfigured: In this toy the tables are fixed and random, so what the questions look for means nothing. In a trained
-        model they are learned.
+      misconfigured: In this toy the tables are fixed and random, so what the questions look for means nothing. In a real
+        model the tables are adjusted during training, a long practice run on huge amounts of text, so that they end up asking
+        useful questions.
       story: Each word's numbers are turned into three new lists. The query says what this word is looking for. The key says
         what this word offers, so others can find it. The value is what it hands over if someone picks it. They are made by
         multiplying by three different tables of numbers. With 2 heads, each head reads all 64 numbers and makes its own 32-number
@@ -205,8 +207,8 @@ components:
     label: No-peeking rule
     subtitle: Hide what comes later
     short: Hides the words a word is not allowed to see.
-    detail: A causal mask sets the scores of later words to the lowest possible number, so they end up with no attention at
-      all. Padding masks are a different thing.
+    detail: A causal mask sets the scores of later words to minus infinity, a number lower than any real score, so they end
+      up with no attention at all.
     inputs:
     - Match scores
     outputs:
@@ -230,8 +232,9 @@ components:
       misconfigured: Without the rule, a text-writing model could see words that will not exist yet when it is writing. Do
         not mix it up with a padding mask, which is a different thing.
       story: Sometimes a word must not see the words after it, for example when a model writes text one word at a time. The
-        causal mask hides them by setting their scores to the lowest possible number, so they end up with exactly zero attention.
-        A mask is a rule that hides some scores. In this lesson the mask is off until you switch it on.
+        causal mask hides them by replacing their scores with minus infinity, a number lower than any real score, so they
+        end up with exactly zero attention. A mask is a rule that hides some scores. In this lesson the mask is off until
+        you switch it on.
       thread: 'With the mask on, the upper-right corner of our grid is hidden: 15 of the 36 squares.'
       check:
         question: What does a causal mask stop a word from doing?
@@ -394,10 +397,10 @@ connections:
     explain: Each head produced its own blended lists. The last stage joins them into one list per word.
 big_picture:
   story: When you read "the cat sat on the mat", the meaning of each word depends on the others. Attention is how a computer
-    model lets every word look at every other word and decide which ones matter to it. Each word asks a question, every word
-    offers something in reply, the best matches get the biggest share of attention, and each word ends up as a blend of what
-    it paid attention to. This lesson runs one real layer of attention, step by step. It is a toy that uses random numbers,
-    so it shows how the idea works, not what a trained model has learned.
+    model lets every word look at all the words, itself included, and decide which ones matter to it. Each word asks a question,
+    every word offers something in reply, the best matches get the biggest share of attention, and each word ends up as a
+    blend of what it paid attention to. This lesson runs one real round of attention (called a layer), step by step. It is
+    a toy that uses random numbers, so it shows how the idea works, not what a trained model has learned.
   analogy:
     title: A classroom where every student can listen to everyone
     mapping:
@@ -406,13 +409,14 @@ big_picture:
     - part: Numbers and seat number
       becomes: each student's profile, plus a seat number
     - part: Question, tag and message
-      becomes: each student's question, name tag, and what they would say if called on
+      becomes: each student's question, a tag saying what they can help with, and what they would say if called on
     - part: Match grid
-      becomes: every student holding their question up against everyone's name tag
+      becomes: every student holding their question up against everyone's tag
     - part: No-peeking rule
       becomes: a rule that you cannot listen to students who have not spoken yet
     - part: Attention shares
-      becomes: turning the scores into shares of attention that add up to 100%
+      becomes: each student dividing 100 listening points among the students they could listen to, giving the most to the
+        best match
     - part: Message blender
       becomes: each student mixing together what the others said, in proportion to those shares
     - part: Combine the groups
@@ -447,8 +451,8 @@ experiment:
     One word: One word
     Q · K · V: Question, tag, message
     Output: New numbers for each word
-    Score spread before scaling: How spread out the scores were
-    Score spread used: How spread out the scores are now
+    Score spread before scaling: Typical gap between scores before dividing
+    Score spread used: Typical gap between scores after dividing
     Strongest weight (average): Biggest share (average)
     Attention on later words: Attention on later words
     Tokens: Words
@@ -460,9 +464,9 @@ experiment:
     presets:
       Cat:
         try: Click it and open the "Who looks at whom" tab. Click a row label such as "sat".
-        notice: Each row is a word that is asking, and the numbers in a row add up to about 100%. The biggest share (the average
-          of each row's largest share, over both groups) is about 35%. For "sat", about 30% goes to "on" (averaged over the
-          two groups). Then switch "Hide the words that come later" on, and 15 of the 36 squares are hatched out.
+        notice: 'Each row is a word that is asking, and the numbers in a row add up to about 100%. Take each row''s biggest
+          share and average them across all rows and both groups: about 35%. For "sat", about 30% goes to "on" (averaged over
+          the two groups). Then switch "Hide the words that come later" on, and 15 of the 36 squares are hatched out.'
       Pronoun:
         try: Click it, open the "One word" tab and pick "it".
         notice: 'In a trained model, "it" might pay attention to "animal". In this toy "it" gives its biggest share (about
@@ -470,11 +474,13 @@ experiment:
           show" to compare: the first group looks most at "tired". The numbers are random, so they carry no meaning. That
           is the point of the warning on this lesson.'
       Order:
-        try: Click it, turn "Seat numbers" Off, then On, and press "Check my fix" in "Break & fix", under "Order-blind attention".
+        try: Click it, turn "Seat numbers" Off, then On, and press "Check my fix" in "Break & fix", under "Attention that
+          ignores order".
         notice: 'With seat numbers off (and the no-peeking rule off) the layer cannot tell "dog bites man" from "man bites
-          dog", and the check shows "Order matters: no". With seat numbers on, it shows "yes". (The size of the difference
-          is exactly 0 in one case and about 0.45 in the other.) You can also see it in the Break & fix check, and in the
-          "What breaks if removed?" card on "Numbers and seat number".'
+          dog", and the check shows "Order matters: no". With seat numbers on, it shows "yes". The check measures how much
+          each word''s new numbers change when the same words are put in reverse order. With seat numbers off the change is
+          exactly 0, so order made no difference. With them on, it is about 0.45. You can also see it in the Break & fix check,
+          and in the "What breaks if removed?" card on "Numbers and seat number".'
     ideas:
     - do: Set "Groups looking at once" to 1 and "Keep the scores a sensible size" to Off.
       see: 'The biggest share averages about 94% for "the cat sat on the mat": with big scores, almost all the attention piles
@@ -504,25 +510,24 @@ challenges:
     brief: This layer is meant to write text from left to right, so each word may only see the words before it. Right now
       the words look ahead. Fix it without changing the sentence.
     hint: Which control hides the later words?
-    explanation: A causal mask sets the scores of later words to the lowest possible number before the shares are worked out,
-      so they get exactly zero attention. Without it, every word can look at words that would not exist yet when the model
-      is writing.
+    explanation: A causal mask sets the scores of later words to minus infinity before the shares are worked out, so they
+      get exactly zero attention. Without it, every word can look at words that would not exist yet when the model is writing.
   one-word-takes-all:
-    title: One word takes everything
-    brief: With a wide group and no size-keeping, almost every word pays attention to a single word. Spread the attention
-      out without changing the sentence.
-    hint: Scores grow with the width of the group. What did the original paper divide them by?
-    explanation: Unscaled scores spread out by about the square root of the head width, so a 64-wide head gives scores far
-      apart and the shares become almost all-or-nothing. Dividing by that square root, or splitting into four or more narrower
-      heads, keeps the attention spread out. Two heads are not enough on their own without the division.
+    title: Each word fixes on one word
+    brief: With one big group and the score-size control off, each word puts almost all its attention on a single word (not
+      always the same one). Spread the attention out without changing the sentence.
+    hint: Scores grow with the size of each group. What did the 2017 paper that introduced this design divide them by?
+    explanation: Unscaled scores spread out by about the square root of the group size, so a 64-wide group gives scores far
+      apart and the shares become almost all-or-nothing. Dividing by that number, or using four or more smaller groups, brings
+      it down in this puzzle. With two groups and no dividing it stays too concentrated.
   bag-of-words:
     title: Attention that ignores order
     brief: This layer gives each word the same result for "dog bites man" and "man bites dog", whichever order the words come
       in. Make it sensitive to word order without changing the sentence.
     hint: What tells attention where each word sits?
-    explanation: Attention only compares lists of numbers, so without place information it treats the sentence as a pile of
-      words. Adding seat numbers makes each word's result depend on the order. (A rule hiding later words would also do it,
-      but that rule is locked in this puzzle.)
+    explanation: Attention only compares lists of numbers, so without place information it treats the sentence as words with
+      no order. Adding seat numbers makes each word's result depend on the order. (Hiding later words also makes each word's
+      view depend on its place, but that rule is locked here.)
 tour:
   tokens:
     title: Start with the words

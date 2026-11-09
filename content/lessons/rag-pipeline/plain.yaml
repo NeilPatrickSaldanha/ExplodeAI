@@ -1,12 +1,14 @@
 # Plain-words voice for Lesson 01. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
 # nothing about AI yet. Same facts and numbers; see docs/PLAIN_WORDS.md for the rules.
 title: Retrieval-Augmented Generation, exploded
-summary: An AI model only knows what it saw in training. RAG (retrieval-augmented generation) gives it your documents to read
-  before it answers. Take the whole machine apart piece by piece, run it for real, break it on purpose, and rebuild it.
+summary: An AI model only knows what it saw in training. RAG (retrieval-augmented generation) finds the few pieces of your
+  documents that match a question and gives just those to the model to read before it answers. You will take it apart one
+  stage at a time, run it, break it on purpose, and put it back together.
 objectives:
 - Name the eight stages of RAG, and what each one hands to the next.
-- Predict how the size of the pieces, the overlap, the number kept and the room on the page change what the model sees.
-- Explain why searching by number-fingerprint, by keywords and by both together rank the pieces differently.
+- Predict how the size of the pieces, the overlap (words that two neighbouring pieces share), the number kept and the room
+  on the page change what the model sees.
+- Explain why searching by the number lists, by matching keywords, and by both together rank the pieces differently.
 - Work out what went wrong in a broken pipeline from the pieces it found and the page it built.
 ui:
   eyebrow: GETTING READY → ANSWERING
@@ -17,9 +19,10 @@ ui:
   summary: Follow a real RAG machine from your documents to an answer. Click any part to see what goes in, what comes out,
     and what breaks without it.
   challenges_intro: Each puzzle below breaks the pipeline in one specific way. Find the reason in the experiment, then fix
-    it using the controls that are left unlocked. The server runs your settings again and checks the result.
-  lexical_notice: 'The built-in fingerprint maker only counts words: it folds them into {dim} numbers, so "refund" and "money
-    back" do not land near each other. A small AI model would put them close together.'
+    it using the controls that are left unlocked. The site runs your settings again and checks the result.
+  lexical_notice: 'The built-in fingerprint maker only counts words: it squeezes them into {dim} numbers, so "refund" and
+    "money back", which share no words, are treated as unrelated. A small AI model is built to give them similar numbers,
+    though it does not always work.'
 components:
   corpus:
     label: Help articles
@@ -52,15 +55,15 @@ components:
         will still be wrong.
       story: This is the pile of documents the system is allowed to answer from. A language model is a computer program that
         writes text, and it only knows what it saw while it was being trained. It has never seen your private articles. Keeping
-        the documents outside the model means you can change what the system knows just by changing the documents and rebuilding
-        the card box (cutting them up again and giving the pieces new fingerprints). Nothing needs training again. Every later
-        stage works on these documents and nothing else.
+        the documents outside the model means you can change what the system knows just by swapping the documents and preparing
+        them again. Nothing needs training again. Every later stage works on these documents and nothing else, apart from
+        whatever a real AI model already learned in training.
       thread: 'Our pile is six made-up help articles from a bike shop, 271 words in all: returns, warranty, battery care,
         shipping, sizing and service.'
       check:
         question: Why keep the documents outside the model, instead of teaching them to the model?
-        answer: Because you can replace or update the documents, and rebuild the card box (cut them up again and give them
-          new fingerprints), without training anything again. The model never needed to see them while it was being trained.
+        answer: Because you can replace or update the documents, and prepare them again, without training anything again.
+          The model never needed to see them while it was being trained.
       terms:
       - word: RAG
         meaning: Retrieval-augmented generation. Looking up the right pieces of your documents first, then giving them to
@@ -97,11 +100,12 @@ components:
         output: Two pieces that each make sense on their own (an illustration)
       misconfigured: Too small and a piece loses the context it needs. Too big and several topics blur together. A fact cut
         across an edge may not fit completely inside any single piece.
-      story: 'A whole article mixes several topics, so it matches a question only vaguely, and the page you send to the model
-        has limited room. So the card cutter cuts each article into small pieces called chunks. Think of cutting a page into
-        index cards. This lesson cuts by sentence or by a set number of words, not by idea, so a card can hold half a topic.
-        Where you cut matters: if the cut falls in the middle of a fact, no single card holds the whole fact. You choose how
-        big the chunks are and whether neighbouring chunks overlap, which means they share some words.'
+      story: 'A whole article mixes several topics, so it matches a question only vaguely, and a model can only read so much
+        text at once, so whatever you send it (we will call this the page) has a size limit. So the card cutter cuts each
+        article into small pieces called chunks. Think of cutting a page into index cards. This lesson cuts by sentence or
+        by a set number of words, not by idea, so a card can hold half a topic. Where you cut matters: if the cut falls in
+        the middle of a fact, no single card holds the whole fact. You choose how big the chunks are and whether neighbouring
+        chunks overlap, which means they share some words.'
       thread: 'With sentence chunks of up to 40 words, our six articles become 11 chunks. The returns article becomes two:
         returns#0 and returns#1.'
       check:
@@ -141,14 +145,15 @@ components:
         - The words are turned into counts
         - The counts are folded into a list of a fixed length
         output: A list of 1024 numbers (an illustration, not real values)
-      misconfigured: Questions and pieces must be given fingerprints in the same way, because fingerprints from different
-        makers cannot be compared. A word-counting maker misses a paraphrase that shares no words with the piece.
-      story: 'A computer cannot compare the meaning of two paragraphs directly, so the fingerprint maker turns each chunk
-        into a list of numbers that stands for it. Such a list is called a vector, and this step is called embedding. Think
-        of writing a fingerprint on every index card. Chunks about similar things should get similar fingerprints. In this
-        lesson the built-in maker is deliberately simple: it builds the fingerprint from the words used (and pairs of neighbouring
-        words), weighted by how rare they are, and folded into 1024 numbers per chunk, so it matches words better than it
-        matches meaning. Unrelated words can occasionally land in the same slot.'
+      misconfigured: Questions and pieces should be given fingerprints in the same way, because fingerprints from different
+        makers usually cannot be compared. A word-counting maker misses a paraphrase that shares no words with the piece.
+      story: A computer cannot compare the meaning of two paragraphs directly, so the fingerprint maker turns each chunk into
+        a list of numbers that stands for it. Such a list is called a vector, and this step is called embedding. Think of
+        writing a fingerprint on every index card. Chunks about similar things should get similar fingerprints. In this lesson
+        the built-in maker is deliberately simple. It looks at the words in a piece, and at pairs of words side by side, and
+        gives rarer words more weight because they say more. It then squeezes all of that into a list of 1024 numbers. So
+        it matches words better than it matches meaning. Because 1024 is a small space, two unrelated words can occasionally
+        end up in the same place in the list.
       thread: Each of our 11 chunks becomes a list of 1024 numbers. Chunks that share words with the question, like the returns
         chunk and the word "return", score highest.
       check:
@@ -234,10 +239,10 @@ components:
         output: One list of numbers for the question (an illustration)
       misconfigured: If the question were given a fingerprint in a different way from the chunks, the two could not be compared
         and the scores would mean nothing.
-      story: The question needs the same treatment as the chunks, using the same maker, so the two can be compared. This is
-        where the question enters the machine, which is why it arrives on its own dotted line. If the question and the chunks
-        were turned into numbers in different ways, comparing them would be meaningless. The question you search with is sometimes
-        called the query.
+      story: The question needs a fingerprint of the same kind as the chunks, so the two can be compared. In this lesson one
+        maker does both jobs. This is where the question enters the machine, which is why it arrives on its own dotted line.
+        If the question and the chunks were turned into numbers in different ways, comparing them would be meaningless. The
+        question you search with is sometimes called the query.
       thread: Our question, "How long do I have to return a bike?", becomes one list of 1024 numbers, made the same way as
         the chunk lists.
       check:
@@ -280,12 +285,14 @@ components:
         number-based search behaves much like a keyword search. Keeping too few chunks can drop the one with the answer, and
         keeping too many floods the page.
       story: The retriever is the search step. It compares the question's fingerprint with the stored ones, ranks every chunk
-        from most to least similar, and keeps the top few (here k = 3). Keeping only a few matters because the page has limited
+        from most to least similar, and keeps the top few (here k = 3). Each chunk gets a score, a number saying how well
+        it matches the question. A bigger score is a better match. Keeping only a few matters because the page has limited
         room. This lesson can rank by number-fingerprint similarity (called dense retrieval), by keywords (called BM25), or
-        by both together (called hybrid). With the default fingerprint maker, dense ranking is itself word-based. Switch to
-        the small AI model on this computer to get a ranking that goes by meaning.
-      thread: For our question the top three are returns#0, battery#1 and returns#1. The two returns chunks are what we want.
-        The battery chunk sneaks in because the simple fingerprint maker is only matching words.
+        by both together (called hybrid). With the default fingerprint maker, dense ranking is itself word-based. If the small
+        AI model on this computer is installed, you can switch to it to rank more by meaning than by shared words.
+      thread: For our question the top three are returns#0, battery#1 and returns#1. returns#0 is the chunk we want, because
+        it holds the 30-day rule. returns#1 is from the same article but only says custom-built bikes cannot be returned.
+        The battery chunk sneaks in because the simple fingerprint maker is only matching words, here the word "long".
       check:
         question: Why keep only the top few chunks instead of all of them?
         answer: The page has a limited size, and extra chunks add irrelevant text that can distract the model or push out
@@ -317,7 +324,7 @@ components:
     explain:
       what: Packs the best chunks and your question into one message, called a prompt, within a limit on its size.
       why: The writer only sees what is on the page. How the page is laid out changes how well the model uses it.
-      analogy: Laying the relevant pages out on the desk, then pinning the question on top.
+      analogy: Laying the relevant pages out on the desk, then adding your question underneath them.
       happens:
       - The chunks go first, each labelled with its name.
       - The instructions and the question come after.
@@ -378,8 +385,8 @@ components:
       story: The generator writes the answer from the page. In a real system this is a language model that reads the chunks
         and writes a reply, ideally pointing to the chunks it used. In this lesson, to stay free and repeatable, it is a simple
         helper that picks the best sentences from the chunks and quotes them, and it is labelled as not a real AI model. Below
-        its answer, an optional real-model panel appears; it is off unless the site owner has switched it on. Looking things
-        up first makes wrong answers less likely, but it does not make them impossible.
+        the answer there can be a second box showing a real AI model's answer. It only shows up if the site owner has paid
+        to switch it on. Looking things up first makes wrong answers less likely, but it does not make them impossible.
       thread: 'It quotes two sentences from returns#0: "Ridgeline Bikes accepts returns of unused bikes within 30 days of
         delivery." and "Returned bikes must include the original packaging."'
       check:
@@ -398,8 +405,8 @@ connections:
       topics, and a page has limited room, so you want to send only the most useful pieces.
   chunker->embedder:
     payload: pieces
-    explain: Each piece gets its own fingerprint (made alongside the others, since how rare a word is depends on all the pieces),
-      because the search will later hand back whole pieces, not whole documents.
+    explain: Each piece gets its own fingerprint, because the search will later hand back whole pieces, not whole documents.
+      (All the fingerprints are made together, because how rare a word is depends on all the pieces.)
   embedder->vector_index:
     payload: fingerprints
     explain: The fingerprints are filed in the box together with which piece each belongs to, so a match can be turned back
@@ -423,9 +430,9 @@ big_picture:
   story: A computer program that writes text can sound very fluent, but it only knows what it saw during training. It has
     never read your private documents. RAG, short for retrieval-augmented generation, fixes that by looking things up first.
     It searches your documents for the pieces that match the question, puts those pieces in front of the model together with
-    the question, and asks the model to answer from them. This lesson has two halves. Getting the documents ready happens
-    once, ahead of time, in a real system (the first four stages, which this demo repeats on every run). Answering happens
-    every time someone asks (the last four).
+    the question, and asks the model to answer from them. This lesson has two halves. The first four stages get the documents
+    ready. In a real system that is done once, ahead of time (this demo repeats it on every run). The last four stages answer
+    a question, and run every time someone asks.
   analogy:
     title: A help desk with a binder and index cards
     mapping:
@@ -444,11 +451,11 @@ big_picture:
     - part: Page builder
       becomes: clipping those cards and the question onto one sheet of paper
     - part: Writer
-      becomes: the writer who answers using only that sheet
-    breaks: A person reads a card and understands it. The computer only compares numbers, so it can pull out the wrong card
-      for a silly reason, and in this lesson the fingerprints are deliberately crude (they are built from the words used).
-      Unlike a real fingerprint, these are compared by how close they are, not for an exact match. A real writer would also
-      sometimes ignore the sheet, and an AI model can too.
+      becomes: the writer who is told to answer using only that sheet
+    breaks: A person reading a card understands it. The computer only compares numbers, so it can pull out the wrong card
+      by mistake, and in this lesson the fingerprints are deliberately crude (they are built from the words used). Unlike
+      a real fingerprint, these are compared by how close they are, not for an exact match. And the writer, whether a person
+      or an AI model, may still ignore the sheet and say something that is not on it.
   example:
     title: The question we will follow
     input: How long do I have to return a bike?
@@ -544,8 +551,8 @@ experiment:
       prompt: The page a real AI model would read, and which chunks fit into the room and which were left out. The simple
         helper's answer below does not read this text. It quotes from the chunks that were included.
       answer: A labelled helper that quotes sentences from the chunks. It is not an AI model. If it quotes nothing, the chunks
-        that were found held no sentence that matched. Below it, an optional real-model answer panel appears. It is off unless
-        the site owner has switched it on.
+        that were found held no sentence that matched. Below the answer there can be a second box showing a real AI model's
+        answer. It only shows up if the site owner has paid to switch it on.
 challenges:
   boundary-split:
     title: The fact that got cut in half
@@ -568,9 +575,9 @@ challenges:
     brief: Keeping 3 chunks, the number-fingerprint search still misses the chunk about the frame's lifetime warranty. Keep
       the number at 3 and change how the chunks are ranked.
     hint: Compare the fingerprint rank and the keyword rank of warranty#0.
-    explanation: Different ways of ranking make different mistakes. Blending the two rankings (reciprocal rank fusion) rewards
-      chunks that rank well in both lists, so a chunk one ranking misses can still make the cut when the other ranks it highly
-      enough.
+    explanation: Different ways of ranking make different mistakes. Blending the two rankings (the "Both together" option)
+      gives extra credit to a card for placing well in either list, so a card that one ranking missed can still make the cut
+      when the other ranks it highly.
   budget-overflow:
     title: Found, then left out
     brief: The right chunk is found, but it never reaches the model. Fix it without changing the search.

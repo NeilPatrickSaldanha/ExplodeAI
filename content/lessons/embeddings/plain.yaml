@@ -1,278 +1,374 @@
 # Plain-words voice for Lesson 03. Laid over lesson.yaml, explain.yaml and teaching.yaml for people who have learned
 # nothing about AI yet. The facts and numbers are the same; see docs/PLAIN_WORDS.md for the rules.
 title: Embeddings, exploded
-summary: A computer cannot read meaning, so it turns each sentence into a list of 384 numbers. Sentences with a similar meaning get similar numbers. Watch it happen with a real small AI model, break it on purpose, and rebuild it.
+summary: A computer cannot read meaning, so it turns each sentence into a list of 384 numbers. Sentences with a similar meaning
+  usually get similar numbers. Watch it happen with a real small AI model, break it on purpose, and rebuild it.
 objectives:
-  - Follow one sentence as it is chopped into pieces, turned into numbers and squashed into a single list.
-  - Explain why sentences with similar meanings end up with similar numbers, and when they do not.
-  - Say what "closeness" means for two lists of numbers, and why different ways of measuring it often agree.
-  - Spot the usual mistakes, such as matching only words, mixing two models, or forgetting a hint for a short question.
+- Follow one sentence as it is chopped into pieces, turned into numbers and squashed into a single list.
+- Explain why sentences with similar meanings end up with similar numbers, and when they do not.
+- Say what "closeness" means for two lists of numbers, and why different ways of measuring it often agree.
+- Spot the usual mistakes, such as matching only words, mixing two models, or forgetting a hint for a short question.
 ui:
   eyebrow: TEXT → PIECES → NUMBERS → MEANING
   scene_title: Exploded view of the machine that turns a sentence into numbers
   flow_document: Text
   flow_vector: Lists of numbers
   flow_query: Your sentence
-  summary: Watch a sentence turn into 384 numbers and land near other sentences that mean something similar. Click any part to see what goes in, what comes out, and what breaks without it.
-  challenges_intro: Each puzzle below makes the search return the wrong sentences, or none at all, for one specific reason. Find the reason in the experiment, then fix it using the controls that are left unlocked. The server runs your settings again and checks the result.
+  summary: Watch a sentence turn into 384 numbers and usually land near other sentences that mean something similar. Click
+    any part to see what goes in, what comes out, and what breaks without it.
+  challenges_intro: Each puzzle below makes the search return the wrong sentences, or none at all, for one specific reason.
+    Find the reason in the experiment, then fix it using the controls that are left unlocked. The site runs your settings
+    again and checks the result.
 components:
   library:
     label: Example sentences
     subtitle: The sentences we search
     short: The ready-made sentences your sentence will be compared with.
-    detail: Twenty-four short example sentences about four topics. Each one was turned into numbers once, by the same model that will read your sentence.
-    inputs: [Example sentences]
-    outputs: [24 sentences]
+    detail: Twenty-four short example sentences about four topics. Each one was turned into numbers once, by the same model
+      that will read your sentence.
+    inputs:
+    - Example sentences
+    outputs:
+    - 24 sentences
     breaks_if_removed: There is nothing to compare your sentence with, so there are no nearest sentences.
     explain:
-      what: Twenty-four short example sentences about animals, food, furniture and vehicles. Your sentence will be compared with all of them.
+      what: Twenty-four short example sentences about animals, food, furniture and vehicles. Your sentence will be compared
+        with all of them.
       why: A search needs something to search through. These are turned into numbers once, and then used again for every search.
       analogy: A neighbourhood where 24 houses are already built, each with an address.
       happens:
-        - Every example sentence goes through the same steps as your sentence will.
-        - Each ends up as one list of 384 numbers, which works like its address.
-        - The addresses are kept, ready to be compared.
+      - Every example sentence goes through the same steps as your sentence will.
+      - Each ends up as one list of 384 numbers, which works like its address.
+      - The addresses are kept, ready to be compared.
       goes_to: First the word chopper, then later the closeness ranker, as lists of numbers.
       example:
         input: The bookshelf is full of old novels.
-        steps: [Chopped into pieces, Read for meaning, Squashed into one list]
+        steps:
+        - Chopped into pieces
+        - Read for meaning
+        - Combined into one list
         output: One list of 384 numbers
-      misconfigured: If the example sentences were turned into numbers by a different model than your sentence, their addresses would not match up, and the comparison would mean nothing.
-      story: Here are the sentences your sentence will be compared with. There are 24 of them, about four topics (animals, food, furniture and vehicles). Each one is turned into a list of numbers by a small AI model. That list works like an address, so the sentences are like houses that are already built.
+      misconfigured: If the example sentences were turned into numbers by a different model than your sentence, their addresses
+        would not match up, and the comparison would mean nothing.
+      story: Here are the sentences your sentence will be compared with. There are 24 of them, about four topics (animals,
+        food, furniture and vehicles). Each one is turned into a list of numbers by a small AI model. That list works like
+        an address, so the sentences are like houses that are already built.
       thread: Our town has 24 houses. One of them, a sentence about a bookshelf, lives on the furniture street.
       check:
         question: Why must the example sentences and your sentence be turned into numbers by the same model?
-        answer: Each model has its own way of laying out addresses. If two models were used, the addresses would not line up, and comparing them would tell you nothing.
+        answer: Each model has its own way of laying out addresses. If two models were used, the addresses would not line
+          up, and comparing them would tell you nothing.
       terms:
-        - word: Model
-          meaning: A computer program that learned patterns from a huge number of examples. This lesson uses a small one.
-        - word: Embedding
-          meaning: The list of numbers that stands for a piece of text. It works like an address that says where the text lives on a map of meaning.
+      - word: Model
+        meaning: A computer program that learned patterns from a huge number of examples. This lesson uses a small one.
+      - word: Embedding
+        meaning: The list of numbers that stands for a piece of text. It works like an address that says where the text lives
+          on a map of meaning.
   your_text:
     label: Your sentence
     subtitle: What you type
     short: The sentence you want to find look-alikes for.
-    detail: For short search questions, this model's makers suggest adding a hint in front. You can turn that hint on in the experiment.
-    inputs: [Your sentence]
-    outputs: [Text for the model]
+    detail: For short search questions, this model's makers suggest adding a hint in front. You can turn that hint on in the
+      experiment.
+    inputs:
+    - Your sentence
+    outputs:
+    - Text for the model
     breaks_if_removed: There is no sentence to turn into numbers, so there are no nearest sentences.
     explain:
-      what: The sentence you type. The machine will find which example sentences mean something similar.
-      why: "Everything the machine does is to answer one question about your sentence: which example sentences are closest in meaning?"
+      what: The sentence you type. The machine will list the example sentences whose numbers are nearest to yours, which are
+        usually the ones that mean something similar.
+      why: 'Everything the machine does is to answer one question about your sentence: which example sentences have numbers
+        nearest to yours (usually, the ones closest in meaning)?'
       analogy: A visitor arriving in the neighbourhood and asking, "Who lives nearest to me?"
       happens:
-        - You type any sentence you like, or click an example button.
-        - It goes into the word chopper on its own, just like the example sentences did.
-        - For short questions, you can add a hint sentence in front, which the model's makers suggest.
+      - You type any sentence you like, or click an example button.
+      - It goes into the word chopper on its own, just like the example sentences did.
+      - For short questions, you can add a hint sentence in front, which the model's makers suggest.
       goes_to: The word chopper.
       example:
         input: a place to put my books
-        steps: [Typed in, Optionally given a hint, Sent to the word chopper]
+        steps:
+        - Typed in
+        - Optionally given a hint
+        - Sent to the word chopper
         output: Your sentence, ready to be chopped
-      misconfigured: A very short question, with no hint, may land next to the wrong sentences. The model's makers suggest a hint for short questions.
-      story: This is the sentence you type. You want to know which example sentences mean something similar. Try anything, then try the example buttons to see where the model does well and where it stumbles.
-      thread: We follow "a place to put my books". It shares no words with "The bookshelf is full of old novels", the sentence we hope it finds.
+      misconfigured: The model's makers suggest a hint for short questions. Leaving it out can send a very short question
+        to slightly worse matches, but for this model the difference is small, so try it both ways.
+      story: This is the sentence you type. You want to know which example sentences mean something similar. Try anything,
+        then try the example buttons to see where the model does well and where it stumbles.
+      thread: We follow "a place to put my books". It shares no words with "The bookshelf is full of old novels", the sentence
+        we hope it finds.
       check:
         question: Why is "a place to put my books" a good test?
-        answer: It shares no words with the bookshelf sentence, yet they are about the same thing. A method that only matches shared words cannot link them. A model trained on lots of text often can.
+        answer: It shares no words with the bookshelf sentence, yet they are about the same thing. A method that only matches
+          shared words cannot link them. A model trained on lots of text often can.
       terms:
-        - word: Query
-          meaning: The question or sentence you search with. Here it is just "your sentence".
+      - word: Query
+        meaning: The question or sentence you search with. Here it is just "your sentence".
   tokenizer:
     label: Word chopper
     subtitle: Sentences into pieces
     short: Cuts a sentence into small pieces and gives each piece a number.
-    detail: The model cannot read letters. It only reads numbered pieces. A start marker goes first and an end marker goes last, and rare words are split into smaller pieces.
-    inputs: [Sentences, Your sentence]
-    outputs: [Numbered pieces]
+    detail: The model cannot read letters. It only reads numbered pieces. A start marker goes first and an end marker goes
+      last, and rare words are split into smaller pieces.
+    inputs:
+    - Sentences
+    - Your sentence
+    outputs:
+    - Numbered pieces
     breaks_if_removed: The model only reads numbered pieces, not raw text, so nothing can be turned into numbers.
     explain:
       what: Cuts the sentence into small pieces, called tokens, and gives each piece a number.
-      why: The model cannot read letters or words directly. It only understands numbers, so the text must be chopped into numbered pieces first.
+      why: The model cannot read letters or words directly. It only understands numbers, so the text must be chopped into
+        numbered pieces first.
       analogy: Cutting a sentence into word cards and numbering the cards from a fixed list.
       happens:
-        - A marker is added at the start and another at the end.
-        - The sentence is cut into pieces. Common words stay whole; rare words split into smaller parts.
-        - Each piece is swapped for its number from a fixed list.
-        - If there are more than 512 pieces, the extra ones are cut off.
+      - A marker is added at the start and another at the end.
+      - The sentence is cut into pieces. Common words stay whole; rare words split into smaller parts.
+      - Each piece is swapped for its label number from a fixed list.
+      - If there are more than 512 pieces, the extra ones are cut off.
       goes_to: The meaning reader.
       example:
         input: a place to put my books
-        steps: [Start marker added, Cut into six word pieces, End marker added]
+        steps:
+        - Start marker added
+        - Cut into six word pieces
+        - End marker added
         output: 8 numbered pieces
       misconfigured: A very long text is cut off after 512 pieces, so the end of it is never read.
-      story: The model cannot read raw text. First the sentence is chopped into small pieces called tokens, and two markers are added, one at the start and one at the end. Rare words are split into smaller parts. This model can read at most 512 pieces at a time.
+      story: The model cannot read raw text. First the sentence is chopped into small pieces called tokens, and two markers
+        are added, one at the start and one at the end. Rare words are split into smaller parts. This model can read at most
+        512 pieces at a time.
       thread: '"a place to put my books" becomes 8 pieces: a start marker, the six words, and an end marker.'
       check:
         question: What happens to a text with more than 512 pieces?
         answer: The extra pieces are cut off. Anything after the limit is never seen by the model.
       terms:
-        - word: Token
-          meaning: One piece of text the model reads, such as a whole word or part of a rare word.
-        - word: "[CLS] and [SEP]"
-          meaning: Two special marker pieces. [CLS] goes at the start and [SEP] goes at the end.
+      - word: Token
+        meaning: One piece of text the model reads, such as a whole word or part of a rare word.
+      - word: '[CLS] and [SEP]'
+        meaning: Two special marker pieces. [CLS] goes at the start and [SEP] goes at the end.
   encoder:
     label: Meaning reader
     subtitle: Pieces into numbers
     short: Reads all the pieces together and gives each one a list of 384 numbers.
-    detail: Each piece gets 384 numbers that depend on the pieces around it, so the same word gets different numbers in different sentences.
-    inputs: [Numbered pieces]
-    outputs: [One list of numbers per piece]
+    detail: Each piece gets 384 numbers that depend on the pieces around it, so the same word gets different numbers in different
+      sentences.
+    inputs:
+    - Numbered pieces
+    outputs:
+    - One list of numbers per piece
     breaks_if_removed: The pieces have numbers, but nothing turns them into lists of numbers that carry meaning.
     explain:
-      what: Reads all the pieces together and gives each piece its own list of 384 numbers that captures its meaning in this sentence.
+      what: Reads all the pieces together and gives each piece its own list of 384 numbers that captures its meaning in this
+        sentence.
       why: A word's meaning depends on the words around it. Reading everything together lets the numbers reflect that.
       analogy: A reader who reads a whole sentence, then writes a short note about each word, thinking about how it fits in.
       happens:
-        - All the pieces go into the model together.
-        - The model works through twelve layers, which are twelve rounds of thinking about how the pieces relate.
-        - Each piece comes out with its own list of 384 numbers.
+      - All the pieces go into the model together.
+      - The model passes the pieces through twelve layers. A layer is one step of calculation that lets each piece's numbers
+        be adjusted using the other pieces around it.
+      - Each piece comes out with its own list of 384 numbers.
       goes_to: The summariser.
       example:
         input: 8 numbered pieces
-        steps: [All pieces read together, Twelve rounds of thinking, A list of numbers for each piece]
+        steps:
+        - All pieces read together
+        - Twelve layers of calculation
+        - A list of numbers for each piece
         output: 8 lists of 384 numbers
       misconfigured: If this step is skipped, there are no numbers that carry meaning, only the labels of the pieces.
-      story: The meaning reader is the model itself. It reads all the pieces together, in twelve rounds of thinking, and gives every piece a list of 384 numbers that reflects its meaning in this sentence. Because each piece is read with its neighbours, the same word gets different numbers in different sentences, like "bank" beside a river and "bank" for money.
+      story: The meaning reader is the model itself. It reads all the pieces together, through twelve layers of calculation,
+        and gives every piece a list of 384 numbers that reflects its meaning in this sentence. Because each piece is read
+        with its neighbours, the same word gets different numbers in different sentences, like "bank" beside a river and "bank"
+        for money.
       thread: Our 8 pieces become 8 lists of 384 numbers each. That is a table with 8 rows and 384 columns.
       check:
         question: Why does the same word get different numbers in different sentences?
         answer: Each piece's numbers are worked out from the whole sentence, so the words around it change the result.
       terms:
-        - word: Vector
-          meaning: A list of numbers in a fixed order. Each list here has 384 numbers.
-        - word: Layer
-          meaning: One round of thinking inside the model. This model has twelve.
+      - word: Vector
+        meaning: A list of numbers in a fixed order. Each list here has 384 numbers.
+      - word: Layer
+        meaning: One step of calculation inside the model. This model has twelve.
   pooling:
     label: Summariser
     subtitle: Many lists become one
-    short: Squashes the lists for all the pieces into one list for the whole sentence.
-    detail: This model uses the list from the start marker as the summary. Averaging every piece is the other common choice, and you can try both.
-    inputs: [One list per piece]
-    outputs: [One list of 384 numbers]
-    breaks_if_removed: There is a list for every piece but none for the whole sentence, so sentences of different lengths cannot be compared.
+    short: Combines the lists for all the pieces into one list for the whole sentence.
+    detail: This model uses the list from the start marker as the summary. Averaging every piece is the other common choice,
+      and you can try both.
+    inputs:
+    - One list per piece
+    outputs:
+    - One list of 384 numbers
+    breaks_if_removed: There is a list for every piece but none for the whole sentence, so sentences of different lengths
+      cannot be compared.
     explain:
       what: Squashes the many lists, one per piece, into one list for the whole sentence.
       why: To compare two sentences, you need exactly one list for each, no matter how long the sentence is.
       analogy: Writing one summary line for a whole paragraph.
       happens:
-        - The machine looks at the table of lists, one row per piece.
-        - It keeps the row for the start marker, which the model was trained to use as a summary of the sentence.
-        - That one row is the sentence's list.
+      - The machine looks at the table of lists, one row per piece.
+      - It keeps the row for the start marker, which the model was trained to use as a summary of the sentence.
+      - That one row is the sentence's list.
       goes_to: The size equaliser.
       example:
         input: 8 lists of 384 numbers
-        steps: [Look at all the rows, Keep the start marker's row]
+        steps:
+        - Look at all the rows
+        - Keep the start marker's row
         output: One list of 384 numbers
-      misconfigured: Using a different way of summarising than the one the model was trained with usually gives slightly worse results.
-      story: Now there is one list per piece, but we need one list for the whole sentence. The summariser squashes them into one. This model keeps the list of the start marker, the [CLS] marker, because it was trained to use that one as a summary of the whole sentence. This way of squashing many lists into one is called pooling.
+      misconfigured: The summary should be made the way the model was trained to make it. A different way can give worse results,
+        sometimes only a little and sometimes a lot, so it is worth testing.
+      story: Now there is one list per piece, but we need one list for the whole sentence. The summariser combines them into
+        one. This model keeps the list of the start marker, the [CLS] marker, because it was trained to use that one as a
+        summary of the whole sentence. This way of combining many lists into one is called pooling.
       thread: The table of 8 rows becomes a single row of 384 numbers, the start marker's row.
       check:
         question: What is the job of this step?
         answer: To turn many lists, one per piece, into a single list for the whole sentence.
       terms:
-        - word: Pooling
-          meaning: Squashing many lists of numbers into one list.
+      - word: Pooling
+        meaning: Combining many lists of numbers into one list.
   normalizer:
     label: Size equaliser
     subtitle: Every list the same size
     short: Rescales the list so that its overall size is exactly 1.
     detail: After this step, only the direction the list points in matters, not how large its numbers are.
-    inputs: [One list of 384 numbers]
-    outputs: [A list of size 1]
-    breaks_if_removed: The lists keep their original sizes, so some scoring methods give numbers outside the usual range. The closeness-by-direction method is not affected.
+    inputs:
+    - One list of 384 numbers
+    outputs:
+    - A list of size 1
+    breaks_if_removed: The scores can go outside -1 to 1, and for "Multiply and add" and "Straight-line distance" the order
+      of the sentences can change too, because lists with bigger numbers get an unfair advantage. "Direction match" is not
+      affected.
     explain:
       what: Rescales the list so that its overall size is exactly 1, without changing what it points towards.
-      why: Two lists can point the same way but be different sizes. Making every list the same size means only the direction is compared.
+      why: Two lists can point the same way but be different sizes. Making every list the same size means only the direction
+        is compared.
       analogy: Redrawing every arrow to the same length, so you only compare where they point.
       happens:
-        - The machine works out the overall size of the list.
-        - Every number in the list is divided by that size.
-        - The list now has size exactly 1 and points the same way.
+      - The machine works out the overall size of the list.
+      - Every number in the list is divided by that size.
+      - The list now has size exactly 1 and points the same way.
       goes_to: The closeness ranker and the meaning map.
       example:
         input: A list of size 9.25
-        steps: [Work out its size, Divide every number by it]
+        steps:
+        - Work out its size
+        - Divide every number by it
         output: The same list, now size 1.00
-      misconfigured: If this step is skipped, some ways of measuring closeness give numbers that are not between -1 and 1. Measuring by direction is unaffected.
-      story: Next the list is rescaled so its overall size is exactly 1, like redrawing every arrow to the same length so that only where it points matters. This step is called normalising. After it, the different ways of measuring closeness, which you will meet in the next stage, all put the sentences in the same order.
+      misconfigured: If this step is skipped, some ways of measuring closeness give numbers that are not between -1 and 1,
+        and the order can change too. "Direction match" is unaffected.
+      story: Next the list is rescaled so its overall size is exactly 1, like redrawing every arrow to the same length so
+        that only where it points matters. This step is called normalising. After it, the different ways of measuring closeness,
+        which you will meet in the next stage, all put the sentences in the same order.
       thread: The size of our list goes from 9.25 down to 1.00.
       check:
         question: Why do two ways of measuring closeness agree once every list has size 1?
-        answer: Measuring by direction, called cosine similarity, is the same calculation as multiplying and adding when both lists have size 1. So the two give the same answer.
+        answer: Measuring by direction, called cosine similarity, is the same calculation as multiplying and adding when both
+          lists have size 1. So the two give the same answer.
       terms:
-        - word: Normalising
-          meaning: Rescaling a list of numbers so its overall size is exactly 1.
-        - word: Cosine similarity
-          meaning: A score for how closely two lists point in the same direction. It does not care how big the lists are.
+      - word: Normalising
+        meaning: Rescaling a list of numbers so its overall size is exactly 1.
+      - word: Cosine similarity
+        meaning: A score for how closely two lists point in the same direction. It does not care how big the lists are.
   similarity:
     label: Closeness ranker
     subtitle: Who lives nearest?
     short: Scores your sentence's numbers against every example's numbers and puts them in order.
-    detail: Sentences with a related meaning score highest, but even unrelated sentences get scores well above zero. Only the order is meaningful.
-    inputs: [Your numbers, The examples' numbers]
-    outputs: [Nearest sentences, in order]
+    detail: Sentences with a related meaning score highest, but even unrelated sentences get scores well above zero. Only
+      the order is meaningful.
+    inputs:
+    - Your numbers
+    - The examples' numbers
+    outputs:
+    - Nearest sentences
+    - in order
     breaks_if_removed: Nothing is put in order. The examples come back in the order they were stored.
     explain:
       what: Scores your sentence's numbers against every example sentence's numbers, then puts them in order, closest first.
-      why: "This is the answer to the question the whole machine was built for: which sentences are most like yours?"
-      analogy: Measuring the distance from the visitor to every house, then listing the houses from nearest to furthest.
+      why: 'This is the answer to the question the whole machine was built for: which sentences are most like yours?'
+      analogy: Giving every house a closeness score for the visitor, where a bigger score means a nearer house, then listing
+        the houses from highest score to lowest.
       happens:
-        - Your list is compared with each example's list, one at a time.
-        - Each comparison gives one score. A higher score means closer.
-        - The sentences are sorted by score.
+      - Your list is compared with each example's list, one at a time.
+      - Each comparison gives one score. A higher score means closer. (If you pick the straight-line distance option, the
+        scores show as negative numbers so that the nearest sentence still has the highest one.)
+      - The sentences are sorted by score.
       goes_to: Nothing. This is the answer. The meaning map is a separate picture.
       example:
         input: Your list and 24 example lists
-        steps: [Compare with each example, Give each a score, Sort the scores]
+        steps:
+        - Compare with each example
+        - Give each a score
+        - Sort the scores
         output: The nearest sentences, in order
-      misconfigured: The scores are not percentages, and even unrelated sentences score above zero. Only compare scores with each other.
-      story: Now your list is scored against every example's list, and the sentences are put in order. A higher score means closer in meaning. The scores are not percentages. What matters is the order they come out in.
-      thread: The top three are the bookshelf sentence (0.695), the desk (0.566) and the armchair (0.554), all from the furniture topic.
+      misconfigured: The scores are not percentages, and even unrelated sentences score above zero. Only compare scores with
+        each other.
+      story: Now your list is scored against every example's list, and the sentences are put in order. A higher score means
+        the model thinks the two sentences are closer in meaning, though it can be wrong. The scores are not percentages.
+        What matters is the order they come out in.
+      thread: The top three are the bookshelf sentence (0.695), the desk (0.566) and the armchair (0.554), all from the furniture
+        topic.
       check:
         question: Is a score of 0.6 "quite similar"?
-        answer: Not on its own. The scores are not on a fixed scale, and even sentences about different things score above zero. Compare scores with each other, not with a target number.
+        answer: Not on its own. The scores are not on a fixed scale, and even sentences about different things score above
+          zero. Compare scores with each other, not with a target number.
       terms:
-        - word: Dot product
-          meaning: A way to score two lists by multiplying them number by number and adding the results.
-        - word: Euclidean distance
-          meaning: The ordinary straight-line distance between two points.
+      - word: Dot product
+        meaning: A way to score two lists by multiplying them number by number and adding the results.
+      - word: Euclidean distance
+        meaning: The ordinary straight-line distance between two points.
   semantic_space:
     label: Meaning map
     subtitle: See the neighbourhoods
     short: A 3D picture of where all the sentences live.
-    detail: A technique squashes the 384 numbers down to 3 so we can draw them. Use the picture to see neighbourhoods, but the exact scores are in the nearest-sentences list.
-    inputs: [All the lists of numbers]
-    outputs: [Points in 3D]
-    breaks_if_removed: There is no picture, but the nearest sentences are exactly the same, because the picture is only a view of the real numbers.
+    detail: A technique squashes the 384 numbers down to 3 so we can draw them. Use the picture to see neighbourhoods, but
+      the exact scores are in the nearest-sentences list.
+    inputs:
+    - All the lists of numbers
+    outputs:
+    - Points in 3D
+    breaks_if_removed: There is no picture, but the nearest sentences are exactly the same, because the picture is only a
+      view of the real numbers.
     explain:
       what: A 3D picture of where all the sentences live, drawn from their lists of numbers.
-      why: Numbers are hard to picture. A map lets you see which sentences cluster together, even though the real address has 384 numbers.
+      why: Numbers are hard to picture. A map lets you see which sentences cluster together, even though the real address
+        has 384 numbers.
       analogy: The paper map of the neighbourhood, a flat drawing of the real town.
       happens:
-        - The 384 numbers cannot be drawn, so a technique squashes them down to 3.
-        - Each sentence becomes one point in 3D, and your sentence becomes a ring.
-        - The label says how much of the real spread the picture keeps.
+      - The 384 numbers cannot be drawn, so a technique squashes them down to 3.
+      - Each sentence becomes one point in 3D, and your sentence becomes a ring.
+      - The label says how much of the real spread the picture keeps.
       goes_to: Nothing. It is only a picture.
       example:
         input: 25 lists of 384 numbers
-        steps: [Squash 384 numbers down to 3, Place a point for each sentence]
+        steps:
+        - Squash 384 numbers down to 3
+        - Place a point for each sentence
         output: A 3D map
-      misconfigured: Squashing loses detail. Two sentences can look near on the map but be farther apart in the real numbers, so trust the nearest-sentences list for exact answers.
-      story: "This stage is a picture, not part of the search. The 384 numbers cannot be drawn, so a technique called PCA squashes them down to 3, and then you can see the map. Squashing loses detail: the picture keeps only part of the real spread, and its label tells you how much. The nearest-sentences list uses the real numbers."
-      thread: Your sentence shows up as a ring among the 24 example points. Its three nearest neighbours, by the real numbers, are all furniture.
+      misconfigured: Squashing loses detail. Two sentences can look near on the map but be farther apart in the real numbers,
+        so trust the nearest-sentences list for exact answers.
+      story: 'This stage is a picture, not part of the search. The 384 numbers cannot be drawn, so a technique called PCA
+        squashes them down to 3, and then you can see the map. Squashing loses detail: the picture keeps only part of the
+        real spread, and its label tells you how much. The nearest-sentences list uses the real numbers.'
+      thread: Your sentence shows up as a ring among the 24 example points. Its three nearest neighbours, by the real numbers,
+        are all furniture.
       check:
         question: Why trust the nearest-sentences list more than the 3D map?
         answer: The map squashes 384 numbers down to 3 and loses detail. The list is worked out from all 384 numbers.
       terms:
-        - word: PCA
-          meaning: A technique that squashes a long list of numbers down to a few, keeping as much of the pattern as it can.
-        - word: Cluster
-          meaning: A group of points that sit close together.
+      - word: PCA
+        meaning: A technique that squashes a long list of numbers down to a few, keeping as much of the pattern as it can.
+      - word: Cluster
+        meaning: A group of points that sit close together.
 connections:
   library->tokenizer:
     payload: sentences
-    explain: The example sentences are chopped up in exactly the same way as your sentence, so that all of them end up in the same neighbourhood.
+    explain: The example sentences are chopped up in exactly the same way as your sentence, so that all of them end up in
+      the same neighbourhood.
   your_text->tokenizer:
     payload: your sentence
     explain: Your sentence is chopped into pieces first, because the model reads numbered pieces, not letters.
@@ -281,10 +377,12 @@ connections:
     explain: The meaning reader looks at all the pieces together, so that each piece can be read in the light of the others.
   encoder->pooling:
     payload: a list per piece
-    explain: The meaning reader gives one list per piece. To compare whole sentences, those must be squashed into one list per sentence.
+    explain: The meaning reader gives one list per piece. To compare whole sentences, those must be squashed into one list
+      per sentence.
   pooling->normalizer:
     payload: sentence list
-    explain: The sentence's list is rescaled to size 1, so that when two lists are compared, only the direction they point matters.
+    explain: The sentence's list is rescaled to size 1, so that when two lists are compared, only the direction they point
+      matters.
   normalizer->similarity:
     payload: size-1 lists
     explain: The closeness ranker compares your list with every example's list to find the nearest ones.
@@ -292,31 +390,38 @@ connections:
     payload: size-1 lists
     explain: The map is drawn from the same lists, squashed down to three numbers each so that you can see them.
 big_picture:
-  story: A computer cannot read meaning. It can only work with numbers. So the trick is to give every sentence an address made of numbers, in a way that sentences with a similar meaning get nearby addresses. Then, to find sentences that mean something similar, the computer only has to look for the nearest addresses. This lesson follows one sentence through a real small AI model, from words, to pieces, to a list of 384 numbers, to a spot on a map.
+  story: A computer cannot read meaning. It can only work with numbers. So the trick is to give every sentence an address
+    made of numbers, in a way that sentences with a similar meaning usually get nearby addresses. Then, to find sentences
+    that mean something similar, the computer only has to look for the nearest addresses. This lesson follows one sentence
+    through a real small AI model, from words, to pieces, to a list of 384 numbers, to a spot on a map.
   analogy:
     title: A town where similar things live close together
     mapping:
-      - part: Example sentences
-        becomes: 24 houses that are already built
-      - part: Your sentence
-        becomes: a visitor asking who lives nearest to them
-      - part: Word chopper
-        becomes: cutting the sentence into word cards
-      - part: Meaning reader
-        becomes: a reader who writes a note for every card, keeping the whole sentence in mind
-      - part: Summariser
-        becomes: writing one summary line for the whole sentence
-      - part: Size equaliser
-        becomes: redrawing every arrow to the same length, so only where it points matters
-      - part: Closeness ranker
-        becomes: measuring the distance from the visitor to every house
-      - part: Meaning map
-        becomes: the paper map of the town
-    breaks: A paper map has two directions. This one has 384, so the 3D picture has to squash them down and loses detail. Distances on the picture are only a hint. The list of nearest sentences uses the exact numbers.
+    - part: Example sentences
+      becomes: 24 houses that are already built
+    - part: Your sentence
+      becomes: a visitor asking who lives nearest to them
+    - part: Word chopper
+      becomes: cutting the sentence into word cards
+    - part: Meaning reader
+      becomes: a reader who writes a note for every card, keeping the whole sentence in mind
+    - part: Summariser
+      becomes: writing one summary line for the whole sentence
+    - part: Size equaliser
+      becomes: imagine each house's address as an arrow from the town centre, and redraw every arrow to the same length, so
+        only the direction it points in matters
+    - part: Closeness ranker
+      becomes: giving every house a closeness score for the visitor, where a bigger score means a nearer house
+    - part: Meaning map
+      becomes: the flat photo of the town
+    breaks: A town address needs only two numbers, like a street and a house number. Our addresses need 384, which cannot
+      be drawn. So the 3D picture squeezes them down to three numbers per sentence, like a flat photo of a round planet, and
+      loses some detail. Distances on the picture are only a hint. The list of nearest sentences uses the exact numbers.
   example:
     title: The sentence we will follow
     input: a place to put my books
-    note: It shares no words with the sentence we hope the machine finds, "The bookshelf is full of old novels". Only the meaning can connect them.
+    note: It shares no words with the sentence we hope the machine finds, "The bookshelf is full of old novels". Only the
+      meaning can connect them.
 experiment:
   corpus_note: Example sentences about four topics. They are generic examples, not claims about the world.
   labels:
@@ -325,8 +430,8 @@ experiment:
     Your-text embedder: How your sentence becomes numbers
     Neural (bge-small): Small AI model (bge-small)
     Lexical: Word matching only
-    Pooling: How to squash the lists into one
-    "[CLS] token": Start marker's list
+    Pooling: How to combine the lists into one
+    '[CLS] token': Start marker's list
     Mean of tokens: Average of all the pieces
     Similarity: How closeness is measured
     Cosine: Direction match
@@ -343,57 +448,91 @@ experiment:
     Your vector: Your list of numbers
   presets:
     Where it goes wrong:
-      note: The train sentence never says "rails", and this small model puts it only 14th out of 24, below a truck, a horse and a plane. Being close in meaning is not the same as being correct.
+      note: The train sentence never says "rails", and this small model puts it only 14th out of 24, below a truck, a horse
+        and a plane. Being close in meaning is not the same as being correct.
     Long text:
       note: The end of this text is past the model's limit of 512 pieces, so the model never sees it. Check the Pieces tab.
   guide:
-    intro: Every run here uses a small AI model on your own computer, unless both settings for turning sentences into numbers are set to "Word matching only". Change one thing at a time and watch the Nearest sentences tab. Compare the order of the scores, not the numbers.
+    intro: Every run here uses a small AI model on your own computer, unless both settings for turning sentences into numbers
+      are set to "Word matching only". Change one thing at a time and watch the Nearest sentences tab. Compare the order of
+      the scores, not the numbers.
     presets:
       Puppy:
         try: Click it, then open the Nearest sentences tab.
-        notice: The nearest sentences are all about animals, which is what you would hope. The puppy fetching sticks (0.717) comes first, then the dog chasing a ball (0.637), then the horse grazing (0.564). The first one shares the words "puppy" and "fetch" with your sentence. The dog and the horse share no words at all, so the model matched them on meaning.
+        notice: The nearest sentences are all about animals, which is what you would hope. The puppy fetching sticks (0.717)
+          comes first, then the dog chasing a ball (0.637), then the horse grazing (0.564). The first one shares the word
+          "puppy" and a form of "fetch" with your sentence. The dog and the horse share no important words with it, only small
+          ones like "a" and "the", so the model matched them on meaning.
       Bookshelf:
-        try: Click it, then set both "how to turn sentences into numbers" settings to "Word matching only".
-        notice: With the small AI model, the nearest sentences are the bookshelf (0.695), the desk (0.566) and the armchair (0.554), all furniture, even though "a place to put my books" shares no real words with them. With word matching only, every score is 0.0. Nothing matches, so the list just shows the first sentences in the library, which happen to be the animal ones. That is a tie, not a match.
+        try: Click it, then set both "How the example sentences become numbers" and "How your sentence becomes numbers" to
+          "Word matching only".
+        notice: With the small AI model, the nearest sentences are the bookshelf (0.695), the desk (0.566) and the armchair
+          (0.554), all furniture, even though "a place to put my books" shares no real words with them. With word matching
+          only, every score is 0.0. Nothing matches, so the list just shows the first sentences in the library, which happen
+          to be the animal ones. That is a tie, not a match.
       Commute:
         try: Click it, then turn on "Hint for short questions".
-        notice: At first the top match is the desk (0.588), then the bus (0.561). That is not what you meant. With the hint on, the bus comes first (0.515 against the desk's 0.502). The gap is tiny, which is why we call the hint a tendency, not a guarantee.
+        notice: At first the top match is the desk (0.588), then the bus (0.561). That is not what you meant. With the hint
+          on, the bus comes first (0.515 against the desk's 0.502). The gap is tiny, which is why we call the hint a tendency,
+          not a guarantee.
       Where it goes wrong:
         try: Click it and look at the top three.
-        notice: '"A vehicle that runs on rails" finds a truck (0.619), a horse (0.613) and a small plane (0.597). The train sentence is not even in the top three: it comes 14th out of 24. The numbers are only an approximation of meaning, and this is a real miss for this small model.'
+        notice: '"A vehicle that runs on rails" finds a truck (0.619), a horse (0.613) and a small plane (0.597). The train
+          sentence is not even in the top three: it comes 14th out of 24. The numbers are only an approximation of meaning,
+          and this is a real miss for this small model.'
       Long text:
         try: Click it, then open the Pieces tab.
-        notice: A warning says the text was cut off. The model reads at most 512 pieces, so the end of the passage, including its last sentence, never reaches it.
+        notice: A warning says the text was cut off. The model reads at most 512 pieces, so the end of the passage, including
+          its last sentence, never reaches it.
     ideas:
-      - do: Set only one of the two "how to turn sentences into numbers" settings to "Word matching only", then open the Nearest sentences tab.
-        see: A red notice says the two sets of numbers cannot be compared, because they came from different models. It is like trying to find a house using addresses from two different towns.
-      - do: Switch "How closeness is measured" between "Direction match" and "Multiply and add", with "Make every list size 1" on.
-        see: The order of the nearest sentences stays the same. Once every list has size 1, the two methods agree.
-      - do: Turn "Make every list size 1" off and look at the "Multiply and add" scores.
-        see: The scores are no longer kept between -1 and 1, because the lists keep their original sizes. "Direction match" is not affected.
-      - do: Switch "How to squash the lists into one" between "Start marker's list" and "Average of all the pieces".
-        see: Both turn the lists for the pieces into one list for the sentence, in different ways, so the scores change. This model was trained to use the start marker, so the average is a slight mismatch. For the bookshelf sentence the top score drops from 0.695 to 0.645. Try "a vehicle that runs on rails" and watch the top two swap.
+    - do: Set only one of the two settings for how sentences become numbers to "Word matching only", then open the Nearest
+        sentences tab.
+      see: A red notice says the two sets of numbers cannot be compared, because they came from different models. It is like
+        trying to find a house using addresses from two different towns.
+    - do: Switch "How closeness is measured" between "Direction match" and "Multiply and add", with "Make every list size
+        1" on.
+      see: The order of the nearest sentences stays the same. Once every list has size 1, the two methods agree.
+    - do: Turn "Make every list size 1" off and look at the "Multiply and add" scores.
+      see: The scores are no longer kept between -1 and 1, because the lists keep their original sizes. "Direction match"
+        is not affected.
+    - do: Switch "How to combine the lists into one" between "Start marker's list" and "Average of all the pieces".
+      see: Both turn the lists for the pieces into one list for the sentence, in different ways, so the scores change. This
+        model was trained to use the start marker, so the average is a slight mismatch. For the bookshelf sentence the top
+        score drops from 0.695 to 0.645. Try "a vehicle that runs on rails" and watch the top two swap.
     tabs:
-      space: Your sentence is a ring among the 24 example sentences, coloured and shaped by topic. Hover over a point to read its sentence. The label tells you how much of the real spread the picture keeps. "Show as table" lists everything.
-      neighbours: The exact scores, highest first. Compare the order of the scores rather than the numbers, because they are not percentages.
-      tokens: The pieces the model really reads, including the start marker [CLS] and the end marker [SEP]. Rare words are split into smaller parts that begin with ##. A warning appears if the text was cut off at 512 pieces.
-      vector: The first 48 of the 384 numbers in your sentence's list, before it was rescaled to size 1 (the line under it shows the size going from about 9.25 to 1.00). A bar's height shows how big a number is, and its fill shows whether it is positive or negative. Rescaling divides every number by that size, so the list keeps the same shape. The lists for each piece are on the Pieces tab.
+      space: Your sentence is a ring among the 24 example sentences, coloured and shaped by topic. Hover over a point to read
+        its sentence. The label tells you how much of the real spread the picture keeps. "Show as table" lists everything.
+      neighbours: The exact scores, highest first. Compare the order of the scores rather than the numbers, because they are
+        not percentages.
+      tokens: The pieces the model really reads, including the start marker [CLS] and the end marker [SEP]. Rare words are
+        split into smaller parts that begin with
+      vector: The first 48 of the 384 numbers in your sentence's list, before it was rescaled to size 1 (the line under it
+        shows the size going from about 9.25 to 1.00). A bar's height shows how big a number is, and its fill shows whether
+        it is positive or negative. Rescaling divides every number by that size, so the list keeps the same shape. The lists
+        for each piece are on the Pieces tab.
 challenges:
   synonym-blind:
     title: Same meaning, different words
-    brief: No example sentence shares a real word with this question, so the search finds nothing useful. Fix it without changing the question.
+    brief: No example sentence shares a real word with this question, so the search finds nothing useful. Fix it without changing
+      the question.
     hint: What does each setting compare, the words or the meaning?
-    explanation: Word matching can only match words that appear in both sentences. The small AI model puts "a place to put my books" next to "The bookshelf is full of old novels" because they are about related things.
+    explanation: Word matching can only match words that appear in both sentences. The small AI model puts "a place to put
+      my books" next to "The bookshelf is full of old novels" because they are about related things.
   mixed-models:
     title: Two models, one search
-    brief: The example sentences were turned into numbers by one model, and your sentence by another. Make the search work again without redoing the examples.
+    brief: The example sentences were turned into numbers by one model, and your sentence by another. Make the search work
+      again without redoing the examples.
     hint: Compare the two settings. Are the two lists of numbers even the same length?
-    explanation: Different models lay out their addresses in different ways, like two towns with different street plans. Here the lists do not even have the same number of numbers. Your sentence must be turned into numbers by the same model as the examples.
+    explanation: Different models lay out their addresses in different ways, like two towns with different street plans. Here
+      the lists do not even have the same number of numbers. Your sentence must be turned into numbers by the same model as
+      the examples.
   short-query:
     title: The short question
-    brief: For this short question the top match is a desk, not a way to get to work. Fix it without changing the text, the model or the way closeness is measured.
+    brief: For this short question the top match is a desk, not a way to get to work. Fix it without changing the text, the
+      model or the way closeness is measured.
     hint: The model's makers suggest something specific for short questions.
-    explanation: The makers of this model recommend adding a short hint sentence in front of short questions. Here it nudges the question towards the bus sentence, though only a little. It is a tendency to test on your own data, not a promise.
+    explanation: The makers of this model recommend adding a short hint sentence in front of short questions. Here it nudges
+      the question towards the bus sentence, though only a little. It is a tendency to test on your own data, not a promise.
 tour:
   library:
     title: Start with what we search through
@@ -403,10 +542,11 @@ tour:
     body: A short question can carry a hint sentence in front. A long passage does not need one.
   tokenizer:
     title: The sentence is chopped into pieces
-    body: The model reads numbered pieces. A start marker goes first, rare words are split up, and there is a limit of 512 pieces.
+    body: The model reads numbered pieces. A start marker goes first, rare words are split up, and there is a limit of 512
+      pieces.
   encoder:
     title: Every piece gets a list of numbers
-    body: Twelve rounds of thinking give each piece 384 numbers that depend on the words around it.
+    body: Twelve layers of calculation give each piece 384 numbers that depend on the words around it.
   pooling:
     title: Many lists become one
     body: This model keeps the start marker's list as the summary of the whole sentence.
@@ -430,10 +570,13 @@ visuals:
     description: The positions and shapes are a visual way of explaining. The order of the steps follows the real order.
   data-flow:
     label: Animated picture of the idea
-    description: The moving dots show which stage feeds which. Solid lines carry text, dashed lines carry lists of numbers, and dotted lines carry your sentence. The speed means nothing.
+    description: The moving dots show which stage feeds which. Solid lines carry text, dashed lines carry lists of numbers,
+      and dotted lines carry your sentence. The speed means nothing.
   experiment:
     label: Real run
-    description: A small model called bge-small-en-v1.5 (a reduced-precision version made by Qdrant, run through a tool called fastembed) runs on this computer, stage by stage, on your sentence.
+    description: A small model called bge-small-en-v1.5 (a reduced-precision version made by Qdrant, run through a tool called
+      fastembed) runs on this computer, stage by stage, on your sentence.
   semantic-space:
     label: Real numbers, squashed picture
-    description: The real lists of 384 numbers, squashed down to 3 for drawing. Distances in the picture only roughly match the real distances.
+    description: The real lists of 384 numbers, squashed down to 3 for drawing. Distances in the picture only roughly match
+      the real distances.
