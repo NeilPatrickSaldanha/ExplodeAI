@@ -8,7 +8,7 @@ import { scenePalette } from './colors'
 import { useThemeVersion } from './hooks'
 import { LabelProjector, type LabelAnchor } from './LabelLayer'
 import { Links3D } from './Links3D'
-import { bounds, linkControlPoint, neighbours, partPosition, quadBezier } from './math'
+import { bounds, labelAnchor, linkControlPoint, linkEnd, neighbours, partPosition, quadBezier } from './math'
 import { Part3D } from './Part3D'
 import { StudioLight } from './StudioLight'
 import { linkKey, type AssemblySpec, type Readouts, type Vec3, type ViewState } from './types'
@@ -62,7 +62,7 @@ function CameraRig({
   resetSignal?: number
   framePoints: Vec3[]
   /** Where each part's label hangs at full explosion, so the frame can leave room for the label cards. */
-  labelAnchors: { id: string; at: Vec3 }[]
+  labelAnchors: { id: string; at: Vec3; below?: boolean }[]
   elements: RefObject<Map<string, HTMLElement>>
   center: Vec3
   /** Changes when the selected stage changes: the only time the camera drifts towards a goal. */
@@ -114,7 +114,8 @@ function CameraRig({
       const el = elements.current?.get(a.id)
       const w = el?.offsetWidth || 190
       const lh = el?.offsetHeight || 62
-      return { at: a.at, padX: (w / 2 + 6) / halfW, padTop: lh / (h / 2) }
+      const pad = lh / (h / 2)
+      return a.below ? { at: a.at, padX: (w / 2 + 6) / halfW, padBottom: pad } : { at: a.at, padX: (w / 2 + 6) / halfW, padTop: pad }
     })
     const fit = fitView([...framePoints, ...labelPoints], center, aspect, { marginX, marginY, centerY })
     home.current.set(...fit.target)
@@ -162,13 +163,15 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
       }),
     [spec],
   )
+  // Models in the front row hang their labels below them, towards the viewer, so labels never cover models.
+  const below = useMemo(() => {
+    const mid = bounds(spec, 1).center[2]
+    return new Set(spec.parts.filter((p) => p.model && partPosition(p, 1)[2] > mid).map((p) => p.id))
+  }, [spec])
   // Label anchors at full explosion (the same offsets the live labels use), for framing the camera.
   const labelAnchorsFull = useMemo(
-    () => spec.parts.map((p) => {
-      const at = partPosition(p, 1)
-      return { id: p.id, at: [at[0], at[1] + p.size[1] + 0.8, at[2]] as Vec3 }
-    }),
-    [spec],
+    () => spec.parts.map((p) => ({ id: p.id, at: labelAnchor(partPosition(p, 1), p, 0.8, below.has(p.id)), below: below.has(p.id) })),
+    [spec, below],
   )
   const [sceneWidth, setSceneWidth] = useState(1000)
   const compact = sceneWidth < 640
@@ -186,6 +189,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
     ? [0, 1, 2].map((i) => frame.center[i] + (sel[i] - frame.center[i]) * FOCUS_PULL) as Vec3
     : frame.center
   const animating = view.flow && !reducedMotion
+  const partInfo = useMemo(() => Object.fromEntries(spec.parts.map((p) => [p.id, { size: p.size, model: p.model }])), [spec])
   // Lessons whose stages are real 3D models get studio lighting and soft shadows for their materials.
   const hasModels = spec.parts.some((p) => p.model)
 
@@ -196,15 +200,12 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
     : spec.links.filter((l) => cardMode === 'all' || (!!view.selectedId && (l.source === view.selectedId || l.target === view.selectedId)))
   const anchors = useRef<LabelAnchor[]>([])
   anchors.current = [
-    ...spec.parts.map((p) => {
-      const at = positions[p.id]
-      return { id: p.id, at: [at[0], at[1] + p.size[1] + 0.55 + t * 0.25, at[2]] as Vec3 }
-    }),
+    ...spec.parts.map((p) => ({ id: p.id, at: labelAnchor(positions[p.id], p, 0.55 + t * 0.25, below.has(p.id)), below: below.has(p.id) })),
     ...linkLabels.map((l) => {
       const a = positions[l.source]
       const b = positions[l.target]
-      const s: Vec3 = [a[0], a[1] + 0.25, a[2]]
-      const e: Vec3 = [b[0], b[1] + 0.25, b[2]]
+      const s = linkEnd(a, b, partInfo[l.source])
+      const e = linkEnd(b, a, partInfo[l.target])
       const m = quadBezier(s, linkControlPoint(s, e), e, 0.5)
       return { id: linkKey(l), at: [m[0], m[1] + 0.12, m[2]] as Vec3 }
     }),
@@ -230,7 +231,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
         <directionalLight position={[6, 10, 6]} intensity={hasModels ? 0.9 : 1.1} />
         <directionalLight position={[-8, 4, -6]} intensity={0.35} />
         {hasModels && <StudioLight />}
-        {hasModels && <ContactShadows position={[frame.center[0], 0.001, frame.center[2]]} scale={40} resolution={1024} blur={2.4} far={2.5} opacity={0.5} />}
+        {hasModels && <ContactShadows position={[frame.center[0], 0.001, frame.center[2]]} scale={40} resolution={1024} blur={2.4} far={2.5} opacity={0.7} />}
         <gridHelper args={[40, 40, palette.muted, palette.edge]} position={[0, -0.02, 0]} material-transparent material-opacity={0.12} />
         {spec.parts.map((p) => (
           <Part3D
@@ -244,7 +245,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
             onSelect={onSelect}
           />
         ))}
-        <Links3D links={spec.links} positions={positions} flow={view.flow} reducedMotion={reducedMotion} activeIds={active} focusId={view.selectedId} palette={palette} />
+        <Links3D links={spec.links} positions={positions} flow={view.flow} reducedMotion={reducedMotion} activeIds={active} focusId={view.selectedId} palette={palette} parts={partInfo} />
         <OrbitControls
           makeDefault
           enableDamping={!reducedMotion}

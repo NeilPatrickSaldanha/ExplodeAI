@@ -1,11 +1,11 @@
 """Stage 2, Card cutter: the six articles cut into the 11 real chunks of a default run.
 
 Each card carries its chunk id, its source article's colour, and one text line per ten words, so a
-36-word chunk is visibly bigger than a 5-word one.
+36-word chunk is visibly fuller than a 5-word one. The cards lie on a sloped board facing the viewer.
 """
 
-from blib import empty
-from cards import CHUNKS, card
+from blib import empty, wedge
+from cards import CHUNKS, CW, card
 
 ROWS = [
     ["returns#0", "returns#1", "warranty#0", "warranty#1"],
@@ -17,9 +17,9 @@ ROWS = [
 def build():
     root = empty("card_cutter")
     assert sum(len(r) for r in ROWS) == len(CHUNKS)
+    top = wedge("slope", 4 * (CW + 0.025) + 0.04, 0.5, 36, root)
     for r, row in enumerate(ROWS):
         for c, chunk_id in enumerate(row):
-            x = (c - (len(row) - 1) / 2) * 0.205
-            y = 0.19 - r * 0.17
-            card(chunk_id, root, (x, y, 0.055 + (2 - r) * 0.035), explode=((c - (len(row) - 1) / 2) * 0.06, 0.02 * (2 - r), r * 0.06))
+            k = c - (len(row) - 1) / 2
+            card(chunk_id, top, (k * (CW + 0.025), 0.155 - r * 0.155, 0.003), tilt=0, explode=(k * 0.05, 0.03, r * 0.03))
     return root

@@ -12,7 +12,7 @@ CHUNKS = [
     ("sizing#1", 14), ("service#0", 33), ("service#1", 10),
 ]
 WORDS = dict(CHUNKS)
-CW, CH = 0.19, 0.12  # card width and height
+CW, CH = 0.22, 0.13  # card width and height
 
 
 def card(chunk_id, parent, loc, tilt=55, explode=None, lines=None, w=CW, h=CH):
@@ -21,9 +21,9 @@ def card(chunk_id, parent, loc, tilt=55, explode=None, lines=None, w=CW, h=CH):
     g.rotation_euler = (math.radians(tilt), 0, 0)
     doc = chunk_id.split("#")[0]
     box(f"{chunk_id}_stock", (w, h, 0.003), (0, 0, 0), paper(CARD), g, bevel=0.0008)
-    box(f"{chunk_id}_stripe", (w, 0.016, 0.0008), (0, h / 2 - 0.008, 0.0019), ink(DOC[doc]), g)
-    text(f"{chunk_id}_id", chunk_id, 0.017, (-w / 2 + 0.012, h / 2 - 0.03, 0.0021), ink(INK), g, align="LEFT")
+    box(f"{chunk_id}_stripe", (w, 0.042, 0.0008), (0, h / 2 - 0.021, 0.0019), ink(DOC[doc]), g)
+    text(f"{chunk_id}_id", chunk_id, 0.028, (-w / 2 + 0.012, h / 2 - 0.021, 0.0023), ink((255, 255, 255)), g, align="LEFT")
     n = lines if lines is not None else max(1, math.ceil(WORDS.get(chunk_id, 10) / 10))
     widths = [w * 0.78 if i < n - 1 else w * 0.45 for i in range(n)]
-    text_lines(f"{chunk_id}_l", (-w / 2 + 0.012, h / 2 - 0.052), widths, 0.0155, 0.0045, ink(GREY), g, z=0.0019)
+    text_lines(f"{chunk_id}_l", (-w / 2 + 0.012, h / 2 - 0.058), widths, 0.0165, 0.006, ink(GREY), g, z=0.0019)
     return g

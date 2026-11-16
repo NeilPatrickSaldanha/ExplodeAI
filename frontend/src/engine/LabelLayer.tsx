@@ -6,6 +6,8 @@ import type { Vec3 } from './types'
 export interface LabelAnchor {
   id: string
   at: Vec3
+  /** Hang the label below its anchor instead of above it. */
+  below?: boolean
 }
 
 /**
@@ -34,7 +36,7 @@ export function LabelProjector({
       const raw = ((v.x + 1) / 2) * size.width
       const x = size.width > half * 2 ? Math.min(Math.max(raw, half), size.width - half) : raw
       const y = ((1 - v.y) / 2) * size.height
-      el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`
+      el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, ${a.below ? '0%' : '-100%'})`
       el.style.visibility = visible ? 'visible' : 'hidden'
     }
   })

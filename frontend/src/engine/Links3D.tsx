@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import type { Mesh } from 'three'
 import type { ScenePalette } from './colors'
-import { linkControlPoint, quadBezier } from './math'
+import { linkControlPoint, linkEnd, quadBezier } from './math'
 import type { FlowKind, LinkSpec, Vec3 } from './types'
 import { linkKey } from './types'
 
@@ -17,6 +17,8 @@ interface Props {
   /** Links touching this part are drawn brighter and faster. */
   focusId?: string | null
   palette: ScenePalette
+  /** Each part's size and model, so lines can meet a model at its edge. */
+  parts?: Record<string, { size: Vec3; model?: string }>
 }
 
 /**
@@ -34,7 +36,7 @@ function flowColor(kind: FlowKind, p: ScenePalette) {
   return kind === 'vector' ? p.flowVector : kind === 'query' ? p.flowQuery : p.flow
 }
 
-export function Links3D({ links, positions, flow, reducedMotion, activeIds, focusId, palette }: Props) {
+export function Links3D({ links, positions, flow, reducedMotion, activeIds, focusId, palette, parts }: Props) {
   return (
     <>
       {links.map((link) => {
@@ -46,8 +48,8 @@ export function Links3D({ links, positions, flow, reducedMotion, activeIds, focu
         return (
           <OneLink
             key={linkKey(link)}
-            a={a}
-            b={b}
+            a={linkEnd(a, b, parts?.[link.source])}
+            b={linkEnd(b, a, parts?.[link.target])}
             kind={link.kind ?? 'document'}
             animate={flow && !reducedMotion && active}
             dim={!active}
@@ -79,9 +81,8 @@ function OneLink({
 }) {
   const style = STYLE[kind]
   const color = dim ? palette.muted : flowColor(kind, palette)
-  const lift = (p: Vec3): Vec3 => [p[0], p[1] + 0.25, p[2]]
-  const start = lift(a)
-  const end = lift(b)
+  const start = a
+  const end = b
   const ctrl = linkControlPoint(start, end)
   const points = useMemo(
     () => Array.from({ length: 33 }, (_, i) => quadBezier(start, ctrl, end, i / 32)),

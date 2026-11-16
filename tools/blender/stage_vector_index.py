@@ -24,8 +24,8 @@ def build():
     for s in (-1, 1):
         box(f"wall_side{s}", (T, ID + 2 * T, IH), (s * (IW / 2 + T / 2), 0, IH / 2), kraft, root, bevel=0.002)
     label_w = 0.2
-    box("label", (label_w, 0.003, 0.04), (0, -ID / 2 - T - 0.0015, IH * 0.22), paper(CARD), root, bevel=0.001)
-    text("label_text", "11 vectors", 0.02, (0, -ID / 2 - T - 0.0035, IH * 0.22), ink(INK), root, rot=(math.radians(90), 0, 0))
+    box("label", (label_w, 0.003, 0.05), (0, -ID / 2 - T - 0.0015, IH * 0.22), paper(CARD), root, bevel=0.001)
+    text("label_text", "11 vectors", 0.026, (0, -ID / 2 - T - 0.0035, IH * 0.22), ink(INK), root, rot=(math.radians(90), 0, 0))
 
     n = len(CHUNKS)
     for i, (chunk_id, _) in enumerate(CHUNKS):
@@ -33,10 +33,10 @@ def build():
         g = empty(f"file_{chunk_id}", (0, y, T), root, explode=(0, 0.03 + i * 0.012, 0))
         g.rotation_euler = (math.radians(-10), 0, 0)
         box(f"{chunk_id}_file", (IW - 0.04, 0.003, IH * 0.92), (0, 0, IH * 0.46), paper(CARD), g, bevel=0.0008)
-        tab_x = -0.24 + (i % 4) * 0.16
+        tab_x = -0.235 + (i % 4) * 0.157
         top = IH * 0.92
         doc = chunk_id.split("#")[0]
-        box(f"{chunk_id}_tab", (0.13, 0.003, 0.035), (tab_x, 0, top + 0.0165), ink(DOC[doc]), g, bevel=0.001)
-        text(f"{chunk_id}_tabtext", chunk_id, 0.017, (tab_x, -0.0025, top + 0.0165), ink((255, 255, 255)), g, rot=(math.radians(90), 0, 0))
-        strip(f"{chunk_id}_vec", g, (-(IW - 0.04) / 2 + 0.015, -0.002, top - 0.03), n=22, seed=100 + i, count_label="", rot=(math.radians(90), 0, 0))
+        box(f"{chunk_id}_tab", (0.155, 0.003, 0.045), (tab_x, 0, top + 0.021), ink(DOC[doc]), g, bevel=0.001)
+        text(f"{chunk_id}_tabtext", chunk_id, 0.025, (tab_x, -0.0025, top + 0.021), ink((255, 255, 255)), g, rot=(math.radians(90), 0, 0))
+        strip(f"{chunk_id}_vec", g, (-(IW - 0.04) / 2 + 0.02, -0.002, top - 0.04), n=12, seed=100 + i, count_label="", rot=(math.radians(90), 0, 0))
     return root

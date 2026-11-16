@@ -170,6 +170,41 @@ def bounds(objs):
     return (min(xs), max(xs)), (min(ys), max(ys)), (min(zs), max(zs))
 
 
+STAND = (98, 106, 120)  # neutral slate: reads on both the navy and the cream background
+
+
+def wedge(name, w, d, angle_deg, parent=None, mat=None):
+    """A sloped board: front edge on the floor, rising towards the back at angle_deg. Returns the empty
+    sitting at the centre of its top face, rotated to match, so items placed on it face the viewer."""
+    import bmesh
+
+    a = math.radians(angle_deg)
+    cy, sz = d / 2 * math.cos(a), d * math.sin(a)
+    mesh = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    pts = [(-w / 2, -cy, 0), (w / 2, -cy, 0), (w / 2, cy, 0), (-w / 2, cy, 0), (w / 2, cy, sz), (-w / 2, cy, sz)]
+    v = [bm.verts.new(p) for p in pts]
+    for f in ((0, 1, 2, 3), (0, 5, 4, 1), (3, 2, 4, 5), (0, 3, 5), (1, 4, 2)):
+        bm.faces.new([v[i] for i in f])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(mesh)
+    bm.free()
+    o = bpy.data.objects.new(name, mesh)
+    link(o, parent)
+    o.data.materials.append(mat or material("stand", STAND, rough=0.45, coat=0.2))
+    top = empty(f"{name}_top", (0, 0, sz / 2 + 0.003), parent)
+    top.rotation_euler = (a, 0, 0)
+    return top
+
+
+def stand(margin=0.05, height=0.03):
+    """A slim slate base under the whole model, so it stands out on any background."""
+    bpy.context.view_layer.update()
+    (x0, x1), (y0, y1), (z0, z1) = bounds(list(bpy.context.scene.objects))
+    w, d = x1 - x0 + 2 * margin, y1 - y0 + 2 * margin
+    box("stand", (w, d, height), ((x0 + x1) / 2, (y0 + y1) / 2, z0 - height / 2), material("stand", STAND, rough=0.45, coat=0.2), bevel=0.012)
+
+
 def settle():
     """Move the model so it rests on the floor (z = 0) and is centred on the origin in x and y."""
     bpy.context.view_layer.update()

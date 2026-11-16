@@ -36,7 +36,7 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
       label: 'Your question',
       group: 'input',
       shape: 'card',
-      size: [1.4, 0.53, 0.22],
+      size: [1.32, 0.49, 0.38],
       model: '/models/rag/question.glb',
       position: [qe.position[0], 0, qe.position[2] + 0.9],
       explode: [qe.explode[0], 0, qe.explode[2] + 1.6],

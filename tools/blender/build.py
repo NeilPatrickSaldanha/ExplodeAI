@@ -26,14 +26,16 @@ for stage in stages:
     blib.reset()
     mod = importlib.import_module(f"stage_{stage}")
     mod.build()
+    blib.stand()
     blib.settle()
     blib.optimise()
     sizes[stage] = blib.export(os.path.join(OUT, f"{stage}.glb"))
     print("OBJECTS", stage, sum(1 for o in bpy.context.scene.objects if o.type == "MESH"), "MATERIALS", len(bpy.data.materials))
     if preview:
         os.makedirs(PREVIEW, exist_ok=True)
-        target = getattr(mod, "PREVIEW_TARGET", (0, 0, 0.1))
-        dist = getattr(mod, "PREVIEW_DIST", 1.6)
+        (x0, x1), (y0, y1), (z0, z1) = blib.bounds(list(bpy.context.scene.objects))
+        target = (0, 0, (z1 - z0) * 0.45)
+        dist = 1.25 * max(x1 - x0, y1 - y0, z1 - z0) + 0.7
         blib.render_preview(os.path.join(PREVIEW, f"{stage}_dark.png"), (16, 20, 38), target, dist)
         blib.render_preview(os.path.join(PREVIEW, f"{stage}_light.png"), (246, 240, 226), target, dist)
 print("SIZES", json.dumps(sizes))

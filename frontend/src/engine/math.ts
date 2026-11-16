@@ -85,3 +85,32 @@ export function topDown(spec: AssemblySpec, t: number, width: number, height: nu
     spec.parts.map((p, i) => [p.id, { x: ox + (pts[i][0] - minX) * s, y: oz + (pts[i][2] - minZ) * s }]),
   ) as Record<string, { x: number; y: number }>
 }
+
+/**
+ * Where a flow line meets a part. Generic shapes: just above the part's centre, as before. Model parts:
+ * on the edge of the part's footprint that faces the other end, low over its stand, so the line meets the
+ * stage instead of running through it.
+ */
+export function linkEnd(at: Vec3, toward: Vec3, part?: { size: Vec3; model?: string }): Vec3 {
+  if (!part?.model) return [at[0], at[1] + 0.25, at[2]]
+  const dx = toward[0] - at[0]
+  const dz = toward[2] - at[2]
+  const len = Math.hypot(dx, dz) || 1
+  const ux = dx / len
+  const uz = dz / len
+  const hw = part.size[0] / 2 + 0.08
+  const hd = part.size[2] / 2 + 0.08
+  const reach = Math.min(ux ? hw / Math.abs(ux) : Infinity, uz ? hd / Math.abs(uz) : Infinity)
+  return [at[0] + ux * reach, at[1] + 0.12, at[2] + uz * reach]
+}
+
+/**
+ * Where a part's label is pinned. Generic shapes: above the centre. Models: above the back edge, or, for the
+ * front row (below = true), just in front of the front edge with the label hanging downwards, so no label
+ * covers a model.
+ */
+export function labelAnchor(at: Vec3, part: { size: Vec3; model?: string }, raise: number, below = false): Vec3 {
+  if (!part.model) return [at[0], at[1] + part.size[1] + raise, at[2]]
+  if (below) return [at[0], at[1] + 0.04, at[2] + part.size[2] / 2 + 0.15]
+  return [at[0], at[1] + part.size[1] + raise, at[2] - part.size[2] * 0.45]
+}

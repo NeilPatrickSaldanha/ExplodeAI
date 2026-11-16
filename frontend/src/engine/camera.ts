@@ -65,6 +65,8 @@ export interface FitPoint {
   padX?: number
   /** Extra room above the point, in NDC (a label that hangs above its anchor). */
   padTop?: number
+  /** Extra room below the point, in NDC (a label that hangs below its anchor). */
+  padBottom?: number
 }
 
 export function fitView(rawPoints: (Vec3 | FitPoint)[], center: Vec3, aspect: number, opts: FitOptions): { distance: number; target: Vec3 } {
@@ -85,10 +87,11 @@ export function fitView(rawPoints: (Vec3 | FitPoint)[], center: Vec3, aspect: nu
       v.set(p.at[0], p.at[1], p.at[2]).project(cam)
       const px = p.padX ?? 0
       const pt = p.padTop ?? 0
+      const pb = p.padBottom ?? 0
       return (
         v.x - px >= -opts.marginX &&
         v.x + px <= opts.marginX &&
-        v.y - centerY >= -opts.marginY &&
+        v.y - pb - centerY >= -opts.marginY &&
         v.y + pt - centerY <= opts.marginY &&
         v.z < 1
       )
@@ -115,7 +118,7 @@ export function fitView(rawPoints: (Vec3 | FitPoint)[], center: Vec3, aspect: nu
       v.set(p.at[0], p.at[1], p.at[2]).project(cam)
       minX = Math.min(minX, v.x - (p.padX ?? 0))
       maxX = Math.max(maxX, v.x + (p.padX ?? 0))
-      minY = Math.min(minY, v.y)
+      minY = Math.min(minY, v.y - (p.padBottom ?? 0))
       maxY = Math.max(maxY, v.y + (p.padTop ?? 0))
     }
     const dx = (minX + maxX) / 2
