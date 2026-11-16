@@ -4,7 +4,7 @@ import { spreadParts } from '../../engine/math'
 import { linkKey } from '../../engine/types'
 
 /** How far this lesson's parts spread when fully exploded (x, y, z). */
-const SPREAD: [number, number, number] = [2.6, 1.2, 1.5]
+const SPREAD: [number, number, number] = [1.15, 1.2, 0.6]
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   return {
@@ -14,6 +14,7 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
       group: c.phase,
       shape: c.geometry.shape,
       size: c.geometry.size,
+      model: c.geometry.model ? `/models/${c.geometry.model}.glb` : undefined,
       position: c.position,
       explode: c.explode,
       subtitle: c.subtitle ?? undefined,

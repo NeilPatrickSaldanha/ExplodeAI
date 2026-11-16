@@ -541,7 +541,7 @@ components:
     short: The text the tokenizer learns its merges from.
     detail: Merges come from whatever is frequent in this text, so the corpus decides which words end up as single tokens. Here it is a small, fictional lighthouse keeper's log in plain ASCII.
     claims: [bpe-frequency-weighted, real-merge-counts]
-    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    geometry: {shape: stack, size: [2.0, 0.91, 1.51], model: tok/corpus}
     position: [-2.2, 0, -0.55]
     explode: [-2.8, 0, -1.6]
     subtitle: Text to learn from
@@ -555,7 +555,7 @@ components:
     short: Cuts text into word-like pieces before any merging.
     detail: Merges never cross a piece boundary. The pattern here is a simplified GPT-2 style one. A space stays attached to the word after it, and letters, digits and punctuation go into separate pieces. Turn it off and merges start to span words.
     claims: [bpe-no-cross-word, gpt2-character-categories, leading-space, sentencepiece-raw-text, hf-pipeline]
-    geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
+    geometry: {shape: slab, size: [2.0, 0.65, 0.87], model: tok/pre_tokenizer}
     position: [-1.1, 0, -0.55]
     explode: [-1.4, 0, -1.6]
     subtitle: Cut into word pieces
@@ -569,7 +569,7 @@ components:
     short: The starting symbols every piece is spelled with.
     detail: With bytes, there are always 256 starting symbols and any text can be spelled. With only the characters seen in training, anything new becomes [UNK].
     claims: [gpt2-byte-level, byte-level-no-unk, char-bpe-unk]
-    geometry: {shape: grid, size: [0.9, 0.4, 0.9]}
+    geometry: {shape: grid, size: [1.84, 1.04, 1.63], model: tok/base_alphabet}
     position: [0, 0, -0.55]
     explode: [0, 0, -1.6]
     subtitle: Starting symbols
@@ -583,7 +583,7 @@ components:
     short: Repeatedly merges the most frequent adjacent pair.
     detail: Each step counts every adjacent pair, weighted by how often its word occurs, and turns the winner into a new symbol. Ties go to the pair whose bytes sort first, so training is deterministic.
     claims: [bpe-compression-origin, bpe-training-loop, bpe-frequency-weighted, bpe-deterministic]
-    geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
+    geometry: {shape: ring, size: [2.0, 0.49, 0.78], model: tok/merge_learner}
     position: [1.1, 0, -0.55]
     explode: [1.4, 0, -1.6]
     subtitle: Merge frequent pairs
@@ -597,7 +597,7 @@ components:
     short: Base symbols, learned merges, and special tokens, each with an id.
     detail: Vocabulary size is the base alphabet plus one entry per merge plus the special tokens. Here that is one end-of-text marker, as in GPT-2. With the character alphabet, [UNK] counts as part of the base. The merge list is ordered, and that order is part of the tokenizer.
     claims: [bpe-vocab-formula, gpt2-vocab-size, real-merge-counts, sentencepiece-vocab-size, special-tokens, vocab-length-tradeoff]
-    geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
+    geometry: {shape: cylinder, size: [2.0, 0.81, 0.56], model: tok/vocabulary}
     position: [2.2, 0, -0.55]
     explode: [2.8, 0, -1.6]
     subtitle: Symbols and their ids
@@ -611,7 +611,7 @@ components:
     short: New text to turn into tokens.
     detail: It does not have to look like the training text. Words the corpus never contained still get spelled out from smaller pieces.
     claims: [subword-open-vocabulary, tokens-not-words]
-    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    geometry: {shape: stack, size: [2.0, 1.0, 0.65], model: tok/input_text}
     position: [2.2, 0, 0.55]
     explode: [2.8, 0, 1.6]
     subtitle: Your text
@@ -625,7 +625,7 @@ components:
     short: Pre-tokenizes, spells in base symbols, then replays the merges in order.
     detail: The encoder uses the same pre-tokenizer and alphabet as training and applies the merges in the order they were learned. The number of ids it outputs is the token count. That count only holds for this tokenizer.
     claims: [bpe-apply-in-order, subword-open-vocabulary, counts-tokenizer-specific, tiktoken-model-encodings, bytes-per-token, openai-rule-of-thumb, gemini-tokens, anthropic-count-tokens, anthropic-new-tokenizer, tokens-meter-usage]
-    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    geometry: {shape: prism, size: [2.0, 0.56, 0.92], model: tok/encoder}
     position: [0.55, 0, 0.55]
     explode: [0.7, 0, 1.6]
     subtitle: Text becomes token ids
@@ -639,7 +639,7 @@ components:
     short: Turns token ids back into bytes, then text.
     detail: Joining every token's bytes gives back the input exactly, unless a token is [UNK]. With a byte alphabet that never happens. A single token can hold part of a character, so decoding only some of the tokens can produce broken text.
     claims: [byte-bpe-lossless, decode-partial-lossy, sentencepiece-lossless]
-    geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
+    geometry: {shape: lens, size: [2.0, 0.59, 0.96], model: tok/decoder}
     position: [-1.1, 0, 0.55]
     explode: [-1.4, 0, 1.6]
     subtitle: Ids back to text

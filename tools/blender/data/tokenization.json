@@ -1,0 +1,220 @@
+{
+ "text": "The keeper lit the lantern at dusk.",
+ "pre_pieces": [
+  "The",
+  " keeper",
+  " lit",
+  " the",
+  " lantern",
+  " at",
+  " dusk",
+  "."
+ ],
+ "tokens": [
+  {
+   "id": 262,
+   "text": "The",
+   "bytes_hex": "54 68 65",
+   "is_unk": false
+  },
+  {
+   "id": 269,
+   "text": " keeper",
+   "bytes_hex": "20 6b 65 65 70 65 72",
+   "is_unk": false
+  },
+  {
+   "id": 346,
+   "text": " lit",
+   "bytes_hex": "20 6c 69 74",
+   "is_unk": false
+  },
+  {
+   "id": 258,
+   "text": " the",
+   "bytes_hex": "20 74 68 65",
+   "is_unk": false
+  },
+  {
+   "id": 275,
+   "text": " lantern",
+   "bytes_hex": "20 6c 61 6e 74 65 72 6e",
+   "is_unk": false
+  },
+  {
+   "id": 285,
+   "text": " at",
+   "bytes_hex": "20 61 74",
+   "is_unk": false
+  },
+  {
+   "id": 321,
+   "text": " dusk",
+   "bytes_hex": "20 64 75 73 6b",
+   "is_unk": false
+  },
+  {
+   "id": 46,
+   "text": ".",
+   "bytes_hex": "2e",
+   "is_unk": false
+  }
+ ],
+ "merges": [
+  {
+   "rank": 0,
+   "left": "h",
+   "right": "e",
+   "token": "he",
+   "token_id": 256,
+   "count": 48
+  },
+  {
+   "rank": 1,
+   "left": " ",
+   "right": "t",
+   "token": " t",
+   "token_id": 257,
+   "count": 40
+  },
+  {
+   "rank": 2,
+   "left": " t",
+   "right": "he",
+   "token": " the",
+   "token_id": 258,
+   "count": 28
+  },
+  {
+   "rank": 3,
+   "left": "e",
+   "right": "r",
+   "token": "er",
+   "token_id": 259,
+   "count": 24
+  },
+  {
+   "rank": 4,
+   "left": "a",
+   "right": "n",
+   "token": "an",
+   "token_id": 260,
+   "count": 20
+  },
+  {
+   "rank": 5,
+   "left": " ",
+   "right": "l",
+   "token": " l",
+   "token_id": 261,
+   "count": 19
+  },
+  {
+   "rank": 6,
+   "left": "T",
+   "right": "he",
+   "token": "The",
+   "token_id": 262,
+   "count": 18
+  },
+  {
+   "rank": 7,
+   "left": " ",
+   "right": "w",
+   "token": " w",
+   "token_id": 263,
+   "count": 17
+  },
+  {
+   "rank": 8,
+   "left": " ",
+   "right": "c",
+   "token": " c",
+   "token_id": 264,
+   "count": 14
+  },
+  {
+   "rank": 9,
+   "left": "e",
+   "right": "p",
+   "token": "ep",
+   "token_id": 265,
+   "count": 14
+  },
+  {
+   "rank": 10,
+   "left": "k",
+   "right": "e",
+   "token": "ke",
+   "token_id": 266,
+   "count": 14
+  },
+  {
+   "rank": 11,
+   "left": " ",
+   "right": "ke",
+   "token": " ke",
+   "token_id": 267,
+   "count": 13
+  }
+ ],
+ "merges_learned": 100,
+ "vocab_size": 357,
+ "base_size": 256,
+ "pre_sample": [
+  {
+   "text": " the",
+   "count": 28
+  },
+  {
+   "text": ".",
+   "count": 22
+  },
+  {
+   "text": "\n",
+   "count": 11
+  },
+  {
+   "text": " keeper",
+   "count": 11
+  },
+  {
+   "text": " The",
+   "count": 10
+  },
+  {
+   "text": " lantern",
+   "count": 10
+  },
+  {
+   "text": " and",
+   "count": 9
+  },
+  {
+   "text": "The",
+   "count": 8
+  },
+  {
+   "text": ",",
+   "count": 7
+  },
+  {
+   "text": " at",
+   "count": 6
+  },
+  {
+   "text": " tide",
+   "count": 5
+  },
+  {
+   "text": " came",
+   "count": 4
+  }
+ ],
+ "corpus_chars": 1045,
+ "decoding": {
+  "text": "The keeper lit the lantern at dusk.",
+  "round_trip": true,
+  "unk_count": 0
+ }
+}

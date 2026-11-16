@@ -1,6 +1,6 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useMemo, useState } from 'react'
 import { scenePalette } from '../../../engine/colors'
 import { hasWebGL, useThemeVersion } from '../../../engine/hooks'
 import { Part3D } from '../../../engine/Part3D'
@@ -16,7 +16,7 @@ export function PartCloseup({ part, reducedMotion, label }: { part: PartSpec; re
   if (!hasWebGL()) return null
   return (
     <div className="closeup">
-      <Canvas frameloop={reducedMotion ? 'demand' : 'always'} camera={{ position: [1.6, 1.5, 2.4], fov: 38 }} role="img" aria-label={label} dpr={[1, 2]}>
+      <Canvas frameloop="demand" camera={{ position: [1.6, 1.5, 2.4], fov: 38 }} role="img" aria-label={label} dpr={[1, 2]}>
         <Scene part={part} reducedMotion={reducedMotion} />
       </Canvas>
     </div>
@@ -28,11 +28,18 @@ function Scene({ part, reducedMotion }: { part: PartSpec; reducedMotion: boolean
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const pal = useMemo(() => scenePalette(), [v])
   const [t, setT] = useState(0.5)
+  const invalidate = useThree((s) => s.invalidate)
   useFrame(({ clock }) => {
     if (reducedMotion) return
     const next = 0.5 + 0.5 * Math.sin(clock.getElapsedTime() * 0.9)
     if (Math.abs(next - t) > 0.01) setT(next)
   })
+  // Open and close at 20 frames a second: plenty for a slow motion, and much lighter than every frame.
+  useEffect(() => {
+    if (reducedMotion) return
+    const id = window.setInterval(invalidate, 50)
+    return () => window.clearInterval(id)
+  }, [reducedMotion, invalidate])
   const solo: PartSpec = { ...part, position: [0, -part.size[1] / 2, 0], explode: [0, 0, 0] }
   return (
     <>

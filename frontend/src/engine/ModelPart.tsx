@@ -26,8 +26,8 @@ interface Mover {
 }
 
 function ModelMeshes({ url, width, t, opacity, highlight }: { url: string; width: number; t: number; opacity: number; highlight?: string }) {
-  // No Draco or Meshopt: the models are plain .glb files, so nothing is fetched from a CDN.
-  const { scene } = useGLTF(url, false, false)
+  // The models are Draco-compressed. The decoder is served from this site (public/draco), never a CDN.
+  const { scene } = useGLTF(url, '/draco/')
   const invalidate = useThree((s) => s.invalidate)
   const { root, movers, materials } = useMemo(() => {
     const root = scene.clone(true)
@@ -44,6 +44,8 @@ function ModelMeshes({ url, width, t, opacity, highlight }: { url: string; width
       if (mesh.isMesh) {
         // Each part gets its own materials, so dimming or highlighting one stage leaves the others alone.
         const own = (mesh.material as Material).clone() as MeshStandardMaterial
+        // Remember how see-through the model made this material (glass), so dimming never makes it solid.
+        own.userData.baseOpacity = own.opacity
         mesh.material = own
         materials.push(own)
       }
@@ -59,11 +61,12 @@ function ModelMeshes({ url, width, t, opacity, highlight }: { url: string; width
   useLayoutEffect(() => {
     const glow = highlight ? new Color(highlight) : null
     for (const m of materials) {
+      const base = (m.userData.baseOpacity as number | undefined) ?? 1
       // three.js materials are mutable objects owned by this component; changing them is the intent.
       // eslint-disable-next-line react/immutability
-      m.transparent = opacity < 1
-      m.opacity = opacity
-      m.depthWrite = opacity === 1
+      m.opacity = base * opacity
+      m.transparent = m.opacity < 1
+      m.depthWrite = !m.transparent
       if ('emissive' in m && m.emissive) {
         m.emissive.copy(glow ?? new Color(0, 0, 0))
         m.emissiveIntensity = glow ? 0.16 : 0

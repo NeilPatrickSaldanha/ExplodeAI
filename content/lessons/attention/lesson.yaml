@@ -866,12 +866,7 @@ components:
   claims:
   - attn-origin
   - attn-not-all-you-need
-  geometry:
-    shape: stack
-    size:
-    - 0.9
-    - 0.5
-    - 0.7
+  geometry: {shape: stack, size: [2.0, 0.44, 0.78], model: att/tokens}
   position:
   - -2.45
   - 0
@@ -897,12 +892,7 @@ components:
   - attn-position-needed
   - attn-position-encoding
   - attn-position-alternatives
-  geometry:
-    shape: slab
-    size:
-    - 0.9
-    - 0.4
-    - 0.7
+  geometry: {shape: slab, size: [2.0, 0.53, 0.99], model: att/embed_pos}
   position:
   - -1.75
   - 0
@@ -931,12 +921,7 @@ components:
   - attn-kv-cache
   - attn-kv-cache-size
   - attn-mqa-gqa
-  geometry:
-    shape: prism
-    size:
-    - 0.9
-    - 0.6
-    - 0.7
+  geometry: {shape: prism, size: [2.0, 0.56, 1.05], model: att/qkv}
   position:
   - -1.05
   - 0
@@ -967,12 +952,7 @@ components:
   - attn-scaling-reason
   - attn-additive-vs-dot
   - attn-quadratic-cost
-  geometry:
-    shape: grid
-    size:
-    - 1.0
-    - 0.35
-    - 1.0
+  geometry: {shape: grid, size: [1.87, 0.95, 1.49], model: att/scores}
   position:
   - -0.35
   - 0
@@ -1000,18 +980,13 @@ components:
   - attn-padding-vs-causal
   - attn-mask-polarity
   - attn-kv-cache-valid
-  geometry:
-    shape: lens
-    size:
-    - 0.9
-    - 0.5
-    - 0.7
+  geometry: {shape: lens, size: [1.87, 0.96, 1.52], model: att/mask}
   position:
   - 0.35
   - 0
   - 0
   explode:
-  - 1.6
+  - 1.25
   - 0
   - 1.0
   subtitle: No peeking ahead
@@ -1031,18 +1006,13 @@ components:
   - attn-softmax-weights
   - attn-softmax-stable
   - attn-softmax-saturation
-  geometry:
-    shape: ring
-    size:
-    - 0.8
-    - 0.5
-    - 0.8
+  geometry: {shape: ring, size: [2.0, 0.58, 1.09], model: att/softmax}
   position:
   - 1.05
   - 0
   - 0
   explode:
-  - 0.55
+  - -0.5
   - 0
   - 1.0
   subtitle: Shares of attention
@@ -1063,18 +1033,13 @@ components:
   - attn-explanation-contested
   - attn-interpretability-hedged
   - attn-quadratic-memory
-  geometry:
-    shape: stack
-    size:
-    - 0.9
-    - 0.6
-    - 0.7
+  geometry: {shape: stack, size: [2.0, 0.67, 0.79], model: att/mix}
   position:
   - 1.75
   - 0
   - 0
   explode:
-  - -0.55
+  - -2.3
   - 0
   - 1.0
   subtitle: Blend what it finds
@@ -1097,18 +1062,13 @@ components:
   - attn-multihead-motivation
   - attn-head-sizes
   - attn-residual
-  geometry:
-    shape: cylinder
-    size:
-    - 0.8
-    - 0.6
-    - 0.8
+  geometry: {shape: cylinder, size: [2.0, 0.44, 0.84], model: att/output}
   position:
   - 2.45
   - 0
   - 0
   explode:
-  - -1.6
+  - -4.05
   - 0
   - 1.0
   subtitle: One vector per word

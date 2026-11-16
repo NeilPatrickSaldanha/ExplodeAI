@@ -1,0 +1,230 @@
+{
+ "goal": "Hi! I'd like to return my E-Trail from order 1001. Can I get a refund?",
+ "tools": [
+  {
+   "name": "search_help_centre",
+   "description": "Search Ridgeline's help-centre articles for a policy or how-to answer: returns and refunds, warranty, shipping, sizing, service, battery care. Input: a short search query. Returns the best-matching articles.",
+   "side_effects": false
+  },
+  {
+   "name": "get_order",
+   "description": "Look up one customer order by its order ID (the letter A and 4 digits, for example A1001). Returns the item, price, status, delivery date and whether the bike was custom-built.",
+   "side_effects": false
+  },
+  {
+   "name": "days_between",
+   "description": "Count the days between two dates, given as YYYY-MM-DD. Use it to check how long ago an order was delivered.",
+   "side_effects": false
+  },
+  {
+   "name": "issue_refund",
+   "description": "Issue a refund of money to the customer for an order. This moves money, so a person must approve it first.",
+   "side_effects": true
+  }
+ ],
+ "steps": [
+  {
+   "index": 1,
+   "tokens_in": 1475,
+   "kind": "tool_call",
+   "tool": "search_help_centre",
+   "arguments": {
+    "query": "returns refunds policy"
+   },
+   "scores": [
+    {
+     "tool": "search_help_centre",
+     "score": 1.0
+    },
+    {
+     "tool": "get_order",
+     "score": 0.143
+    },
+    {
+     "tool": "days_between",
+     "score": 0.0
+    },
+    {
+     "tool": "issue_refund",
+     "score": 0.143
+    }
+   ],
+   "validation": {
+    "checked": true,
+    "errors": []
+   },
+   "execution": {
+    "ran": true,
+    "ms": 0.187,
+    "is_error": false,
+    "approved_by_person": false
+   }
+  },
+  {
+   "index": 2,
+   "tokens_in": 1955,
+   "kind": "tool_call",
+   "tool": "get_order",
+   "arguments": {
+    "order_id": "1001"
+   },
+   "scores": [
+    {
+     "tool": "search_help_centre",
+     "score": 0.0
+    },
+    {
+     "tool": "get_order",
+     "score": 1.0
+    },
+    {
+     "tool": "days_between",
+     "score": 0.2
+    },
+    {
+     "tool": "issue_refund",
+     "score": 0.4
+    }
+   ],
+   "validation": {
+    "checked": true,
+    "errors": [
+     "'order_id' must match ^A\\d{4}$ (for example A1001), got '1001'"
+    ]
+   },
+   "execution": {
+    "ran": false,
+    "reason": "invalid arguments"
+   }
+  },
+  {
+   "index": 3,
+   "tokens_in": 2203,
+   "kind": "tool_call",
+   "tool": "get_order",
+   "arguments": {
+    "order_id": "A1001"
+   },
+   "scores": [
+    {
+     "tool": "search_help_centre",
+     "score": 0.0
+    },
+    {
+     "tool": "get_order",
+     "score": 1.0
+    },
+    {
+     "tool": "days_between",
+     "score": 0.2
+    },
+    {
+     "tool": "issue_refund",
+     "score": 0.4
+    }
+   ],
+   "validation": {
+    "checked": true,
+    "errors": []
+   },
+   "execution": {
+    "ran": true,
+    "ms": 0.002,
+    "is_error": false,
+    "approved_by_person": false
+   }
+  },
+  {
+   "index": 4,
+   "tokens_in": 2526,
+   "kind": "tool_call",
+   "tool": "days_between",
+   "arguments": {
+    "start": "2026-10-05",
+    "end": "2026-10-21"
+   },
+   "scores": [
+    {
+     "tool": "search_help_centre",
+     "score": 0.0
+    },
+    {
+     "tool": "get_order",
+     "score": 0.2
+    },
+    {
+     "tool": "days_between",
+     "score": 0.8
+    },
+    {
+     "tool": "issue_refund",
+     "score": 0.2
+    }
+   ],
+   "validation": {
+    "checked": true,
+    "errors": []
+   },
+   "execution": {
+    "ran": true,
+    "ms": 0.004,
+    "is_error": false,
+    "approved_by_person": false
+   }
+  },
+  {
+   "index": 5,
+   "tokens_in": 2799,
+   "kind": "tool_call",
+   "tool": "issue_refund",
+   "arguments": {
+    "order_id": "A1001",
+    "amount": 2899.0
+   },
+   "scores": [
+    {
+     "tool": "search_help_centre",
+     "score": 0.2
+    },
+    {
+     "tool": "get_order",
+     "score": 0.4
+    },
+    {
+     "tool": "days_between",
+     "score": 0.2
+    },
+    {
+     "tool": "issue_refund",
+     "score": 1.0
+    }
+   ],
+   "validation": {
+    "checked": true,
+    "errors": []
+   },
+   "execution": {
+    "ran": false,
+    "reason": "waiting for a person to approve"
+   }
+  }
+ ],
+ "status": "needs_approval",
+ "held": {
+  "tool": "issue_refund",
+  "arguments": {
+   "order_id": "A1001",
+   "amount": 2899.0
+  }
+ },
+ "stats": {
+  "steps": 5,
+  "tool_calls": 5,
+  "tool_runs": 3,
+  "invalid_calls": 1,
+  "tokens_last": 2799,
+  "tokens_total": 10958,
+  "unapproved_side_effects": 0,
+  "answered": false
+ }
+}

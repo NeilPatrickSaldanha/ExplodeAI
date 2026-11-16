@@ -13,6 +13,9 @@ import bpy
 import numpy as np
 
 _mats = {}
+# Clear-coat makes three.js use its heavier physical material for every surface. The look barely changes at
+# this size, and the models draw several times faster without it, so it is off.
+COAT = False
 
 
 def lin(c):
@@ -39,7 +42,7 @@ def material(name, color, rough=0.6, metal=0.0, coat=0.0, emit=0.0):
     b.inputs["Base Color"].default_value = lin(color)
     b.inputs["Roughness"].default_value = rough
     b.inputs["Metallic"].default_value = metal
-    if coat:
+    if coat and COAT:
         b.inputs["Coat Weight"].default_value = coat
         b.inputs["Coat Roughness"].default_value = 0.08
     if emit:
@@ -87,7 +90,7 @@ def box(name, size, loc, mat, parent=None, bevel=0.0, rot=(0, 0, 0)):
     if bevel:
         m = o.modifiers.new("bevel", "BEVEL")
         m.width = bevel
-        m.segments = 3
+        m.segments = 2
         m.limit_method = "ANGLE"
     o.data.materials.append(mat)
     o.location = loc
@@ -115,7 +118,7 @@ def text(name, body, size, loc, mat, parent=None, rot=(0, 0, 0), align="CENTER",
     curve.size = size
     curve.align_x = align
     curve.align_y = "CENTER"
-    curve.extrude = depth
+    curve.extrude = 0.0
     curve.resolution_u = 3
     o = bpy.data.objects.new(name, curve)
     link(o)
@@ -249,6 +252,10 @@ def export(path):
         export_apply=True,
         export_extras=True,
         export_yup=True,
+        export_draco_mesh_compression_enable=True,
+        export_draco_mesh_compression_level=6,
+        export_draco_position_quantization=14,
+        export_draco_normal_quantization=10,
     )
     (x0, x1), (y0, y1), (z0, z1) = bounds(list(bpy.context.scene.objects))
     # three.js size: width (x), height (z), depth (y)

@@ -386,7 +386,7 @@ components:
     short: The sentences your text is compared against.
     detail: Twenty-four sample sentences in four topics, each embedded once by the same model.
     claims: [embedding-uses, models-not-comparable]
-    geometry: {shape: stack, size: [0.9, 0.5, 0.7]}
+    geometry: {shape: stack, size: [2.0, 0.76, 1.22], model: emb/library}
     position: [-1.65, 0, -0.55]
     explode: [-4.4, 0, -2.4]
     subtitle: Sentences to search
@@ -400,7 +400,7 @@ components:
     short: The sentence you want to find neighbours for.
     detail: For short search queries, BGE suggests prefixing an instruction. Toggle it in the experiment.
     claims: [bge-query-instruction, query-document-asymmetry]
-    geometry: {shape: card, size: [1.2, 0.7, 0.05]}
+    geometry: {shape: card, size: [2.0, 1.18, 1.37], model: emb/your_text}
     position: [-1.65, 0, 0.55]
     explode: [-4.4, 0, 2.0]
     subtitle: What you type
@@ -414,7 +414,7 @@ components:
     short: Splits text into WordPiece tokens and ids.
     detail: The model never sees letters, only token ids. [CLS] goes first and [SEP] last, rare words split into ## pieces, and anything past 512 tokens is cut off.
     claims: [wordpiece-subwords, bert-cls-token, bge-max-tokens, input-limits]
-    geometry: {shape: slab, size: [0.9, 0.5, 0.7]}
+    geometry: {shape: slab, size: [2.0, 0.42, 0.75], model: emb/tokenizer}
     position: [-0.55, 0, -0.55]
     explode: [-1.5, 0, 1.2]
     subtitle: Text to token ids
@@ -428,7 +428,7 @@ components:
     short: Twelve transformer layers give every token a context-aware vector.
     detail: Each token gets 384 numbers that depend on the words around it, so the same word gets a different vector in each sentence.
     claims: [contextual-vectors, word2vec-static, word2vec-analogy, contrastive-training, bge-dims]
-    geometry: {shape: grid, size: [0.9, 0.5, 0.9]}
+    geometry: {shape: grid, size: [2.0, 1.22, 1.21], model: emb/encoder}
     position: [-0.55, 0, 0.55]
     explode: [0.1, 0, -2.6]
     subtitle: Tokens become vectors
@@ -442,7 +442,7 @@ components:
     short: Turns many token vectors into one sentence vector.
     detail: BGE takes the [CLS] token's vector. Averaging every token is the other common choice. Try both.
     claims: [bge-cls-normalized, pooling-strategies, raw-bert-poor]
-    geometry: {shape: prism, size: [0.9, 0.6, 0.7]}
+    geometry: {shape: prism, size: [2.0, 0.59, 1.02], model: emb/pooling}
     position: [0.55, 0, -0.55]
     explode: [0.4, 0, 2.4]
     subtitle: Many vectors to one
@@ -456,7 +456,7 @@ components:
     short: Scales the vector to length 1.
     detail: After normalizing, the dot product equals cosine similarity, so scores fall between -1 and 1.
     claims: [unit-vector-metrics, shorter-dimensions]
-    geometry: {shape: lens, size: [0.9, 0.6, 0.7]}
+    geometry: {shape: lens, size: [2.0, 0.48, 0.81], model: emb/normalizer}
     position: [0.55, 0, 0.55]
     explode: [2.3, 0, -0.8]
     subtitle: Length becomes 1
@@ -470,7 +470,7 @@ components:
     short: Scores your vector against every library vector and ranks them.
     detail: Related sentences score highest, but even unrelated ones score well above zero. Only the order is meaningful.
     claims: [semantic-similarity, scores-uncalibrated, lexical-vs-neural, models-not-comparable, mteb-no-winner]
-    geometry: {shape: ring, size: [0.8, 0.5, 0.8]}
+    geometry: {shape: ring, size: [2.0, 0.87, 0.95], model: emb/similarity}
     position: [1.65, 0, -0.55]
     explode: [4.2, 0, -2.2]
     subtitle: Rank by closeness
@@ -484,7 +484,7 @@ components:
     short: A 3D map of the vectors.
     detail: PCA squeezes 384 dimensions into 3. Use it to see clusters, but the exact scores live in the neighbours list.
     claims: [projection-lossy, tsne-cautions]
-    geometry: {shape: cylinder, size: [0.8, 0.6, 0.8]}
+    geometry: {shape: cylinder, size: [1.5, 1.44, 1.69], model: emb/semantic_space}
     position: [1.65, 0, 0.55]
     explode: [4.2, 0, 2.2]
     subtitle: See the clusters

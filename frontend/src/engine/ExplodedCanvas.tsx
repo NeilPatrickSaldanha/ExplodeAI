@@ -219,7 +219,7 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
   return (
     <div className="scene" data-pan={view.pan ? 'true' : undefined}>
       <Canvas
-        frameloop={animating ? 'always' : 'demand'}
+        frameloop="demand"
         dpr={[1, 2]}
         camera={{ fov: FOV, near: 0.1, far: 300, position: [1, 14, 20] }}
         onPointerMissed={() => onSelect(null)}
@@ -231,7 +231,9 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
         <directionalLight position={[6, 10, 6]} intensity={hasModels ? 0.9 : 1.1} />
         <directionalLight position={[-8, 4, -6]} intensity={0.35} />
         {hasModels && <StudioLight />}
-        {hasModels && <ContactShadows position={[frame.center[0], 0.001, frame.center[2]]} scale={40} resolution={1024} blur={2.4} far={2.5} opacity={0.7} />}
+        {/* Drawn once, and again only when the parts move (the key changes), not on every frame. */}
+        {hasModels && <ContactShadows key={Math.round(t * 20)} frames={1} position={[frame.center[0], 0.001, frame.center[2]]} scale={40} resolution={512} blur={2.4} far={2.5} opacity={0.7} />}
+        <FrameLimiter active={animating} fps={30} />
         <gridHelper args={[40, 40, palette.muted, palette.edge]} position={[0, -0.02, 0]} material-transparent material-opacity={0.12} />
         {spec.parts.map((p) => (
           <Part3D
@@ -296,6 +298,17 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
       </div>
     </div>
   )
+}
+
+/** Redraw at a steady 30 frames a second while the flow animation runs, instead of as fast as the display allows. */
+function FrameLimiter({ active, fps }: { active: boolean; fps: number }) {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    if (!active) return
+    const id = window.setInterval(invalidate, 1000 / fps)
+    return () => window.clearInterval(id)
+  }, [active, fps, invalidate])
+  return null
 }
 
 function SizeReporter({ onWidth }: { onWidth: (w: number) => void }) {
