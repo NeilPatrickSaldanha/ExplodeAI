@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { scenePalette } from '../../../engine/colors'
 import { hasWebGL, useThemeVersion } from '../../../engine/hooks'
 import { Part3D } from '../../../engine/Part3D'
+import { StudioLight } from '../../../engine/StudioLight'
 import type { PartSpec } from '../../../engine/types'
 
 /**
@@ -36,8 +37,9 @@ function Scene({ part, reducedMotion }: { part: PartSpec; reducedMotion: boolean
   return (
     <>
       <color attach="background" args={[pal.paper]} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[3, 5, 3]} intensity={1.1} />
+      <ambientLight intensity={part.model ? 0.25 : 0.6} />
+      <directionalLight position={[3, 5, 3]} intensity={part.model ? 0.9 : 1.1} />
+      {part.model && <StudioLight />}
       <directionalLight position={[-3, 2, -2]} intensity={0.4} />
       <Part3D part={solo} at={solo.position} explode={t} selected={false} dimmed={false} palette={{ ...pal, edge: pal.accent }} onSelect={() => {}} />
       <OrbitControls makeDefault enablePan={false} enableZoom={false} />

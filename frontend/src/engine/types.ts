@@ -24,6 +24,8 @@ export interface PartSpec {
   number?: string
   /** A prop is scenery (e.g. the user's question card): drawn and linked, never selectable. */
   prop?: boolean
+  /** URL of a 3D model (.glb) for this part. The shape is the fallback while it loads or if it fails. */
+  model?: string
 }
 
 export interface LinkSpec {

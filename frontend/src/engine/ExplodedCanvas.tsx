@@ -1,4 +1,4 @@
-import { OrbitControls } from '@react-three/drei'
+import { ContactShadows, OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { MOUSE, TOUCH, Vector3, type PerspectiveCamera } from 'three'
@@ -10,6 +10,7 @@ import { LabelProjector, type LabelAnchor } from './LabelLayer'
 import { Links3D } from './Links3D'
 import { bounds, linkControlPoint, neighbours, partPosition, quadBezier } from './math'
 import { Part3D } from './Part3D'
+import { StudioLight } from './StudioLight'
 import { linkKey, type AssemblySpec, type Readouts, type Vec3, type ViewState } from './types'
 
 export interface ExplodedCanvasProps {
@@ -185,6 +186,8 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
     ? [0, 1, 2].map((i) => frame.center[i] + (sel[i] - frame.center[i]) * FOCUS_PULL) as Vec3
     : frame.center
   const animating = view.flow && !reducedMotion
+  // Lessons whose stages are real 3D models get studio lighting and soft shadows for their materials.
+  const hasModels = spec.parts.some((p) => p.model)
 
   // Label anchors: a callout above each part, plus data cards at link midpoints.
   const cardMode = view.linkCards ?? 'selected'
@@ -223,9 +226,11 @@ export function ExplodedCanvas({ spec, view, readouts, reducedMotion, onSelect, 
         role="img"
       >
         <color attach="background" args={[palette.paper]} />
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[6, 10, 6]} intensity={1.1} />
+        <ambientLight intensity={hasModels ? 0.25 : 0.55} />
+        <directionalLight position={[6, 10, 6]} intensity={hasModels ? 0.9 : 1.1} />
         <directionalLight position={[-8, 4, -6]} intensity={0.35} />
+        {hasModels && <StudioLight />}
+        {hasModels && <ContactShadows position={[frame.center[0], 0.001, frame.center[2]]} scale={40} resolution={1024} blur={2.4} far={2.5} opacity={0.5} />}
         <gridHelper args={[40, 40, palette.muted, palette.edge]} position={[0, -0.02, 0]} material-transparent material-opacity={0.12} />
         {spec.parts.map((p) => (
           <Part3D

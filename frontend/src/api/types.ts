@@ -74,7 +74,7 @@ export interface Component {
   short: string
   detail: string
   claims: string[]
-  geometry: { shape: Shape; size: Vec3 }
+  geometry: { shape: Shape; size: Vec3; model?: string | null }
   position: Vec3
   explode: Vec3
   subtitle?: string | null

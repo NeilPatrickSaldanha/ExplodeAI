@@ -81,6 +81,8 @@ class Claim(BaseModel):
 class Geometry(BaseModel):
     shape: Literal["slab", "stack", "cylinder", "grid", "prism", "lens", "ring", "card"]
     size: Vec3 = (1.0, 1.0, 1.0)
+    # A 3D model of this stage (frontend/public/models/<model>.glb). The shape stays as the fallback.
+    model: str | None = Field(default=None, pattern=r"^[a-z0-9_\-]+/[a-z0-9_\-]+$")
 
 
 class ExampleDemo(BaseModel):

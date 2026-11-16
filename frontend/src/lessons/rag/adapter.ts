@@ -7,7 +7,7 @@ import { linkKey } from '../../engine/types'
 export const QUESTION_PROP = 'question'
 
 /** How far this lesson's parts spread when fully exploded (x, y, z). */
-const SPREAD: [number, number, number] = [2.6, 1.2, 1.25]
+const SPREAD: [number, number, number] = [1.55, 1.2, 1.15]
 
 export function lessonToSpec(lesson: Lesson): AssemblySpec {
   const parts: AssemblySpec['parts'] = lesson.components.map((c, i) => ({
@@ -20,6 +20,7 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
     explode: c.explode,
     subtitle: c.subtitle ?? undefined,
     number: String(i + 1).padStart(2, '0'),
+    model: c.geometry.model ? `/models/${c.geometry.model}.glb` : undefined,
   }))
   const links: AssemblySpec['links'] = lesson.connections.map((c) => ({
     source: c.source,
@@ -35,7 +36,8 @@ export function lessonToSpec(lesson: Lesson): AssemblySpec {
       label: 'Your question',
       group: 'input',
       shape: 'card',
-      size: [1.3, 0.75, 0.05],
+      size: [1.4, 0.53, 0.22],
+      model: '/models/rag/question.glb',
       position: [qe.position[0], 0, qe.position[2] + 0.9],
       explode: [qe.explode[0], 0, qe.explode[2] + 1.6],
       prop: true,

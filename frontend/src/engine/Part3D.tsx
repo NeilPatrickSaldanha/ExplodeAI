@@ -2,6 +2,7 @@ import { Edges } from '@react-three/drei'
 import type { ThreeEvent } from '@react-three/fiber'
 import { useMemo, useState } from 'react'
 import type { ScenePalette } from './colors'
+import { ModelPart } from './ModelPart'
 import type { PartShape, PartSpec, Vec3 } from './types'
 
 interface Props {
@@ -47,7 +48,18 @@ export function Part3D({ part, at, explode, selected, dimmed, palette, onSelect 
 
   return (
     <group position={at} {...handlers}>
-      <ShapeMeshes shape={part.shape} size={part.size} t={explode} color={palette.part} edge={edge} opacity={opacity} glow={glow} />
+      {part.model ? (
+        <ModelPart
+          url={part.model}
+          width={part.size[0]}
+          t={explode}
+          opacity={opacity}
+          highlight={selected ? palette.accent : hovered ? palette.edge : undefined}
+          fallback={<ShapeMeshes shape={part.shape} size={part.size} t={explode} color={palette.part} edge={edge} opacity={opacity} glow={glow} />}
+        />
+      ) : (
+        <ShapeMeshes shape={part.shape} size={part.size} t={explode} color={palette.part} edge={edge} opacity={opacity} glow={glow} />
+      )}
       {selected && (
         <mesh position={[0, frame[1] / 2 - 0.2, 0]}>
           <boxGeometry args={frame} />
